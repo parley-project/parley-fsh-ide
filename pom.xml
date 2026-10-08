@@ -166,12 +166,11 @@
 			<version>4.0.3</version>
 			<scope>runtime</scope>
 		</dependency>
-		<!-- The parse-tree views use the ANTLR GUI classes and org.abego.treelayout,
-		     which come with the full antlr4 artifact (fsh itself needs only the runtime) -->
+		<!-- The syntax-tree view lays out its tree with org.abego.treelayout -->
 		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>antlr4</artifactId>
-			<version>4.13.2</version>
+			<groupId>org.abego.treelayout</groupId>
+			<artifactId>org.abego.treelayout.core</artifactId>
+			<version>1.0.3</version>
 		</dependency>
 
 		<dependency>

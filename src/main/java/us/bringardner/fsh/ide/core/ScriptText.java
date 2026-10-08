@@ -19,10 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Interval;
 
+import us.bringardner.fsh.syntax.Ast;
 import us.bringardner.parley.files.FileSource;
 
 /** Text helpers for scripts: cleaning pasted text, arguments, reading and writing files. */
@@ -70,19 +68,21 @@ public class ScriptText {
 		return ret;
 	}
 
-	/** The statement's first line of source, cut short; doesn't build the text of its whole body. */
-	public static String statementText(ParserRuleContext context) {
-		Token start = context.start;
-		Token stop = context.stop;
-		if( start == null || stop == null || start.getStartIndex() < 0 || stop.getStopIndex() < start.getStartIndex()) {
+	/**
+	 * The command's first line of source, cut short; doesn't build the text of its whole body.
+	 * @param source the text node was read from
+	 */
+	public static String statementText(Ast.Node node, String source) {
+		if( node == null || source == null || node.start < 0 || node.end <= node.start || node.start >= source.length()) {
 			return "";
 		}
-		int end = Math.min(stop.getStopIndex(), start.getStartIndex()+MAX_STATEMENT_TEXT-1);
-		String ret = start.getInputStream().getText(Interval.of(start.getStartIndex(), end));
+		int stop = Math.min(node.end, source.length());
+		int end = Math.min(stop, node.start+MAX_STATEMENT_TEXT);
+		String ret = source.substring(node.start, end);
 		int nl = ret.indexOf('\n');
 		if( nl >= 0 ) {
 			ret = ret.substring(0, nl)+" ...";
-		} else if( end < stop.getStopIndex()) {
+		} else if( end < stop ) {
 			ret += " ...";
 		}
 		return ret;

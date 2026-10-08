@@ -35,10 +35,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import us.bringardner.fsh.ShellContext;
-import us.bringardner.fsh.antlr.Variable;
+import us.bringardner.fsh.ide.core.SyntaxNode;
+import us.bringardner.fsh.ide.core.Variable;
 
 
 public class DebugVariablePanel extends JPanel  {
@@ -347,7 +347,7 @@ public class DebugVariablePanel extends JPanel  {
 		setContext(editorPane, ctx, ctx == null ? null : ctx.getVariables());
 	}
 
-	public void updateTree(ParseTree tree, String string) {		
+	public void updateTree(SyntaxNode tree, String string) {		
 		treeView.setTree(tree,string);
 	}
 }

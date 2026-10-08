@@ -16,14 +16,13 @@ import java.awt.Point;
 import java.util.Map;
 import java.util.function.IntFunction;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 
 import us.bringardner.fsh.DebugContext;
 import us.bringardner.fsh.ShellContext;
 import us.bringardner.fsh.ShellContext.LoopControl;
-import us.bringardner.fsh.antlr.Compare;
-import us.bringardner.fsh.antlr.FileSourceShVisitorImpl;
-import us.bringardner.fsh.antlr.statement.LoopStatement.LoopControlException;
+import us.bringardner.fsh.exec.Executor;
+import us.bringardner.fsh.signal.LoopControlException;
+import us.bringardner.fsh.syntax.Ast;
 
 /**
  * The IDE's side of fsh's debugger: stops at breakpoints (with their conditions and hit
@@ -62,8 +61,10 @@ public class DebugSession extends DebugContext {
 	private volatile boolean active;
 
 	// the statement about to run, and its context; read when the script stops
-	private ParserRuleContext current;
+	private Ast.Node current;
 	private ShellContext currentCtx;
+	// a breakpoint's condition is running: its own commands are not the script's
+	private boolean evaluating;
 
 	/**
 	 * @param breakpoints the breakpoint on an editor line (0-based), or null; called on the
@@ -123,7 +124,7 @@ public class DebugSession extends DebugContext {
 
 	@Override
 	public synchronized boolean isBreakpoint(Point linePt,ShellContext ctx) {
-		if( !active ) {
+		if( !active || evaluating ) {
 			return false;
 		}
 		int line = editorLine(linePt.x);
@@ -133,25 +134,30 @@ public class DebugSession extends DebugContext {
 		Breakpoint bp = breakpoints.apply(line);
 		boolean ret = bp !=null && bp.isEnabled(true);
 		if( ret && bp.isConditional()) {
+			evaluating = true;
 			try {
-				String code = ctx.console.preProcess(bp.getCondition(), ctx);
-				Compare c = FileSourceShVisitorImpl.parseCompare(code);
-				ret = c.evaluate(ctx);
+				// a command, such as [ $i -gt 3 ]: true if it succeeds
+				ret = Executor.test(ctx, bp.getCondition());
 			} catch (Exception e) {
 				if( bp.reportConditionError()) {
 					listener.conditionFailed(bp, line, e);
 				}
+			} finally {
+				evaluating = false;
 			}
 		}
 		return ret;
 	}
 
 	@Override
-	public synchronized void before(ParserRuleContext context,ShellContext ctx) {
+	public synchronized void before(Ast.Node node, String source, ShellContext ctx) {
+		if( evaluating ) {
+			return;
+		}
 		if( getCurrentState() == RunState.Terminate) {
 			throw new LoopControlException(LoopControl.Break, 100000);
 		}
-		current = context;
+		current = node;
 		currentCtx = ctx;
 	}
 
@@ -161,16 +167,16 @@ public class DebugSession extends DebugContext {
 		// set by the script's thread as it stops at a breakpoint or step. Nothing is
 		// reported for the statements in between.
 		if( state == RunState.AtBreakpoint && active && current != null && currentCtx != null) {
-			listener.paused(editorLine(current.start.getLine()), currentCtx, currentCtx.getVariables());
+			listener.paused(editorLine(current.line), currentCtx, currentCtx.getVariables());
 		}
 	}
 
 	@Override
-	public synchronized void after(ParserRuleContext context,ShellContext ctx) {
-		if( active && context != null ) {
-			int line = editorLine(context.start.getLine());
+	public synchronized void after(Ast.Node node, String source, ShellContext ctx) {
+		if( active && !evaluating && node != null ) {
+			int line = editorLine(node.line);
 			if( line >=0) {
-				listener.statement(line, ScriptText.statementText(context));
+				listener.statement(line, ScriptText.statementText(node, source));
 			}
 		}
 	}

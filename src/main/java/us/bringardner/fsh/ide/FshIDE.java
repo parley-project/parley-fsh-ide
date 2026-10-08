@@ -80,13 +80,13 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.BadLocationException;
 
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import us.bringardner.parley.files.FileSource;
 import us.bringardner.parley.files.FileSourceChooserDialog;
 import us.bringardner.parley.files.FileSourceFactory;
 import us.bringardner.fsh.ConsolePanel;
 import us.bringardner.fsh.ShellContext;
+import us.bringardner.fsh.ide.core.SyntaxNode;
 
 
 public class FshIDE extends JFrame  {
@@ -517,7 +517,7 @@ public class FshIDE extends JFrame  {
 	private String lastCheckedCode;
 	// a check's result is shown only if no newer check has been asked for
 	private int syntaxCheckCount;
-	private ParseTree pendingTree;
+	private SyntaxNode pendingTree;
 	private String pendingTreeErrors;
 
 	private void checkSyntax() {
@@ -534,7 +534,7 @@ public class FshIDE extends JFrame  {
 		}
 		SYNTAX_CHECKER.execute(()->{
 			List<CompileError> errors = new ArrayList<>();
-			ParseTree tree;
+			SyntaxNode tree;
 			try {
 				tree = ScriptParser.parse(code, errors);
 			} catch (RuntimeException e) {
@@ -552,13 +552,13 @@ public class FshIDE extends JFrame  {
 				}
 				pendingTree = tree;
 				pendingTreeErrors = buf.toString();
-				showParseTree();
+				showSyntaxTree();
 			});
 		});
 	}
 
-	/** Lays out the parse tree, which only matters when the debug view shows it. */
-	private void showParseTree() {
+	/** Lays out the syntax tree, which only matters when the debug view shows it. */
+	private void showSyntaxTree() {
 		if( pendingTree != null && debugSplitPane.isVisible()) {
 			debugVariablePanel.updateTree(pendingTree, pendingTreeErrors);
 			pendingTree = null;
@@ -998,7 +998,7 @@ public class FshIDE extends JFrame  {
 			}
 			debugSplitPane.setVisible(b);		
 			centerSplitPane.resetToPreferredSizes();
-			showParseTree();
+			showSyntaxTree();
 		}
 	}
 
@@ -1012,7 +1012,7 @@ public class FshIDE extends JFrame  {
 			debugControlPanel.setVisible(true);
 			debugSplitPane.setVisible(true);
 			centerSplitPane.resetToPreferredSizes();
-			showParseTree();
+			showSyntaxTree();
 			startTask(IdeRunstate.Debugging);
 
 			break;

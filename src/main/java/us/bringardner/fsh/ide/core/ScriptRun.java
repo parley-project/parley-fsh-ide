@@ -26,7 +26,7 @@ import us.bringardner.fsh.ConsoleSignal;
 import us.bringardner.fsh.DebugContext.RunState;
 import us.bringardner.fsh.FshList;
 import us.bringardner.fsh.ShellContext;
-import us.bringardner.fsh.antlr.Argument;
+import us.bringardner.fsh.Argument;
 import us.bringardner.fsh.job.AbstractJob;
 import us.bringardner.fsh.job.ForgroundJob;
 import us.bringardner.parley.files.FileSource;
