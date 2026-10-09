@@ -36,6 +36,7 @@ settings.
 
 - Java 21
 - fsh, which brings parley-files and its FTP and SFTP file systems
+- For the Swing IDE: parley-files-swing
 - For the JavaFX IDE: JavaFX 21, RichTextFX and parley-files-fx
 
 ## Build and run

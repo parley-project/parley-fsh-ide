@@ -142,10 +142,16 @@
 			<artifactId>fsh</artifactId>
 			<version>${fsh.version}</version>
 		</dependency>
-		<!-- Used directly: FileSource, the file chooser, the recent-files menu -->
+		<!-- Used directly: FileSource -->
 		<dependency>
 			<groupId>us.bringardner.parley</groupId>
 			<artifactId>parley-files</artifactId>
+			<version>${parley.version}</version>
+		</dependency>
+		<!-- The Swing IDE's file chooser -->
+		<dependency>
+			<groupId>us.bringardner.parley</groupId>
+			<artifactId>parley-files-swing</artifactId>
 			<version>${parley.version}</version>
 		</dependency>
 

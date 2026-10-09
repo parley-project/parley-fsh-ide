@@ -82,7 +82,7 @@ import javax.swing.text.BadLocationException;
 
 
 import us.bringardner.parley.files.FileSource;
-import us.bringardner.parley.files.FileSourceChooserDialog;
+import us.bringardner.parley.files.swing.FileSourceChooserDialog;
 import us.bringardner.parley.files.FileSourceFactory;
 import us.bringardner.fsh.ConsolePanel;
 import us.bringardner.fsh.ShellContext;

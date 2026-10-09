@@ -12,7 +12,8 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 - Package `us.bringardner.shell.ide` → `us.bringardner.fsh.ide`;
   `BjlShellIDE` → `FshIDE`, `BjlShellIDETextArea` → `FshIDETextArea`,
   `BjlShellTreeViewPanel` → `FshTreeViewPanel`.
-- Depends on fsh and parley-files instead of bjl_shell and bjl_file_system.
+- Depends on fsh and parley-files instead of bjl_shell and bjl_file_system, and on
+  parley-files-swing for the Swing IDE's file chooser.
 - The debug-variables table has a Type column (from this repository's old copy).
 - Fixed the `native` profile's main class (it named a package that didn't exist).
 - The IDE's logic is in a new package, `us.bringardner.fsh.ide.core`, that uses no UI
