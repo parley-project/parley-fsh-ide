@@ -14,15 +14,8 @@ package us.bringardner.fsh.ide;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.io.File;
 
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -33,11 +26,12 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 import org.fife.com.swabunga.spell.engine.SpellDictionary;
-import org.fife.com.swabunga.spell.engine.SpellDictionaryHashMap;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.spell.SpellingParser;
+
+import us.bringardner.fsh.ide.core.SpellChecking;
 
 
 
@@ -55,59 +49,21 @@ public class FshIDETextArea extends RSyntaxTextArea {
 	}
 
 	
-	// The English dictionary, read once in the background and shared by every text area
-	private static CompletableFuture<SpellDictionary> dictionary;
-
-	private static synchronized CompletableFuture<SpellDictionary> dictionary() {
-		if( dictionary == null ) {
-			dictionary = CompletableFuture.supplyAsync(()->{
-				try(InputStream in = FshIDETextArea.class.getResourceAsStream("/english_dic.zip")) {
-					if( in == null ) {
-						return null;
-					}
-					return readEnglishDictionary(in);
-				} catch (IOException e) {
-					e.printStackTrace();
-					return null;
-				}
-			});
-		}
-		return dictionary;
-	}
-
-	private static SpellDictionary readEnglishDictionary(InputStream resource) throws IOException {
-
-		List<String> files = new ArrayList<>();
-
-		for(String s : new String[]{"eng_com.dic", "color.dic", "labeled.dic", "center.dic", "ize.dic","yze.dic" }) {
-			files.add(s);
-		}
-
-		SpellDictionaryHashMap dict=null;
-
-		ZipInputStream zf = new ZipInputStream(resource);
-
+	/**
+	 * A spelling parser on dict whose "Add to dictionary" saves to the user's words
+	 * (~/.fsh-ide/words.txt), the file the JavaFX IDE adds to and the dictionary is read with.
+	 */
+	static SpellingParser spellingParser(SpellDictionary dict) {
+		SpellingParser parser = new SpellingParser(dict);
+		File words = SpellChecking.userWordsFile();
 		try {
-			ZipEntry e = zf.getNextEntry();
-			while(e != null) {
-				if( files.contains(e.getName())) {
-					BufferedReader r = new BufferedReader(new InputStreamReader(zf));
-					if( dict == null ) {
-						dict = new SpellDictionaryHashMap(r);
-					} else {
-						dict.addDictionary(r);
-					}
-				}
-				e = zf.getNextEntry();
-			}
-		} finally {
-			zf.close();
+			words.getParentFile().mkdirs();
+			parser.setUserDictionary(words);
+		} catch (IOException e) {
+			// words can't be added, but spelling is still checked
 		}
-
-		return dict;
-
+		return parser;
 	}
-
 
 	private void initMe() {
 		 setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_UNIX_SHELL);
@@ -117,9 +73,9 @@ public class FshIDETextArea extends RSyntaxTextArea {
 		setTabSize(4);
 	
 		// each text area needs its own parser, but they can share the dictionary
-		dictionary().thenAccept(dict->{
+		SpellChecking.english().thenAccept(dict->{
 			if( dict != null ) {
-				SwingUtilities.invokeLater(()->addParser(new SpellingParser(dict)));
+				SwingUtilities.invokeLater(()->addParser(spellingParser(dict)));
 			}
 		});
 

@@ -16,10 +16,27 @@ Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   view where values can be edited while paused
 - Parse-tree views of the script
 
+## Two front ends
+
+- **Swing**: `us.bringardner.fsh.ide.FshIDE` (the jar's main class), the full IDE.
+- **JavaFX**: `us.bringardner.fsh.ide.fx.FshIdeFx`. The editor (line numbers, shell colouring,
+  syntax errors marked as you type), find and replace, go to line, completion of templates and
+  variables (Ctrl+Space), open/save on any file system through parley-files-fx's chooser, recent
+  files (shared with the Swing IDE), script arguments and redirects, Run/Stop, a console that
+  takes typed input, debugging (breakpoints with conditions and hit counts that follow their
+  line, stepping, the paused line marked, variables editable while paused, the statement log)
+  the script's syntax tree, folding of if/for/while/case/{} blocks, and spell checking of
+  comments and quoted text (suggestions on right-click; your own words go in
+  `~/.fsh-ide/words.txt`).
+
+Both use the UI-free `us.bringardner.fsh.ide.core` package for running, debugging, files and
+settings.
+
 ## Requirements
 
 - Java 21
 - fsh, which brings parley-files and its FTP and SFTP file systems
+- For the JavaFX IDE: JavaFX 21, RichTextFX and parley-files-fx
 
 ## Build and run
 

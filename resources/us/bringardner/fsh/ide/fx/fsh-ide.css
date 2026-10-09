@@ -1,0 +1,45 @@
+/* The JavaFX fsh-ide */
+.script-editor {
+	-fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+	-fx-font-size: 13px;
+}
+.script-editor .lineno {
+	-fx-background-color: #f2f2f2;
+	-fx-text-fill: #9a9a9a;
+	-fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+	-fx-font-size: 11px;
+}
+.script-editor .comment  { -fx-fill: #6a8a5a; -fx-font-style: italic; }
+.script-editor .string   { -fx-fill: #a3402a; }
+.script-editor .variable { -fx-fill: #7a3e9d; }
+.script-editor .keyword  { -fx-fill: #1f4fa8; -fx-font-weight: bold; }
+
+.console {
+	-fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+	-fx-font-size: 12px;
+}
+.console .error { -fx-fill: #c62828; }
+.console .prompt { -fx-fill: #555555; }
+
+/* debugging */
+.script-editor .current-line { -fx-background-color: #d9f2d9; }
+.script-editor .error-marker {
+	-fx-text-fill: white;
+	-fx-background-color: #d32f2f;
+	-fx-background-radius: 7;
+	-fx-font-size: 10px;
+	-fx-font-weight: bold;
+	-fx-padding: 0 4 0 4;
+}
+
+/* spelling and folding */
+.script-editor .misspelled {
+	-rtfx-underline-color: #d32f2f;
+	-rtfx-underline-dash-array: 2 2;
+	-rtfx-underline-width: 1;
+}
+.script-editor .fold-toggle {
+	-fx-text-fill: #888888;
+	-fx-font-size: 10px;
+	-fx-cursor: hand;
+}

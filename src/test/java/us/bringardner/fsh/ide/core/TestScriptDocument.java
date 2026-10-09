@@ -43,4 +43,11 @@ public class TestScriptDocument {
 		assertEquals("", doc.arguments());
 		assertEquals("echo hi\n", doc.body());
 	}
+
+	@Test
+	public void anEmptyScriptStaysEmpty() {
+		ScriptDocument doc = ScriptDocument.parse("");
+		assertEquals("", doc.body());
+		assertEquals("", doc.toText());
+	}
 }

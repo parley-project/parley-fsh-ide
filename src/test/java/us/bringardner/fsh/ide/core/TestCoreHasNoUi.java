@@ -16,7 +16,11 @@ import org.junit.jupiter.api.Test;
 public class TestCoreHasNoUi {
 
 	// fsh's DebugContext.isBreakpoint takes a java.awt.Point (a plain value, no UI)
-	private static final List<String> ALLOWED = List.of("import java.awt.Point;");
+	private static final List<String> ALLOWED = List.of("import java.awt.Point;",
+			// Jazzy, the spelling engine inside RSyntaxTextArea's spellchecker, has no UI
+			"import org.fife.com.swabunga.spell.engine.SpellDictionary;",
+			"import org.fife.com.swabunga.spell.engine.SpellDictionaryHashMap;",
+			"import org.fife.com.swabunga.spell.engine.Word;");
 
 	@Test
 	public void noUiImports() throws IOException {

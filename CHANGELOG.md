@@ -34,6 +34,38 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
     system no longer freezes the window.
   - Waiting for a script to end no longer polls every 10 ms.
 
+- A JavaFX IDE, `us.bringardner.fsh.ide.fx.FshIdeFx`, beside the Swing one and sharing its core.
+  First stage: the editor (RichTextFX, with line numbers and shell colouring), open, save and
+  reload on any file system (parley-files-fx's chooser, which can connect to remote ones), recent
+  files shared with the Swing IDE, the script's arguments and redirect files, Run (or only the
+  selected code) and Stop, and a console (fsh's `ConsoleIO`) that also takes typed input.
+- The JavaFX IDE debugs: Debug (stop at breakpoints), Resume, Step Over, Step Into, Suspend and
+  Stop. Breakpoints go in the editor's margin (click; right-click for the condition, hit count or
+  delete) and stay with their line as text is added or removed above them. The paused line is
+  marked, the variables are shown (the script's own; the shell's and the environment's at the
+  tick of a box) and can be changed while paused, and the statements run are logged. Syntax errors
+  are marked in the margin once typing pauses.
+- `core.DebugVariables`: listing and changing a paused script's variables, used by both IDEs.
+- The JavaFX IDE has find and replace (a bar under the editor: match case, whole words, regular
+  expressions, wrap; Replace All keeps breakpoints on their lines), Go to Line, completion
+  (Ctrl+Space: the templates, and the variables the script sets; a template's first field is
+  selected to type over), and a Syntax tab with the script's parse tree (double-click to go to a
+  line).
+- `core.TextSearch`, `core.TemplateText` and `core.Completions`: find and replace, template
+  expansion and completions, without a UI, for either IDE.
+- The JavaFX IDE folds blocks (if ... fi, for/while/until/select ... done, case ... esac, { ... }):
+  a toggle beside each in the margin, and Fold All / Unfold All in the Edit menu. Folding doesn't
+  change the script or move breakpoints, and the debugger unfolds a block it stops in.
+- The JavaFX IDE checks the spelling of comments and quoted text (not code, variables, options,
+  paths, acronyms or camelCase): misspelled words are underlined, and a right-click offers
+  suggestions, Ignore and Add to Dictionary. It can be switched off in the Edit menu.
+- `core.FoldRegions` and `core.SpellChecking`: the blocks that fold, and spell checking, without a
+  UI. The English dictionary is read once and shared by both IDEs; words added to it are kept in
+  `~/.fsh-ide/words.txt`.
+- The Swing editor's spelling tooltip's "Add to dictionary" now works (it had no user dictionary,
+  so adding only beeped). Added words go to `~/.fsh-ide/words.txt`, which both IDEs read.
+- A new script is empty, not one blank line (`ScriptDocument.parse("")`).
+
 ### Fixed
 - The IDE no longer fails to start on Linux and Windows: it used the macOS-only
   screen-top menu bar without checking. Elsewhere the menu bar is now on the window.

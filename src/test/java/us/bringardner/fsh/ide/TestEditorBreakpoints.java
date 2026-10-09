@@ -31,6 +31,17 @@ public class TestEditorBreakpoints {
 		System.setProperty("user.home", home.toString());
 	}
 
+	/**
+	 * Lets each editor finish setting up its spelling (in the background, once the dictionary
+	 * is read: it creates the user's word list in the home folder) before that folder is deleted.
+	 */
+	@org.junit.jupiter.api.AfterAll
+	public static void spellingSetUp() throws Exception {
+		us.bringardner.fsh.ide.core.SpellChecking.english().get(60, java.util.concurrent.TimeUnit.SECONDS);
+		Thread.sleep(200);
+		SwingUtilities.invokeAndWait(()->{});
+	}
+
 	private static void onEdt(ThrowingRunnable r) throws Exception {
 		Exception[] err = new Exception[1];
 		SwingUtilities.invokeAndWait(()->{

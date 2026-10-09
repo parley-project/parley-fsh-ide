@@ -13,6 +13,7 @@
 package us.bringardner.fsh.ide;
 
 import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.ide.core.DebugVariables;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -88,19 +89,11 @@ public class DebugVariablePanel extends JPanel  {
 		public void setValueAt(Object aValue, int row, int column) {
 			if( column == 2) {
 				Variable val = variables.get(row);
-				String name = ""+val.getName();
-				if( name.startsWith("$")) {
-					try {
-						int pos = Integer.parseInt(name.substring(1));
-						
-						List<Object> vals = ctx.getAllPositionalParameters();
-						vals.set(pos, aValue);
-						ctx.console.setPositionalParameters(true, vals);
-						
-					} catch (Exception e) {						
-					} 
-				} else {
-					ctx.setVariable(name, aValue);
+				try {
+					// the same as the JavaFX IDE: a positional parameter for $1 ..., else a variable
+					DebugVariables.set(ctx, ""+val.getName(), aValue);
+				} catch (RuntimeException e) {
+					// not one that can be set: leave it
 				}
 				// the script is paused, so its variables can be read here
 				variableSnapshot = ctx.getVariables();

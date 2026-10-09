@@ -40,6 +40,10 @@ public record ScriptDocument(String body, String arguments, String stdIn, String
 
 	/** Reads a saved script. Settings lines can be anywhere; each body line ends with a newline. */
 	public static ScriptDocument parse(String text) {
+		if( text.isEmpty()) {
+			// a new script is empty, not one blank line
+			return new ScriptDocument("", "", "", "", "");
+		}
 		String args="", in="", out="", err="";
 		StringBuilder body = new StringBuilder();
 		for(String line : text.split("\n")) {
