@@ -72,6 +72,9 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 - A new script is empty, not one blank line (`ScriptDocument.parse("")`).
 
 ### Fixed
+- Stop works when it is pressed while a run is still setting up its shell: the run used to start
+  the script anyway, and a loop then ran on (`ScriptRun` now creates and starts the job under
+  `cancel`'s lock, and not at all once it's cancelled).
 - The IDE no longer fails to start on Linux and Windows: it used the macOS-only
   screen-top menu bar without checking. Elsewhere the menu bar is now on the window.
 - Saved settings and templates in `Config.xml` are read again (they were replaced by the

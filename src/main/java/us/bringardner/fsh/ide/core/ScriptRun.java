@@ -195,16 +195,26 @@ public class ScriptRun {
 				console.setPositionalParameters(true, args);
 				sc = new ShellContext(console);
 
-				job = new ForgroundJob(sc, HEADER+code);
-				job.start();
-				while(job.isAlive()) {
-					try {
-						job.join(0);
-					} catch (InterruptedException e) {
-						// cancel() interrupts; the kill signal it sent ends the job
+				// (with cancel's lock: a cancel before this sees no job, and the job doesn't start)
+				synchronized (this) {
+					if( !canceled ) {
+						job = new ForgroundJob(sc, HEADER+code);
+						job.start();
 					}
 				}
-				exitCode = job.getExitCode();
+				if( job == null ) {
+					// stopped while the shell was being set up: as a killed run ends
+					exitCode = 128+9;
+				} else {
+					while(job.isAlive()) {
+						try {
+							job.join(0);
+						} catch (InterruptedException e) {
+							// cancel() interrupts; the kill signal it sent ends the job
+						}
+					}
+					exitCode = job.getExitCode();
+				}
 			}
 		} catch (Exception e) {
 			error = e;

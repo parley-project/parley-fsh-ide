@@ -111,6 +111,19 @@ public class TestScriptRun {
 	}
 
 	@Test
+	public void cancelBeforeTheShellIsReady() throws Exception {
+		// Stop pressed while the run is still setting up its shell (before its job exists): the
+		// script must not start afterwards
+		CompletableFuture<Result> result = new CompletableFuture<>();
+		ScriptRun run = run("while true\ndo\n  x=1\ndone\n", result);
+		run.start();
+		run.cancel();
+		result.get(10, TimeUnit.SECONDS);
+		assertTrue(run.join(5000));
+		assertTrue(run.isCanceled());
+	}
+
+	@Test
 	public void exitEndsTheScriptNotTheProgram() throws Exception {
 		CompletableFuture<Result> result = new CompletableFuture<>();
 		Result r = runToEnd(run("echo a\nexit 3\necho b\n", result), result);
