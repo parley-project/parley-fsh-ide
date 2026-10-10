@@ -11,7 +11,38 @@ import us.bringardner.fsh.ShellContext;
 /** A DebugSession.Listener that records what it's told. */
 class RecordingListener implements DebugSession.Listener {
 
-	static final class Pause { private final int line; private final Map<String,Object> variables; Pause(int line, Map<String,Object> variables) { this.line = line; this.variables = variables; } public int line() { return line; } public Map<String,Object> variables() { return variables; } @Override public boolean equals(Object x) { if (this == x) return true; if (!(x instanceof Pause)) return false; Pause o = (Pause) x; return line == o.line && java.util.Objects.equals(variables, o.variables); } @Override public int hashCode() { return java.util.Objects.hash(line, variables); } @Override public String toString() { return "Pause[" + "line=" + line + ", " + "variables=" + variables + "]"; }}
+	static final class Pause {
+		private final int line;
+		private final Map<String,Object> variables;
+
+		Pause(int line, Map<String,Object> variables) {
+			this.line = line;
+			this.variables = variables;
+		}
+
+		public int line() {
+			return line;
+		}
+
+		public Map<String,Object> variables() {
+			return variables;
+		}
+
+		@Override public boolean equals(Object x) {
+			if (this == x) return true;
+			if (!(x instanceof Pause)) return false;
+			Pause o = (Pause) x;
+			return line == o.line && java.util.Objects.equals(variables, o.variables);
+		}
+
+		@Override public int hashCode() {
+			return java.util.Objects.hash(line, variables);
+		}
+
+		@Override public String toString() {
+			return "Pause[" + "line=" + line + ", " + "variables=" + variables + "]";
+		}
+	}
 
 	final BlockingQueue<Pause> pauses = new LinkedBlockingQueue<>();
 	final List<String> statements = new CopyOnWriteArrayList<>();

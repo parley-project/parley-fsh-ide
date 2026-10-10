@@ -26,7 +26,44 @@ public class TestScriptRun {
 	@TempDir
 	Path dir;
 
-	static final class Result { private final int exitCode; private final ShellContext ctx; private final Exception error; Result(int exitCode, ShellContext ctx, Exception error) { this.exitCode = exitCode; this.ctx = ctx; this.error = error; } public int exitCode() { return exitCode; } public ShellContext ctx() { return ctx; } public Exception error() { return error; } @Override public boolean equals(Object x) { if (this == x) return true; if (!(x instanceof Result)) return false; Result o = (Result) x; return exitCode == o.exitCode && java.util.Objects.equals(ctx, o.ctx) && java.util.Objects.equals(error, o.error); } @Override public int hashCode() { return java.util.Objects.hash(exitCode, ctx, error); } @Override public String toString() { return "Result[" + "exitCode=" + exitCode + ", " + "ctx=" + ctx + ", " + "error=" + error + "]"; }}
+	static final class Result {
+		private final int exitCode;
+		private final ShellContext ctx;
+		private final Exception error;
+
+		Result(int exitCode, ShellContext ctx, Exception error) {
+			this.exitCode = exitCode;
+			this.ctx = ctx;
+			this.error = error;
+		}
+
+		public int exitCode() {
+			return exitCode;
+		}
+
+		public ShellContext ctx() {
+			return ctx;
+		}
+
+		public Exception error() {
+			return error;
+		}
+
+		@Override public boolean equals(Object x) {
+			if (this == x) return true;
+			if (!(x instanceof Result)) return false;
+			Result o = (Result) x;
+			return exitCode == o.exitCode && java.util.Objects.equals(ctx, o.ctx) && java.util.Objects.equals(error, o.error);
+		}
+
+		@Override public int hashCode() {
+			return java.util.Objects.hash(exitCode, ctx, error);
+		}
+
+		@Override public String toString() {
+			return "Result[" + "exitCode=" + exitCode + ", " + "ctx=" + ctx + ", " + "error=" + error + "]";
+		}
+	}
 
 	private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 	private final ByteArrayOutputStream err = new ByteArrayOutputStream();
