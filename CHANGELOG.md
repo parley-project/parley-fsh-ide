@@ -5,6 +5,10 @@
 First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
+- Runs on Java 11 or later (was Java 21), like fsh and the rest of the library, with JavaFX 17 LTS
+  (17.0.20; was 21, which needs Java 17). `ScriptDocument` is a final class with the record's
+  constructor, accessors, `equals`, `hashCode` and `toString`. On JavaFX 20 or later the debug
+  tables' last column takes the spare width; on 17 every column shares it.
 - Maven coordinates: `us.bringardner:bjl_shell_ide` → `us.bringardner:fsh-ide`.
 - The sources are now the IDE that had grown inside BjlShell, which was ahead of
   this repository's copy (more templates, the recent-files menu, "Show Position",

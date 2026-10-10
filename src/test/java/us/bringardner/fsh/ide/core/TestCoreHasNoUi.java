@@ -28,7 +28,7 @@ public class TestCoreHasNoUi {
 		assertTrue(Files.isDirectory(core), "run from the project folder");
 		List<String> found = new ArrayList<>();
 		try(Stream<Path> files = Files.list(core)) {
-			for(Path p : files.filter(f->f.toString().endsWith(".java")).toList()) {
+			for(Path p : files.filter(f->f.toString().endsWith(".java")).collect(java.util.stream.Collectors.toList())) {
 				for(String line : Files.readAllLines(p)) {
 					String t = line.trim();
 					if( (t.startsWith("import javax.swing") || t.startsWith("import java.awt")

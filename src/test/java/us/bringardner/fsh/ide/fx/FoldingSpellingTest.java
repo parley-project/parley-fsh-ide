@@ -102,7 +102,7 @@ public class FoldingSpellingTest {
 		assertEquals("filse", Fx.call(()->e.getCodeArea().getText(first[0], first[1])));
 
 		ContextMenu menu = Fx.call(()->e.contextMenu(first[0]+1));
-		List<String> items = Fx.call(()->menu.getItems().stream().map(MenuItem::getText).filter(t->t != null).toList());
+		List<String> items = Fx.call(()->menu.getItems().stream().map(MenuItem::getText).filter(t->t != null).collect(java.util.stream.Collectors.toList()));
 		assertTrue(items.contains("files"), items.toString());
 		assertTrue(items.contains("Add \"filse\" to Dictionary"), items.toString());
 		Fx.run(()->menu.getItems().stream().filter(i->"files".equals(i.getText())).findFirst().get().fire());

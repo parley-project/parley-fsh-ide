@@ -34,10 +34,10 @@ settings.
 
 ## Requirements
 
-- Java 21
+- Java 11 or later, like fsh and the rest of the library
 - fsh, which brings parley-files and its FTP and SFTP file systems
 - For the Swing IDE: parley-files-swing
-- For the JavaFX IDE: JavaFX 21, RichTextFX and parley-files-fx
+- For the JavaFX IDE: JavaFX 17 LTS (17.0.20), RichTextFX and parley-files-fx
 
 ## Build and run
 

@@ -23,19 +23,62 @@ package us.bringardner.fsh.ide.core;
  * @param stdOut file standard output goes to, or ""
  * @param stdErr file standard error goes to, or ""
  */
-public record ScriptDocument(String body, String arguments, String stdIn, String stdOut, String stdErr) {
+public final class ScriptDocument {
+
+	private final String body;
+	private final String arguments;
+	private final String stdIn;
+	private final String stdOut;
+	private final String stdErr;
 
 	static final String SCRIPT_ARGS="#BjlIdeScriptArgs=";
 	static final String SCRIPT_IN  ="#BjlIdeScriptIn=";
 	static final String SCRIPT_OUT ="#BjlIdeScriptOut=";
 	static final String SCRIPT_ERR ="#BjlIdeScriptErr=";
 
-	public ScriptDocument {
-		body = body == null ? "" : body;
-		arguments = arguments == null ? "" : arguments.trim();
-		stdIn = stdIn == null ? "" : stdIn.trim();
-		stdOut = stdOut == null ? "" : stdOut.trim();
-		stdErr = stdErr == null ? "" : stdErr.trim();
+	public ScriptDocument(String body, String arguments, String stdIn, String stdOut, String stdErr) {
+		this.body = body == null ? "" : body;
+		this.arguments = arguments == null ? "" : arguments.trim();
+		this.stdIn = stdIn == null ? "" : stdIn.trim();
+		this.stdOut = stdOut == null ? "" : stdOut.trim();
+		this.stdErr = stdErr == null ? "" : stdErr.trim();
+	}
+
+	public String body() {
+		return body;
+	}
+
+	public String arguments() {
+		return arguments;
+	}
+
+	public String stdIn() {
+		return stdIn;
+	}
+
+	public String stdOut() {
+		return stdOut;
+	}
+
+	public String stdErr() {
+		return stdErr;
+	}
+
+	@Override public boolean equals(Object x) {
+		if (this == x) return true;
+		if (!(x instanceof ScriptDocument)) return false;
+		ScriptDocument o = (ScriptDocument) x;
+		return body.equals(o.body) && arguments.equals(o.arguments) && stdIn.equals(o.stdIn)
+				&& stdOut.equals(o.stdOut) && stdErr.equals(o.stdErr);
+	}
+
+	@Override public int hashCode() {
+		return java.util.Objects.hash(body, arguments, stdIn, stdOut, stdErr);
+	}
+
+	@Override public String toString() {
+		return "ScriptDocument[body=" + body + ", arguments=" + arguments + ", stdIn=" + stdIn
+				+ ", stdOut=" + stdOut + ", stdErr=" + stdErr + "]";
 	}
 
 	/** Reads a saved script. Settings lines can be anywhere; each body line ends with a newline. */

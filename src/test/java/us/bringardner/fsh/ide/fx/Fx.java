@@ -51,7 +51,7 @@ final class Fx {
 		try {
 			return ret.get(30, TimeUnit.SECONDS);
 		} catch (java.util.concurrent.ExecutionException e) {
-			if( e.getCause() instanceof Exception ex ) {
+			if( e.getCause() instanceof Exception ) { Exception ex = (Exception) e.getCause();
 				throw ex;
 			}
 			throw e;

@@ -124,11 +124,12 @@ public class TreeViewer2 extends JComponent {
 	/** the text in a node's box, on one line */
 	String label(SyntaxNode node) {
 		String text = node.getText();
-		String ret = switch (showType) {
-		case Token -> node.getKind();
-		case Both -> text.isEmpty() ? node.getKind() : node.getKind()+": "+text;
-		default -> text.isEmpty() ? node.getKind() : text;
-		};
+		String ret;
+		switch (showType) {
+		case Token: ret = node.getKind(); break;
+		case Both: ret = text.isEmpty() ? node.getKind() : node.getKind()+": "+text; break;
+		default: ret = text.isEmpty() ? node.getKind() : text; break;
+		}
 		ret = ret.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
 		if( node.getLine() > 0 ) {
 			ret += " ("+node.getLine()+")";

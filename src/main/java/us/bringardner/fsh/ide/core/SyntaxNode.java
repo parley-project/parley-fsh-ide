@@ -130,8 +130,8 @@ public class SyntaxNode {
 
 		SyntaxNode command(Ast.Command c) {
 			SyntaxNode ret;
-			switch (c) {
-			case Ast.SimpleCommand s -> {
+			if( c instanceof Ast.SimpleCommand ) {
+				Ast.SimpleCommand s = (Ast.SimpleCommand) c;
 				ret = new SyntaxNode("command", text(s), s.line);
 				for(Ast.Assignment a : s.assignments) {
 					ret.add(assignment(a));
@@ -139,10 +139,14 @@ public class SyntaxNode {
 				for(Word w : s.words) {
 					ret.add(w.assignment != null ? assignment(w.assignment) : word(w));
 				}
-			}
-			case Ast.BraceGroup g -> ret = new SyntaxNode("group", "{ }", g.line).add(sequence("list", g.body));
-			case Ast.Subshell s -> ret = new SyntaxNode("subshell", "( )", s.line).add(sequence("list", s.body));
-			case Ast.If f -> {
+			} else if( c instanceof Ast.BraceGroup ) {
+				Ast.BraceGroup g = (Ast.BraceGroup) c;
+				ret = new SyntaxNode("group", "{ }", g.line).add(sequence("list", g.body));
+			} else if( c instanceof Ast.Subshell ) {
+				Ast.Subshell s = (Ast.Subshell) c;
+				ret = new SyntaxNode("subshell", "( )", s.line).add(sequence("list", s.body));
+			} else if( c instanceof Ast.If ) {
+				Ast.If f = (Ast.If) c;
 				ret = new SyntaxNode("if", "if", f.line);
 				for (int i = 0; i < f.conditions.size(); i++) {
 					ret.add(sequence(i == 0 ? "condition" : "elif", f.conditions.get(i)));
@@ -151,22 +155,26 @@ public class SyntaxNode {
 				if( f.elseBody != null ) {
 					ret.add(sequence("else", f.elseBody));
 				}
-			}
-			case Ast.Loop l -> ret = new SyntaxNode(l.until ? "until" : "while", l.until ? "until" : "while", l.line)
+			} else if( c instanceof Ast.Loop ) {
+				Ast.Loop l = (Ast.Loop) c;
+				ret = new SyntaxNode(l.until ? "until" : "while", l.until ? "until" : "while", l.line)
 					.add(sequence("condition", l.condition)).add(sequence("do", l.body));
-			case Ast.For f -> {
+			} else if( c instanceof Ast.For ) {
+				Ast.For f = (Ast.For) c;
 				ret = new SyntaxNode("for", "for "+f.variable, f.line);
 				ret.add(words("in", f.words, f.line));
 				ret.add(sequence("do", f.body));
-			}
-			case Ast.Select s -> {
+			} else if( c instanceof Ast.Select ) {
+				Ast.Select s = (Ast.Select) c;
 				ret = new SyntaxNode("select", "select "+s.variable, s.line);
 				ret.add(words("in", s.words, s.line));
 				ret.add(sequence("do", s.body));
-			}
-			case Ast.ArithFor f -> ret = new SyntaxNode("for", "for (( "+f.init.raw+"; "+f.condition.raw+"; "+f.step.raw+" ))", f.line)
+			} else if( c instanceof Ast.ArithFor ) {
+				Ast.ArithFor f = (Ast.ArithFor) c;
+				ret = new SyntaxNode("for", "for (( "+f.init.raw+"; "+f.condition.raw+"; "+f.step.raw+" ))", f.line)
 					.add(sequence("do", f.body));
-			case Ast.Case k -> {
+			} else if( c instanceof Ast.Case ) {
+				Ast.Case k = (Ast.Case) c;
 				ret = new SyntaxNode("case", "case", k.line).add(word(k.subject));
 				for(Ast.CaseClause cl : k.clauses) {
 					StringBuilder pats = new StringBuilder();
@@ -180,11 +188,17 @@ public class SyntaxNode {
 					}
 					ret.add(clause);
 				}
-			}
-			case Ast.Arith a -> ret = new SyntaxNode("arithmetic", "(( "+a.expression.raw+" ))", a.line);
-			case Ast.Cond k -> ret = new SyntaxNode("test", "[[ ]]", k.line).add(cond(k.expression, k.line));
-			case Ast.FunctionDef f -> ret = new SyntaxNode("function", f.name, f.line).add(command(f.body));
-			default -> ret = new SyntaxNode(c.getClass().getSimpleName(), text(c), c.line);
+			} else if( c instanceof Ast.Arith ) {
+				Ast.Arith a = (Ast.Arith) c;
+				ret = new SyntaxNode("arithmetic", "(( "+a.expression.raw+" ))", a.line);
+			} else if( c instanceof Ast.Cond ) {
+				Ast.Cond k = (Ast.Cond) c;
+				ret = new SyntaxNode("test", "[[ ]]", k.line).add(cond(k.expression, k.line));
+			} else if( c instanceof Ast.FunctionDef ) {
+				Ast.FunctionDef f = (Ast.FunctionDef) c;
+				ret = new SyntaxNode("function", f.name, f.line).add(command(f.body));
+			} else {
+				ret = new SyntaxNode(c.getClass().getSimpleName(), text(c), c.line);
 			}
 			for(Ast.Redirect r : c.redirects) {
 				ret.add(redirect(r));
@@ -193,14 +207,25 @@ public class SyntaxNode {
 		}
 
 		SyntaxNode cond(Ast.CondExpr e, int line) {
-			return switch (e) {
-			case Ast.CondAnd a -> new SyntaxNode("operator", "&&", line).add(cond(a.left(), line)).add(cond(a.right(), line));
-			case Ast.CondOr o -> new SyntaxNode("operator", "||", line).add(cond(o.left(), line)).add(cond(o.right(), line));
-			case Ast.CondNot n -> new SyntaxNode("operator", "!", line).add(cond(n.expression(), line));
-			case Ast.CondUnary u -> new SyntaxNode("operator", u.op(), line).add(word(u.operand()));
-			case Ast.CondBinary b -> new SyntaxNode("operator", b.op(), line).add(word(b.left())).add(word(b.right()));
-			case Ast.CondWord w -> word(w.word());
-			};
+			if( e instanceof Ast.CondAnd ) {
+				Ast.CondAnd a = (Ast.CondAnd) e;
+				return new SyntaxNode("operator", "&&", line).add(cond(a.left(), line)).add(cond(a.right(), line));
+			} else if( e instanceof Ast.CondOr ) {
+				Ast.CondOr o = (Ast.CondOr) e;
+				return new SyntaxNode("operator", "||", line).add(cond(o.left(), line)).add(cond(o.right(), line));
+			} else if( e instanceof Ast.CondNot ) {
+				return new SyntaxNode("operator", "!", line).add(cond(((Ast.CondNot) e).expression(), line));
+			} else if( e instanceof Ast.CondUnary ) {
+				Ast.CondUnary u = (Ast.CondUnary) e;
+				return new SyntaxNode("operator", u.op(), line).add(word(u.operand()));
+			} else if( e instanceof Ast.CondBinary ) {
+				Ast.CondBinary b = (Ast.CondBinary) e;
+				return new SyntaxNode("operator", b.op(), line).add(word(b.left())).add(word(b.right()));
+			} else if( e instanceof Ast.CondWord ) {
+				return word(((Ast.CondWord) e).word());
+			}
+			// (fsh's six kinds of [[ ]] expression are all above)
+			throw new IllegalArgumentException("unknown [[ ]] expression: "+e);
 		}
 
 		SyntaxNode words(String kind, List<Word> words, int line) {

@@ -35,7 +35,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.release>21</maven.compiler.release>
+		<maven.compiler.release>11</maven.compiler.release>
 		<fsh.version>1.0.0-SNAPSHOT</fsh.version>
 		<parley.version>1.0.0-SNAPSHOT</parley.version>
 	</properties>
@@ -183,7 +183,8 @@
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
-			<version>21.0.2</version>
+			<!-- 17 LTS: it runs on Java 11, like the library's other components -->
+			<version>17.0.20</version>
 		</dependency>
 		<dependency>
 			<groupId>org.fxmisc.richtext</groupId>

@@ -50,6 +50,19 @@ import us.bringardner.fsh.ide.core.Variable;
  */
 public class DebugPanel extends TabPane {
 
+	/**
+	 * The columns fill the table and the last one takes what is left (JavaFX 20's
+	 * CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN); before JavaFX 20, the columns share it.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static javafx.util.Callback<TableView.ResizeFeatures, Boolean> flexLastColumn() {
+		try {
+			return (javafx.util.Callback) TableView.class.getField("CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN").get(null);
+		} catch (ReflectiveOperationException e) {
+			return TableView.CONSTRAINED_RESIZE_POLICY;
+		}
+	}
+
 	/** Log text kept; older text is removed from the top. */
 	static final int MAX_LOG_LENGTH = 200_000;
 
@@ -85,7 +98,7 @@ public class DebugPanel extends TabPane {
 		variableTable.getColumns().add(value);
 		variableTable.setEditable(false);
 		variableTable.setPlaceholder(new Label("The variables show here while a script is paused."));
-		variableTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+		variableTable.setColumnResizePolicy(flexLastColumn());
 
 		// breakpoints
 		TableColumn<Breakpoint,Boolean> enabled = new TableColumn<>("On");
@@ -110,7 +123,7 @@ public class DebugPanel extends TabPane {
 		breakpointTable.getColumns().add(line);
 		breakpointTable.getColumns().add(detail);
 		breakpointTable.setEditable(true);
-		breakpointTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+		breakpointTable.setColumnResizePolicy(flexLastColumn());
 		breakpointTable.setPlaceholder(new Label("Click in the editor's margin to add a breakpoint."));
 		breakpointTable.setRowFactory(t->{
 			TableRow<Breakpoint> row = new TableRow<>();
