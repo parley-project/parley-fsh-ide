@@ -80,6 +80,77 @@
 				</dependency>
 			</dependencies>
 		</profile>
+		<!--
+		  Release profile: everything Maven Central needs.
+		    mvn -Prelease clean deploy
+		  Kept out of normal builds so day-to-day work needs no GPG key or Central token.
+		-->
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>3.3.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>3.11.2</version>
+						<configuration>
+							<!-- Lenient so existing code releases cleanly; tighten to all,-missing later -->
+							<doclint>none</doclint>
+							<release>${maven.compiler.release}</release>
+						</configuration>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>3.2.7</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+								<!-- Passphrase comes from the MAVEN_GPG_PASSPHRASE environment variable -->
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.11.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<!-- Matches the <server><id> in ~/.m2/settings.xml -->
+							<publishingServerId>central</publishingServerId>
+							<!-- false: you review and click Publish on central.sonatype.com -->
+							<autoPublish>false</autoPublish>
+							<deploymentName>${project.artifactId} ${project.version}</deploymentName>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 
 	<build>
