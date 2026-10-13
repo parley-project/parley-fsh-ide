@@ -38,7 +38,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.Taskbar;
-import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -83,6 +82,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.text.BadLocationException;
 
 
+import us.bringardner.parley.brand.ParleyBrand;
 import us.bringardner.parley.files.FileSource;
 import us.bringardner.parley.files.swing.FileSourceChooserDialog;
 import us.bringardner.parley.files.FileSourceFactory;
@@ -329,20 +329,16 @@ public class FshIDE extends JFrame  {
 
 	private static void openWindow() {
 
-		ArrayList<java.awt.Image> imageList = new ArrayList<java.awt.Image>();
-
-		String sizes[] = {"100x100","64x64","25x25","16x16"};
-		for(String s : sizes) {			
-			java.awt.Image image = Toolkit.getDefaultToolkit().getImage(FshIDE.class.getResource("/img/Globe"+s+".png"));
-			imageList.add(image);
-		}
+		// The Parley app icon with the terminal badge, in every size; the OS picks the one it needs
+		List<java.awt.Image> imageList = ParleyBrand.appIcons("terminal");
 
 
 		fixWindowsIcons(imageList);
 		// Windows has a Taskbar but no ICON_IMAGE feature (it throws); the frame icons below cover it
 		if(Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)){
 			Taskbar bar = Taskbar.getTaskbar();
-			bar.setIconImage(imageList.get(0));
+			// The Dock / taskbar shows the icon large
+			bar.setIconImage(ParleyBrand.icon(512, "terminal"));
 		}
 		FshIDE frame = new FshIDE();
 		frame.setIconImages(imageList);
