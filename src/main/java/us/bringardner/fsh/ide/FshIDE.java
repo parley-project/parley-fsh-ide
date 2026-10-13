@@ -274,6 +274,16 @@ public class FshIDE extends JFrame  {
 	 * Launch the application.
 	 */
 	public static void main(String [] args) {
+		// A GraalVM native image has no java.home, and AWT needs one (font configuration): use the
+		// folder of the executable, where the image keeps the AWT libraries.
+		if( System.getProperty("java.home") == null ) {
+			ProcessHandle.current().info().command().ifPresent(c->{
+				java.io.File dir = new java.io.File(c).getParentFile();
+				if( dir != null ) {
+					System.setProperty("java.home", dir.getAbsolutePath());
+				}
+			});
+		}
 		EventQueue.invokeLater(()->openWindow());
 	}
 
@@ -327,7 +337,8 @@ public class FshIDE extends JFrame  {
 
 
 		fixWindowsIcons(imageList);
-		if(Taskbar.isTaskbarSupported()){
+		// Windows has a Taskbar but no ICON_IMAGE feature (it throws); the frame icons below cover it
+		if(Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)){
 			Taskbar bar = Taskbar.getTaskbar();
 			bar.setIconImage(imageList.get(0));
 		}
