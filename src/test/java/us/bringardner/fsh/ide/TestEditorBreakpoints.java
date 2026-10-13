@@ -40,6 +40,7 @@ public class TestEditorBreakpoints {
 		us.bringardner.fsh.ide.core.SpellChecking.english().get(60, java.util.concurrent.TimeUnit.SECONDS);
 		Thread.sleep(200);
 		SwingUtilities.invokeAndWait(()->{});
+		TestHandles.release();
 	}
 
 	private static void onEdt(ThrowingRunnable r) throws Exception {
