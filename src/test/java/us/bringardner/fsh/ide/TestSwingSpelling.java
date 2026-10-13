@@ -31,6 +31,12 @@ public class TestSwingSpelling {
 		Files.writeString(words, "fshide\n");
 	}
 
+	/** The word list is open until collected (see TestHandles), and the folder is deleted next. */
+	@org.junit.jupiter.api.AfterAll
+	public static void releaseWordList() throws Exception {
+		TestHandles.release();
+	}
+
 	@Test
 	public void readsTheUsersWords() throws Exception {
 		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);

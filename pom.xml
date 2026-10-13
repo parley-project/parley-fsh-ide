@@ -63,7 +63,40 @@
 						<configuration>
 							<imageName>fsh-ide</imageName>
 							<mainClass>us.bringardner.fsh.ide.FshIDE</mainClass>
+							<buildArgs>
+								<!-- fsh (a dependency) ships native-image.properties with -Djava.awt.headless=true; this is a window app -->
+								<buildArg>-Djava.awt.headless=false</buildArg>
+								<!-- JNA and others look the platform charset (Cp1252) up by name -->
+								<buildArg>-H:+AddAllCharsets</buildArg>
+							</buildArgs>
 						</configuration>
+					</plugin>
+					<!-- AWT reads its font configuration from java.home/lib, and the image's java.home is
+					     its own folder (see FshIDE.main): ship the JDK's file beside the exe -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-resources-plugin</artifactId>
+						<version>3.3.1</version>
+						<executions>
+							<execution>
+								<id>native-fontconfig</id>
+								<phase>package</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${project.build.directory}/lib</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${java.home}/lib</directory>
+											<includes>
+												<include>fontconfig.bfc</include>
+											</includes>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>
@@ -194,6 +227,13 @@
 						     Swing (AWT) is already running, so the JavaFX IDE's tests can't
 						     share one with the Swing IDE's -->
 						<reuseForks>false</reuseForks>
+							<!-- JavaFX unpacks its native libraries under user.home, and the tests point
+							     that at a temporary folder. On Windows a loaded DLL can't be deleted, so
+							     the folder couldn't be cleaned up (and the class errored): the cache
+							     is kept in target instead -->
+							<systemPropertyVariables>
+								<javafx.cachedir>${project.build.directory}/javafx-cache</javafx.cachedir>
+							</systemPropertyVariables>
 					</configuration>
 				</plugin>
 			</plugins>
@@ -264,6 +304,16 @@
 			<groupId>org.fxmisc.richtext</groupId>
 			<artifactId>richtextfx</artifactId>
 			<version>0.11.0</version>
+				<!-- It declares JavaFX 11 for this platform. The unclassified JavaFX jars are empty:
+				     the classes are in the platform jars, so those 11 jars took the graphics and base
+				     classes from under the 17 controls (NoSuchFieldError AccessibleRole.DIALOG).
+				     JavaFX comes from javafx-controls above, all one version. -->
+				<exclusions>
+					<exclusion>
+						<groupId>org.openjfx</groupId>
+						<artifactId>*</artifactId>
+					</exclusion>
+				</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>us.bringardner.parley</groupId>
