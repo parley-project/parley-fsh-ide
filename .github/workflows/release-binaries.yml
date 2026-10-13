@@ -1,16 +1,20 @@
-# When a release is published, a native (GraalVM) Windows build of fsh-ide (the fsh script editor
-# and debugger) is made and attached to that release as a separate download:
+# When a release is published, a native (GraalVM) build of fsh-ide (the fsh script editor and
+# debugger) is made on each platform and attached to that release as a separate download:
 #
-#   fsh-ide-VERSION-windows-x86_64.zip      (with a .sha256 beside it)
+#   fsh-ide-VERSION-windows-x86_64.zip
+#   fsh-ide-VERSION-linux-x86_64.tar.gz
+#   fsh-ide-VERSION-macos-aarch64.tar.gz       fsh-ide-VERSION-macos-x86_64.tar.gz
 #
-# Run by hand (Actions > release-binaries > Run workflow) it builds the same and keeps the zip as a
-# workflow artifact so it can be tested before anything is published; with a tag it also attaches
-# it to that release.
+# each with a .sha256 beside it. Run by hand (Actions > release-binaries > Run workflow) it builds
+# the same and keeps them as workflow artifacts so they can be tested before anything is published;
+# with a tag it also attaches them to that release.
 #
-# Windows only for now: the Swing/AWT reachability metadata in
-# resources/META-INF/native-image was recorded with the tracing agent on Windows. Linux and macOS
-# need their own recording (java -agentlib:native-image-agent=config-merge-dir=... on that platform,
-# exercising the app) before they can be added to the matrix.
+# Windows is the tested one. The Swing/AWT reachability metadata in resources/META-INF/native-image
+# was recorded with the tracing agent on Windows; Linux and macOS are built too, but their legs are
+# marked experimental (continue-on-error) until the metadata has been recorded on those platforms
+# with tools/record-native-config.sh (run it on the platform, exercise the app, close it, commit the
+# updated metadata). Without that, an image may build and then fail at start (the smoke test
+# reports it) and the leg is simply red without blocking the others.
 #
 # Needs one secret, PACKAGES_TOKEN: a token that can read the Parley and fsh packages
 # (https://maven.pkg.github.com/tony-bringardner/tony-bringardner); the workflow's own token cannot
@@ -25,26 +29,33 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to attach the binary to (empty: only keep it as an artifact)'
+        description: 'Release tag to attach the binaries to (empty: only keep them as artifacts)'
         required: false
         default: ''
 
 permissions:
-  contents: write   # attach the file to the release
+  contents: write   # attach the files to the release
   packages: read    # the Parley dependencies
 
 jobs:
   binary:
     name: ${{ matrix.platform }} ${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
+    # Windows must pass; the others are experimental until their metadata has been recorded
+    continue-on-error: ${{ matrix.platform != 'windows' }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { runner: windows-2022, platform: windows, arch: x86_64 }
+          - { runner: windows-2022,   platform: windows, arch: x86_64 }
+          # (the oldest Ubuntu offered: the binary needs the glibc it was linked with, or later)
+          - { runner: ubuntu-22.04,   platform: linux,   arch: x86_64 }
+          - { runner: macos-15,       platform: macos,   arch: aarch64 }
+          - { runner: macos-15-intel, platform: macos,   arch: x86_64 }
 
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      NAME: fsh-ide
 
     steps:
       - uses: actions/checkout@v4
@@ -87,40 +98,80 @@ jobs:
           </settings>
           XML
 
-      # MSVC for the native linker
+      # ---- Windows: MSVC for the native linker
       - name: MSVC
+        if: matrix.platform == 'windows'
         uses: ilammy/msvc-dev-cmd@v1
 
+      # ---- Linux: the X11 and font libraries native-image links against, and a virtual display
+      - name: Linux build and display libraries
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libx11-dev libxext-dev libxrender-dev libxtst-dev libxi-dev \
+            libxrandr-dev libfreetype6-dev libfontconfig1-dev libasound2-dev
+
       - name: Build the native image
-        shell: cmd
+        shell: bash
         run: mvn -B -Pnative -DskipTests clean package
 
       # A window app: start it, and it must still be running (not crashed) after a while
-      - name: Smoke test
+      - name: Smoke test (Windows)
+        if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath .\target\fsh-ide.exe -WorkingDirectory .\target -PassThru
+          $p = Start-Process -FilePath ".\target\$($env:NAME).exe" -WorkingDirectory .\target -PassThru
           Start-Sleep -Seconds 20
-          if ($p.HasExited) { throw "fsh-ide.exe exited with code $($p.ExitCode)" }
+          if ($p.HasExited) { throw "$($env:NAME).exe exited with code $($p.ExitCode)" }
           Stop-Process -Id $p.Id -Force
-          Write-Output "fsh-ide.exe stayed up"
+          Write-Output "$($env:NAME).exe stayed up"
 
-      # The exe, the JDK's AWT libraries it loads (*.dll) and lib\fontconfig.bfc, kept together
-      - name: Package
+      - name: Smoke test (Linux, macOS)
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: |
+          set -e
+          if [ "${{ matrix.platform }}" = linux ]; then
+            xvfb-run -a sh -c "cd target && ./$NAME & pid=\$!; sleep 20; kill -0 \$pid; kill \$pid"
+          else
+            (cd target && ./$NAME & pid=$!; sleep 20; kill -0 $pid; kill $pid)
+          fi
+          echo "$NAME stayed up"
+
+      # The executable, the JDK's AWT libraries it loads, and lib/fontconfig.bfc, kept together
+      - name: Package (Windows)
+        if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           $v = if ($env:TAG) { $env:TAG.TrimStart('v') } else { $env:GITHUB_SHA.Substring(0, 7) }
-          $name = "fsh-ide-$v-windows-x86_64"
+          $name = "$($env:NAME)-$v-windows-x86_64"
           $stage = Join-Path $env:RUNNER_TEMP $name
           New-Item -ItemType Directory -Force "$stage\lib" | Out-Null
-          Copy-Item target\fsh-ide.exe, target\*.dll $stage
-          Copy-Item target\lib\fontconfig.bfc "$stage\lib"
+          Copy-Item "target\$($env:NAME).exe", target\*.dll $stage
+          if (Test-Path target\lib\fontconfig.bfc) { Copy-Item target\lib\fontconfig.bfc "$stage\lib" }
           if (Test-Path LICENSE) { Copy-Item LICENSE $stage }
-          "Run fsh-ide.exe. Keep the files in this folder together (the .dll files and lib\fontconfig.bfc are loaded by it)." | Set-Content "$stage\README.txt"
+          "Run $($env:NAME).exe. Keep the files in this folder together (the .dll files and lib\fontconfig.bfc are loaded by it)." | Set-Content "$stage\README.txt"
           New-Item -ItemType Directory -Force dist | Out-Null
           Compress-Archive -Path "$stage\*" -DestinationPath "dist\$name.zip"
           $h = (Get-FileHash "dist\$name.zip" -Algorithm SHA256).Hash.ToLower()
           "$h  $name.zip" | Set-Content "dist\$name.zip.sha256"
+
+      - name: Package (Linux, macOS)
+        if: matrix.platform != 'windows'
+        shell: bash
+        run: |
+          set -e
+          v="${TAG#v}"; v="${v:-${GITHUB_SHA::7}}"
+          name="$NAME-$v-${{ matrix.platform }}-${{ matrix.arch }}"
+          stage="$RUNNER_TEMP/$name"
+          mkdir -p "$stage/lib" dist
+          cp "target/$NAME" "$stage/"
+          cp target/*.so target/*.dylib "$stage/" 2>/dev/null || true
+          if [ -f target/lib/fontconfig.bfc ]; then cp target/lib/fontconfig.bfc "$stage/lib/"; fi
+          if [ -f LICENSE ]; then cp LICENSE "$stage/"; fi
+          printf 'Run ./%s. Keep the files in this folder together (the shared libraries and lib/fontconfig.bfc are loaded by it).\n' "$NAME" > "$stage/README.txt"
+          tar -czf "dist/$name.tar.gz" -C "$RUNNER_TEMP" "$name"
+          (cd dist && shasum -a 256 "$name.tar.gz" > "$name.tar.gz.sha256")
 
       - uses: actions/upload-artifact@v4
         with:
