@@ -56,7 +56,7 @@ public class DebugSession extends DebugContext {
 	private final Listener listener;
 
 	// editor line (0-based) = script line (1-based) + lineAdjust
-	private volatile int lineAdjust = -1-ScriptRun.HEADER_LINES;
+	private volatile int lineAdjust = -1;
 	// false while just running: no stopping and no statement log, only terminate
 	private volatile boolean active;
 
@@ -86,7 +86,7 @@ public class DebugSession extends DebugContext {
 
 	/** The editor line (0-based) the code being run starts on (non-zero when running a selection). */
 	public void setFirstLine(int line) {
-		lineAdjust = line-1-ScriptRun.HEADER_LINES;
+		lineAdjust = line-1;
 	}
 
 	/** The editor line (0-based) of a line (1-based) in the code as run. */

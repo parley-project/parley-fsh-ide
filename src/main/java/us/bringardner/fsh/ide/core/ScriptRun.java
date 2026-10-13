@@ -39,9 +39,6 @@ import us.bringardner.parley.files.FileSourceFactory;
  */
 public class ScriptRun {
 
-	/** Lines put in front of the code to run ("#!fsh"); DebugSession allows for them. */
-	static final int HEADER_LINES = 1;
-	private static final String HEADER = "#!fsh\n";
 	private static final AtomicInteger count = new AtomicInteger();
 
 	static {
@@ -78,7 +75,7 @@ public class ScriptRun {
 	private volatile AbstractJob job;
 	private Thread thread;
 
-	/** @param code the script, as in the editor (without "#!fsh") */
+	/** @param code the script, as in the editor (it runs as it is, so $LINENO is the editor's line) */
 	public ScriptRun(String code, Listener listener) {
 		this.code = code;
 		this.listener = listener;
@@ -198,7 +195,7 @@ public class ScriptRun {
 				// (with cancel's lock: a cancel before this sees no job, and the job doesn't start)
 				synchronized (this) {
 					if( !canceled ) {
-						job = new ForgroundJob(sc, HEADER+code);
+						job = new ForgroundJob(sc, code);
 						job.start();
 					}
 				}

@@ -72,6 +72,12 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 - A new script is empty, not one blank line (`ScriptDocument.parse("")`).
 
 ### Fixed
+- `$LINENO`, `BASH_LINENO` and fsh's error messages were one line too high in scripts run by
+  `ScriptRun`: it put a `#!fsh` line in front of the code. The code now runs as it is.
+- `DebugVariables.set` of `$1`, `$2` ... in a function set the script's parameters (inserting the
+  function's among them) and left the function's unchanged. It now sets the running function's
+  (the script's outside one), through `ShellContext.setPositionalParameterValues`. `$0` can't be
+  set, as in bash.
 - Stop works when it is pressed while a run is still setting up its shell: the run used to start
   the script anyway, and a loop then ran on (`ScriptRun` now creates and starts the job under
   `cancel`'s lock, and not at all once it's cancelled).

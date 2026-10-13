@@ -94,6 +94,14 @@ public class TestScriptRun {
 	}
 
 	@Test
+	public void lineNumbersAreTheScriptsOwn() throws Exception {
+		// $LINENO and a function's caller line are the editor's (nothing is put in front of the code)
+		CompletableFuture<Result> result = new CompletableFuture<>();
+		runToEnd(run("echo $LINENO\nf() { echo ${BASH_LINENO[0]}; }\n\nf\n", result), result);
+		assertEquals("1\n4\n", out());
+	}
+
+	@Test
 	public void noArgumentsForABlankField() throws Exception {
 		CompletableFuture<Result> result = new CompletableFuture<>();
 		runToEnd(run("echo $#", result).arguments(""), result);

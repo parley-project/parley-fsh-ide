@@ -93,10 +93,12 @@ public final class DebugVariables {
 	}
 
 	/**
-	 * Sets a variable of a paused script: a positional parameter for "$1", "$2" ..., otherwise
-	 * a shell variable. Call it only while the script is paused (its thread is waiting).
+	 * Sets a variable of a paused script: a positional parameter for "$1", "$2" ... (the running
+	 * function's, in a function), otherwise a shell variable. Call it only while the script is
+	 * paused (its thread is waiting).
 	 *
-	 * @throws IllegalArgumentException if name is "$n" for a parameter the script doesn't have
+	 * @throws IllegalArgumentException if name is "$n" for a parameter the script (or function)
+	 *         doesn't have, or $0 (which, as in bash, can't be set)
 	 */
 	public static void set(ShellContext ctx, String name, Object value) {
 		if( name.startsWith("$")) {
@@ -106,12 +108,16 @@ public final class DebugVariables {
 			} catch (NumberFormatException e) {
 				throw new IllegalArgumentException(name+" can't be set");
 			}
-			List<Object> values = ctx.getAllPositionalParameters();
-			if( pos < 0 || pos >= values.size()) {
+			if( pos == 0 ) {
+				throw new IllegalArgumentException("$0 can't be set");
+			}
+			// $1 ... of the running function, or of the script outside one
+			List<Object> values = new java.util.ArrayList<>(ctx.getPositionalParameterValues());
+			if( pos < 1 || pos > values.size()) {
 				throw new IllegalArgumentException("There's no "+name);
 			}
-			values.set(pos, value);
-			ctx.console.setPositionalParameters(true, values);
+			values.set(pos-1, value);
+			ctx.setPositionalParameterValues(values);
 		} else {
 			ctx.setVariable(name, value);
 		}

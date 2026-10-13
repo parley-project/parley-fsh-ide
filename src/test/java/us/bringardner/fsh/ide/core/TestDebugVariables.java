@@ -43,6 +43,42 @@ public class TestDebugVariables {
 
 		assertThrows(IllegalArgumentException.class, ()->DebugVariables.set(ctx, "$7", "x"));
 		assertThrows(IllegalArgumentException.class, ()->DebugVariables.set(ctx, "$x", "x"));
+		assertThrows(IllegalArgumentException.class, ()->DebugVariables.set(ctx, "$0", "x"));
+	}
+
+	@Test
+	public void setsTheRunningFunctionsParameters() throws Exception {
+		// stopped in f: $1 is f's; the script's stay as they were
+		Console console = new Console();
+		FshList args = new FshList();
+		args.add(new Argument("script"));
+		args.add(new Argument("a"));
+		args.add(new Argument("b"));
+		console.setPositionalParameters(true, args);
+		java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+		console.setStdOut(new java.io.PrintStream(out, true));
+		List<Throwable> problems = new java.util.ArrayList<>();
+		console.setDebugContext(new us.bringardner.fsh.DebugContext() {
+			private boolean done;
+
+			@Override
+			public synchronized void before(us.bringardner.fsh.syntax.Ast.Node node, String source, ShellContext ctx) {
+				if( !done && node.text(source).startsWith("echo \"f:")) {
+					done = true;
+					try {
+						DebugVariables.set(ctx, "$1", "changed");
+						assertEquals("script", String.valueOf(ctx.getVariables().get("$0")));
+						assertEquals("changed", String.valueOf(ctx.getVariables().get("$1")));
+						assertThrows(IllegalArgumentException.class, ()->DebugVariables.set(ctx, "$2", "x"));
+					} catch (Throwable e) {
+						problems.add(e);
+					}
+				}
+			}
+		});
+		console.executeScript("f() {\n  echo \"f: $1 $#\"\n}\nf world\necho \"main: $@\"\n");
+		assertEquals(List.of(), problems);
+		assertEquals("f: changed 1\nmain: a b\n", out.toString());
 	}
 
 	@Test
