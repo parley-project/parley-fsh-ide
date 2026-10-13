@@ -102,6 +102,14 @@ public class TestScriptRun {
 	}
 
 	@Test
+	public void aSelectionRunsOnItsOwnLines() throws Exception {
+		// lines 3 and 4 of a script, run on their own: $LINENO is still the script's
+		CompletableFuture<Result> result = new CompletableFuture<>();
+		runToEnd(run(ScriptText.atLine("echo $LINENO\necho $LINENO\n", 2), result), result);
+		assertEquals("3\n4\n", out());
+	}
+
+	@Test
 	public void noArgumentsForABlankField() throws Exception {
 		CompletableFuture<Result> result = new CompletableFuture<>();
 		runToEnd(run("echo $#", result).arguments(""), result);

@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import javafx.stage.Stage;
+import us.bringardner.fsh.ide.core.RunSettings;
+import us.bringardner.fsh.ide.core.RunSettingsStore;
 import us.bringardner.parley.files.FileSource;
 import us.bringardner.parley.files.FileSourceFactory;
 
@@ -69,11 +71,20 @@ public class IdeWindowTest {
 		protected void report(String title, Throwable error) {
 			problems.add(title+": "+error);
 		}
+
+		@Override
+		protected RunSettingsStore runSettings() {
+			return store;
+		}
 	}
+
+	// the windows' run settings, not the user's
+	static RunSettingsStore store;
 
 	private final MemoryPreferences prefs = new MemoryPreferences();
 
 	private TestWindow window() throws Exception {
+		store = new RunSettingsStore(dir.resolve("config").resolve("run-settings").toFile());
 		return Fx.call(()->new TestWindow(prefs));
 	}
 
@@ -118,15 +129,35 @@ public class IdeWindowTest {
 		assertEquals(f.getAbsolutePath(), w.recent().first());
 		assertTrue(prefs.values.get(IdeWindow.PREF_RECENT_LIST).contains("hello.sh"));
 
+		// saved: the file has only the code; the settings are in the store
 		FileSource copy = file("copy.sh", "");
 		Fx.run(()->{
 			w.argumentsField().setText("x");
 			w.save(copy);
 		});
 		Fx.waitFor(()->!w.hasChanged());
-		assertEquals("#BjlIdeScriptArgs=x\n#BjlIdeScriptOut=/tmp/out\necho café\n",
-				Files.readString(dir.resolve("copy.sh")));
+		assertEquals("echo café\n", Files.readString(dir.resolve("copy.sh")));
+		assertEquals(new RunSettings("x", "", "/tmp/out", ""), store.get(copy));
 		assertEquals("copy.sh", Fx.call(()->w.scriptFile().getName()));
+
+		// opened again, the settings come back; cleared and saved, nothing is kept
+		TestWindow again = window();
+		Fx.run(()->again.load(copy));
+		Fx.waitFor(()->again.scriptFile() != null);
+		assertEquals("x", Fx.call(()->again.argumentsField().getText()));
+		Fx.run(()->{
+			again.argumentsField().setText("");
+			again.stdOutField().setText("");
+			again.save(copy);
+		});
+		Fx.waitFor(()->!again.hasChanged());
+		Fx.waitFor(()->{
+			try {
+				return store.size() == 0;
+			} catch (java.io.IOException e) {
+				return false;
+			}
+		});
 	}
 
 	@Test

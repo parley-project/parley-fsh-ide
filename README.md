@@ -54,6 +54,23 @@ Templates and settings are kept in `~/.fsh-ide/Config.xml`; window positions and
 recent files in Java preferences. Both are copied across from BjlShellIde's
 locations the first time fsh-ide starts.
 
+## Arguments and redirects
+
+A script's arguments and its stdin, stdout and stderr files are not written into the script:
+the script file holds only its code, so it runs the same (and `$LINENO` and error messages give
+the same lines) in fsh-ide, fshdb, fsh or bash. They're kept per user in
+`~/.fsh-ide/run-settings`, by the script's full path, when you save the script; a script with
+none has nothing kept, and clearing them and saving removes what was kept. fshdb uses them too.
+
+What's kept for scripts that were deleted, renamed outside the IDE or are on servers you no
+longer use cleans itself up: settings not used for 180 days go, at most 500 scripts are kept
+(the least recently used go first), and at start the IDE drops those of local scripts that are
+gone. `runSettingsMaxAgeDays` and `runSettingsMaxEntries` in `Config.xml` change the limits;
+File > Clear Run Settings forgets them all.
+
+Scripts saved by earlier versions carry them in comment lines (`#BjlIdeScriptArgs=` ...); those
+are read, and the next save moves them out of the script.
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).

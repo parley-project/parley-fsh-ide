@@ -37,6 +37,22 @@ public class ScriptText {
 	 * return, zero-width spaces and byte order marks. A non-breaking space becomes a space.
 	 * Other characters, including non-ASCII ones, are kept. null stays null.
 	 */
+	/**
+	 * Code from part of a script (a selection), placed on its own lines: blank lines go in front,
+	 * so $LINENO, error messages and the debugger give the script's line numbers.
+	 * @param editorLine the line (0-based) the code starts on
+	 */
+	public static String atLine(String code, int editorLine) {
+		if( code == null || editorLine <= 0 ) {
+			return code;
+		}
+		StringBuilder b = new StringBuilder(editorLine+code.length());
+		for(int i=0; i < editorLine; i++) {
+			b.append('\n');
+		}
+		return b.append(code).toString();
+	}
+
 	public static String clean(String text) {
 		if( text == null ) {
 			return null;

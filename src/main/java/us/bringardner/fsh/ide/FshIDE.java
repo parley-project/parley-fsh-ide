@@ -18,6 +18,8 @@ import us.bringardner.fsh.ide.core.CompileError;
 import us.bringardner.fsh.ide.core.DebugSession;
 import us.bringardner.fsh.ide.core.LogBatcher;
 import us.bringardner.fsh.ide.core.RecentFiles;
+import us.bringardner.fsh.ide.core.RunSettings;
+import us.bringardner.fsh.ide.core.RunSettingsStore;
 import us.bringardner.fsh.ide.core.ScriptDocument;
 import us.bringardner.fsh.ide.core.ScriptParser;
 import us.bringardner.fsh.ide.core.ScriptRun;
@@ -161,8 +163,7 @@ public class FshIDE extends JFrame  {
 
 	private boolean hasChanged() {
 
-		String tmp = getCode();
-		boolean ret = !original.equals(tmp);
+		boolean ret = !original.equals(getDocument());
 
 		return ret;
 	}
@@ -178,7 +179,8 @@ public class FshIDE extends JFrame  {
 
 	private JPanel contentPane;
 
-	private String original = "";
+	// the script as it was read or last saved (code and run settings)
+	private ScriptDocument original = ScriptDocument.parse("");
 	private EditorPanel editorPane =new EditorPanel();
 	//private JEditorPane editorPane = new JEditorPane();
 	private JTextArea logView;
@@ -440,11 +442,17 @@ public class FshIDE extends JFrame  {
 
 	/**
 	 * Drops recent files that no longer exist. Checked in the background: they may be on
-	 * remote file systems. One that can't be checked now (unavailable) is kept.
+	 * remote file systems. One that can't be checked now (unavailable) is kept. The run
+	 * settings of scripts that are gone, or long unused, are dropped too.
 	 */
 	private void pruneRecentFiles() {
 		List<String> names = new ArrayList<>(recent.list());
 		BACKGROUND.execute(()->{
+			try {
+				Configuration.getInstance().runSettings().prune();
+			} catch (IOException e) {
+				// tried again next time
+			}
 			List<String> missing = RecentFiles.findMissing(names);
 			if( !missing.isEmpty()) {
 				SwingUtilities.invokeLater(()->{
@@ -473,11 +481,12 @@ public class FshIDE extends JFrame  {
 		BACKGROUND.execute(()->{
 			try {
 				String code = ScriptText.read(file);
+				ScriptDocument doc = openDocument(file, code);
 				SwingUtilities.invokeLater(()->{
 					if( !isDisplayable() || (editCount != edits && !okToDiscard())) {
 						return;
 					}
-					setCode(code, execute, file);
+					setDocument(doc, file);
 					addRecent(file);
 				});
 			} catch (IOException e) {
@@ -683,6 +692,11 @@ public class FshIDE extends JFrame  {
 			}
 		});
 		fileMenu.add(mntmNewMenuItem_3);
+
+		JMenuItem clearRunSettings = new JMenuItem("Clear Run Settings...");
+		clearRunSettings.setToolTipText("Forget the arguments and redirects kept for every script");
+		clearRunSettings.addActionListener(e -> actionClearRunSettings());
+		fileMenu.add(clearRunSettings);
 
 
 		JMenuItem item = new JMenuItem("Reload");
@@ -890,8 +904,8 @@ public class FshIDE extends JFrame  {
 		centerSplitPane.setLeftComponent(editSplitPane);
 		centerSplitPane.setRightComponent(debugSplitPane);
 
-		original = "";				
-		editorPane.setText(original,null);
+		original = ScriptDocument.parse("");
+		editorPane.setText("",null);
 
 
 		debugVariablePanel  = new DebugVariablePanel();
@@ -1070,7 +1084,7 @@ public class FshIDE extends JFrame  {
 		}
 		scriptFile = null;
 
-		setCode("",false, null);
+		setDocument(ScriptDocument.parse(""), null);
 
 	}
 
@@ -1106,10 +1120,22 @@ public class FshIDE extends JFrame  {
 		return ret;
 	}
 
-	/** The script as it would be saved. */
-	protected String getCode() {		
-		return new ScriptDocument(editorPane.getText(), argumentsTextField.getText(),
-				stdInTextField.getText(), stdOutTextField.getText(), stdErrTextField.getText()).toText();
+	/** The script as it would be saved: the code, and the run settings kept for it. */
+	protected ScriptDocument getDocument() {
+		return new ScriptDocument(editorPane.getText(), new RunSettings(argumentsTextField.getText(),
+				stdInTextField.getText(), stdOutTextField.getText(), stdErrTextField.getText()));
+	}
+
+	/** A script read from file, with its run settings (call it off the event thread: it reads the store). */
+	private ScriptDocument openDocument(FileSource file, String code) {
+		try {
+			return ScriptDocument.open(file, code, Configuration.getInstance().runSettings());
+		} catch (IOException e) {
+			// the script without its settings, rather than not at all
+			String msg = "Can't read the run settings: "+e.getMessage();
+			SwingUtilities.invokeLater(()->appendLog(msg));
+			return ScriptDocument.parse(code);
+		}
 	}
 
 	// -Xss4m
@@ -1200,9 +1226,10 @@ public class FshIDE extends JFrame  {
 				debugControlPanel.setVisible(true);
 			}
 			boolean selection = useSelectedCodeCheckItem.isSelected() && code.selectedCode != null;
-			debugSession.setFirstLine(selection ? code.selectedLine : 0);
+			// a selection runs on its own lines, so its line numbers are the script's
+			debugSession.setFirstLine(0);
 			debugSession.setActive(state == IdeRunstate.Debugging);
-			currentRun = new ScriptRun(selection ? code.selectedCode : code.allCode, this::runFinished)
+			currentRun = new ScriptRun(selection ? ScriptText.atLine(code.selectedCode, code.selectedLine) : code.allCode, this::runFinished)
 					.scriptName(scriptFile != null ? scriptFile.getAbsolutePath() : "fsh")
 					.arguments(argumentsTextField.getText())
 					.redirects(stdInTextField.getText(), stdOutTextField.getText(), stdErrTextField.getText())
@@ -1236,6 +1263,31 @@ public class FshIDE extends JFrame  {
 
 
 
+	/** Forgets the arguments and redirects kept for every script (this window's stay until saved). */
+	protected void actionClearRunSettings() {
+		RunSettingsStore store = Configuration.getInstance().runSettings();
+		int n;
+		try {
+			n = store.size();
+		} catch (IOException e) {
+			showError(e, "Can't read the run settings");
+			return;
+		}
+		if( n == 0 ) {
+			JOptionPane.showMessageDialog(contentPane, "No scripts have arguments or redirects kept.");
+			return;
+		}
+		if( JOptionPane.showConfirmDialog(contentPane, "Forget the arguments and redirects kept for "+n
+				+(n == 1 ? " script?" : " scripts?"), "Clear Run Settings", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION ) {
+			return;
+		}
+		try {
+			store.clear();
+		} catch (IOException e) {
+			showError(e, "Can't clear the run settings");
+		}
+	}
+
 	protected void actionExit() {
 		close(this);
 	}
@@ -1249,25 +1301,25 @@ public class FshIDE extends JFrame  {
 
 	}
 
-	/** Shows code from file (null for a new script). */
-	protected void setCode(String code,boolean execute, FileSource file) {
+	/** Shows a script read from file (null for a new script). */
+	protected void setDocument(ScriptDocument doc, FileSource file) {
 		scriptFile = file;
-		ScriptDocument doc = ScriptDocument.parse(code);
 		argumentsTextField.setText(doc.arguments());
 		stdInTextField.setText(doc.stdIn());
 		stdOutTextField.setText(doc.stdOut());
 		stdErrTextField.setText(doc.stdErr());
 
 		editorPane.setText(doc.body(),scriptFile);
-		// what saving it now would write, so it doesn't count as changed
-		original = getCode();
+		// so it doesn't count as changed (a script with settings lines from an earlier version
+		// loses them when it's next saved)
+		original = getDocument();
 		updateTitle();
 	}
 
 	protected void actionSave() {
 
-		final String code = getCode();
-		if( code.isEmpty()) {
+		final ScriptDocument doc = getDocument();
+		if( doc.body().isEmpty()) {
 			showWarning("Nothing to save");
 			return;
 		}
@@ -1276,10 +1328,15 @@ public class FshIDE extends JFrame  {
 			if( scriptFile == null) {
 				actionSaveAs();
 			} else {
-				ScriptText.write(scriptFile, code);
-				original = code;
+				// the code to the file; the arguments and redirects to the user's store (or
+				// removed from it, if they were cleared)
+				String warning = doc.save(scriptFile, Configuration.getInstance().runSettings());
+				original = doc;
 				addRecent(scriptFile);
 				updateTitle();
+				if( warning != null ) {
+					showWarning(warning);
+				}
 			}
 		} catch (IOException e) {
 			showError(e, "Can't save");
@@ -1287,8 +1344,7 @@ public class FshIDE extends JFrame  {
 	}
 
 	protected void actionSaveAs() {
-		final String code = getCode();
-		if( code.isEmpty()) {
+		if( getDocument().body().isEmpty()) {
 			showWarning("Nothing to save");
 			return;
 		}

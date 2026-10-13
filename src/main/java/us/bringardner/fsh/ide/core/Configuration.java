@@ -43,6 +43,9 @@ public class Configuration {
 	private int tabSize= 4;
 	private boolean lineWrap=false;
 	private String scheme;
+	// how many scripts' arguments and redirects are kept, and for how long (see RunSettingsStore)
+	private int runSettingsMaxAgeDays = RunSettingsStore.DEFAULT_MAX_AGE_DAYS;
+	private int runSettingsMaxEntries = RunSettingsStore.DEFAULT_MAX_ENTRIES;
 
 
 	/** The editor's colour scheme as the editor saved it, or null for its default. */
@@ -185,6 +188,31 @@ public class Configuration {
 		this.maxRecent = maxRecent;
 	}
 
+
+	/** The user's run settings store, with this configuration's limits. */
+	public RunSettingsStore runSettings() {
+		RunSettingsStore s = RunSettingsStore.forUser();
+		s.setLimits(runSettingsMaxAgeDays, runSettingsMaxEntries);
+		return s;
+	}
+
+	/** Scripts' arguments and redirects not used for this many days are forgotten. */
+	public int getRunSettingsMaxAgeDays() {
+		return runSettingsMaxAgeDays;
+	}
+
+	public void setRunSettingsMaxAgeDays(int days) {
+		this.runSettingsMaxAgeDays = days;
+	}
+
+	/** At most this many scripts' arguments and redirects are kept (the least recently used go). */
+	public int getRunSettingsMaxEntries() {
+		return runSettingsMaxEntries;
+	}
+
+	public void setRunSettingsMaxEntries(int entries) {
+		this.runSettingsMaxEntries = entries;
+	}
 
 	public int getMinVariableNameLength() {
 		return minVariableNameLength;

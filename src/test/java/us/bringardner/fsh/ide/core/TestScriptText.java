@@ -79,4 +79,11 @@ public class TestScriptText {
 		assertEquals(4, errors.get(0).line);
 		assertEquals("syntax error near unexpected token `fi'", errors.get(0).msg);
 	}
+
+	@Test
+	public void atLinePutsCodeOnItsLine() {
+		assertEquals("\n\necho", ScriptText.atLine("echo", 2));
+		assertEquals("echo", ScriptText.atLine("echo", 0));
+		assertEquals(null, ScriptText.atLine(null, 3));
+	}
 }

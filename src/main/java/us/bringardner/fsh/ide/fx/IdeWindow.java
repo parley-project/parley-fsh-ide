@@ -52,6 +52,8 @@ import us.bringardner.fsh.ide.core.DebugVariables;
 import us.bringardner.fsh.ide.core.LogBatcher;
 import us.bringardner.fsh.ide.core.DebugSession;
 import us.bringardner.fsh.ide.core.RecentFiles;
+import us.bringardner.fsh.ide.core.RunSettings;
+import us.bringardner.fsh.ide.core.RunSettingsStore;
 import us.bringardner.fsh.ide.core.ScriptDocument;
 import us.bringardner.fsh.ide.core.ScriptParser;
 import us.bringardner.fsh.ide.core.ScriptRun;
@@ -122,7 +124,8 @@ public class IdeWindow {
 	private FileSource scriptFile;
 	private FileSource lastFile;
 	// the script as it was loaded or last saved, to tell whether it has changed
-	private String original = "";
+	// the script as it was read or last saved (code and run settings)
+	private ScriptDocument original = ScriptDocument.parse("");
 	private RecentFiles recent;
 	private ScriptRun currentRun;
 	private final DebugSession debugSession = new DebugSession(line->editor.getBreakpoint(line), new DebugSession.Listener() {
@@ -240,8 +243,10 @@ public class IdeWindow {
 				stage.close();
 			}
 		});
+		MenuItem clearRunSettings = item("Clear Run Settings...", null, this::actionClearRunSettings);
 		Menu file = new Menu("File", null, newFile, open, recentMenu, new SeparatorMenuItem(),
-				save, saveAs, reload, new SeparatorMenuItem(), newWindow, closeItem);
+				save, saveAs, reload, new SeparatorMenuItem(), clearRunSettings, new SeparatorMenuItem(),
+				newWindow, closeItem);
 
 		runItem.setAccelerator(KeyCombination.keyCombination("Shortcut+R"));
 		runItem.setOnAction(e->run());
@@ -378,27 +383,63 @@ public class IdeWindow {
 
 	// ---- the script
 
-	/** The script as it would be saved: its settings lines, then the code. */
-	String getCode() {
-		return new ScriptDocument(editor.getText(), arguments.getText(), stdIn.getText(),
-				stdOut.getText(), stdErr.getText()).toText();
+	/** The user's store of scripts' arguments and redirects; tests use their own. */
+	protected RunSettingsStore runSettings() {
+		return Configuration.getInstance().runSettings();
+	}
+
+	/** The script as it would be saved: the code, and the run settings kept for it. */
+	ScriptDocument getDocument() {
+		return new ScriptDocument(editor.getText(), new RunSettings(arguments.getText(), stdIn.getText(),
+				stdOut.getText(), stdErr.getText()));
 	}
 
 	boolean hasChanged() {
-		return !original.equals(getCode());
+		return !original.equals(getDocument());
 	}
 
-	/** Shows code read from file (null for a new script). */
+	/** Shows a script's text, with only the settings it carries itself (a template, a new script ...). */
 	void setCode(String code, FileSource file) {
+		setDocument(ScriptDocument.parse(code), file);
+	}
+
+	/** Shows a script read from file (null for a new script). */
+	void setDocument(ScriptDocument doc, FileSource file) {
 		scriptFile = file;
-		ScriptDocument doc = ScriptDocument.parse(code);
 		arguments.setText(doc.arguments());
 		stdIn.setText(doc.stdIn());
 		stdOut.setText(doc.stdOut());
 		stdErr.setText(doc.stdErr());
 		editor.setText(doc.body());
-		original = getCode();
+		// so it doesn't count as changed (settings lines from an earlier version go when it's saved)
+		original = getDocument();
 		updateTitle();
+	}
+
+	/** Forgets the arguments and redirects kept for every script (this window's stay until saved). */
+	void actionClearRunSettings() {
+		RunSettingsStore store = runSettings();
+		BACKGROUND.execute(()->{
+			try {
+				int n = store.size();
+				Platform.runLater(()->{
+					if( n == 0 ) {
+						status.setText("No scripts have arguments or redirects kept.");
+					} else if( confirm("Forget the arguments and redirects kept for "+n+(n == 1 ? " script?" : " scripts?"))) {
+						BACKGROUND.execute(()->{
+							try {
+								store.clear();
+								Platform.runLater(()->status.setText("Cleared the run settings."));
+							} catch (IOException e) {
+								Platform.runLater(()->report("Can't clear the run settings", e));
+							}
+						});
+					}
+				});
+			} catch (IOException e) {
+				Platform.runLater(()->report("Can't read the run settings", e));
+			}
+		});
 	}
 
 	private void updateTitle() {
@@ -481,8 +522,16 @@ public class IdeWindow {
 		BACKGROUND.execute(()->{
 			try {
 				String code = ScriptText.read(file);
+				ScriptDocument doc;
+				try {
+					doc = ScriptDocument.open(file, code, runSettings());
+				} catch (IOException e) {
+					// the script without its settings, rather than not at all
+					doc = ScriptDocument.parse(code);
+				}
+				ScriptDocument shown = doc;
 				Platform.runLater(()->{
-					setCode(code, file);
+					setDocument(shown, file);
 					addRecent(file);
 					status.setText(file.getAbsolutePath());
 				});
@@ -512,18 +561,23 @@ public class IdeWindow {
 		}
 	}
 
-	/** Writes the script to file in the background; it's marked saved once that worked. */
+	/**
+	 * Writes the script to file in the background, and keeps its arguments and redirects in the
+	 * user's store (or removes them from it, if they were cleared); it's marked saved once the
+	 * file is written.
+	 */
 	void save(FileSource file) {
-		String code = getCode();
+		ScriptDocument doc = getDocument();
+		RunSettingsStore store = runSettings();
 		status.setText("Saving "+file.getAbsolutePath()+"...");
 		BACKGROUND.execute(()->{
 			try {
-				ScriptText.write(file, code);
+				String warning = doc.save(file, store);
 				Platform.runLater(()->{
 					scriptFile = file;
-					original = code;
+					original = doc;
 					addRecent(file);
-					status.setText("Saved "+file.getAbsolutePath());
+					status.setText(warning != null ? warning : "Saved "+file.getAbsolutePath());
 					updateTitle();
 				});
 			} catch (IOException e) {
@@ -565,10 +619,19 @@ public class IdeWindow {
 		recentMenu.setDisable(recent.list().isEmpty());
 	}
 
-	/** Drops recent files that no longer exist; checked in the background (they may be remote). */
+	/**
+	 * Drops recent files that no longer exist; checked in the background (they may be remote).
+	 * The run settings of scripts that are gone, or long unused, are dropped too.
+	 */
 	private void pruneRecent() {
 		List<String> names = recent.list();
+		RunSettingsStore store = runSettings();
 		BACKGROUND.execute(()->{
+			try {
+				store.prune();
+			} catch (IOException e) {
+				// tried again next time
+			}
 			List<String> missing = RecentFiles.findMissing(names);
 			if( !missing.isEmpty()) {
 				Platform.runLater(()->{
@@ -612,8 +675,9 @@ public class IdeWindow {
 			debugPanel.clearVariables();
 			showDebugPanel.setSelected(true);
 		}
-		debugSession.setFirstLine(selection ? editor.getSelectionStartLine() : 0);
-		ScriptRun run = new ScriptRun(selection ? selected : all, (r, exitCode, ctx, error)->{
+		// a selection runs on its own lines, so its line numbers are the script's
+		debugSession.setFirstLine(0);
+		ScriptRun run = new ScriptRun(selection ? ScriptText.atLine(selected, editor.getSelectionStartLine()) : all, (r, exitCode, ctx, error)->{
 			// the variables as the script left them, read on its thread
 			Map<String,Object> finalVariables = debug && ctx != null ? ctx.getVariables() : null;
 			Platform.runLater(()->{

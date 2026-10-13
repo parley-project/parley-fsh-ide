@@ -5,6 +5,22 @@
 First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
+- A script's arguments and redirects are no longer written into the script. They're kept per
+  user in `~/.fsh-ide/run-settings` (`RunSettingsStore`), by the script's full path (a remote
+  script's URL, without any password). Saving a script writes only its code; if it has no
+  arguments or redirects, nothing is kept for it, and any kept before are removed. So a script
+  holds nothing but its code, and `$LINENO` and fsh's messages match the file however it's run.
+  - Scripts saved with settings lines (`#BjlIdeScriptArgs=` and the others) are still read: the
+    lines are hidden in the editor and give the settings, and the next save moves them to the
+    store and leaves them out of the file.
+  - Kept settings that may be orphans clean themselves up: each change drops those not used for
+    180 days and, past 500 scripts, the least recently used; at start the IDE also drops those
+    of local scripts that are gone (remote ones go by age). Both limits are in `Config.xml`
+    (`runSettingsMaxAgeDays`, `runSettingsMaxEntries`). File > Clear Run Settings forgets them all.
+  - `ScriptDocument` is now a script's code and its `RunSettings`; `open` and `save` go through the
+    store, and `toText` is gone. fshdb reads the same store.
+- Running a selection runs it on its own lines (`ScriptText.atLine`), so `$LINENO`, messages and
+  the debugger use the script's line numbers.
 - Runs on Java 11 or later (was Java 21), like fsh and the rest of the library, with JavaFX 17 LTS
   (17.0.20; was 21, which needs Java 17). `ScriptDocument` is a final class with the record's
   constructor, accessors, `equals`, `hashCode` and `toString`. On JavaFX 20 or later the debug
@@ -110,5 +126,5 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   the old file is copied across the first time.
 - Preferences saved under the old package's node are copied to the new one on first
   start.
-- Script argument markers (`#BjlIdeScriptArgs=` and friends) in saved scripts are
-  unchanged, so existing scripts keep their settings.
+- Scripts saved with argument markers (`#BjlIdeScriptArgs=` and friends) keep their settings:
+  they're read, and moved out of the script the next time it's saved.
