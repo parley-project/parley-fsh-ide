@@ -49,6 +49,7 @@ import us.bringardner.fsh.ide.core.Breakpoint;
 import us.bringardner.fsh.ide.core.CompileError;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.DebugVariables;
+import us.bringardner.fsh.ide.core.LoupeSession;
 import us.bringardner.fsh.ide.core.LogBatcher;
 import us.bringardner.fsh.ide.core.DebugSession;
 import us.bringardner.fsh.ide.core.RecentFiles;
@@ -128,6 +129,10 @@ public class IdeWindow {
 	private ScriptDocument original = ScriptDocument.parse("");
 	private RecentFiles recent;
 	private ScriptRun currentRun;
+	// a debug run on a Loupe adapter (instead of currentRun's debug session), and whether it's stopped
+	private volatile LoupeSession loupe;
+	private volatile boolean loupePaused;
+	private final CheckMenuItem useAdapter = new CheckMenuItem("Debug Through the Loupe Adapter");
 	private final DebugSession debugSession = new DebugSession(line->editor.getBreakpoint(line), new DebugSession.Listener() {
 		@Override
 		public void paused(int line, ShellContext ctx, Map<String, Object> variables) {
@@ -255,17 +260,17 @@ public class IdeWindow {
 		stopItem.setAccelerator(KeyCombination.keyCombination("Shortcut+PERIOD"));
 		stopItem.setOnAction(e->stop());
 		resumeItem.setAccelerator(KeyCombination.keyCombination("F8"));
-		resumeItem.setOnAction(e->debugSession.resume());
+		resumeItem.setOnAction(e->resumeScript());
 		stepOverItem.setAccelerator(KeyCombination.keyCombination("F6"));
-		stepOverItem.setOnAction(e->debugSession.stepOver());
+		stepOverItem.setOnAction(e->stepOverScript());
 		stepIntoItem.setAccelerator(KeyCombination.keyCombination("F5"));
-		stepIntoItem.setOnAction(e->debugSession.stepInto());
-		suspendItem.setOnAction(e->debugSession.suspend());
+		stepIntoItem.setOnAction(e->stepIntoScript());
+		suspendItem.setOnAction(e->suspendScript());
 		MenuItem toggle = item("Toggle Breakpoint", "Shortcut+B", ()->editor.toggleBreakpoint(editor.getCaretLine()));
 		MenuItem clear = item("Clear Console", "Shortcut+K", console::clear);
 		Menu run = new Menu("Run", null, runItem, debugItem, stopItem, new SeparatorMenuItem(),
 				resumeItem, stepOverItem, stepIntoItem, suspendItem, new SeparatorMenuItem(),
-				toggle, useSelection, clear, new SeparatorMenuItem(), showDebugPanel);
+				toggle, useSelection, useAdapter, clear, new SeparatorMenuItem(), showDebugPanel);
 
 		MenuItem undo = item("Undo", "Shortcut+Z", ()->editor.getCodeArea().undo());
 		MenuItem redo = item("Redo", "Shortcut+Shift+Z", ()->editor.getCodeArea().redo());
@@ -308,10 +313,10 @@ public class IdeWindow {
 		runButton.setOnAction(e->run());
 		debugButton.setOnAction(e->debug());
 		stopButton.setOnAction(e->stop());
-		resumeButton.setOnAction(e->debugSession.resume());
-		stepOverButton.setOnAction(e->debugSession.stepOver());
-		stepIntoButton.setOnAction(e->debugSession.stepInto());
-		suspendButton.setOnAction(e->debugSession.suspend());
+		resumeButton.setOnAction(e->resumeScript());
+		stepOverButton.setOnAction(e->stepOverScript());
+		stepIntoButton.setOnAction(e->stepIntoScript());
+		suspendButton.setOnAction(e->suspendScript());
 		resumeButton.setTooltip(new Tooltip("Resume (F8)"));
 		stepOverButton.setTooltip(new Tooltip("Step Over (F6)"));
 		stepIntoButton.setTooltip(new Tooltip("Step Into (F5)"));
@@ -657,13 +662,17 @@ public class IdeWindow {
 	}
 
 	private void start(boolean debug) {
-		if( currentRun != null ) {
+		if( currentRun != null || loupe != null ) {
 			return;
 		}
 		String all = ScriptText.clean(editor.getText());
 		String selected = ScriptText.clean(editor.getSelectedText());
 		boolean selection = useSelection.isSelected() && selected != null;
 		console.clear();
+		if( debug && useAdapter.isSelected()) {
+			startWithAdapter(selection ? ScriptText.atLine(selected, editor.getSelectionStartLine()) : all);
+			return;
+		}
 		debugging = debug;
 		debugSession.setActive(debug);
 		if( debug ) {
@@ -708,8 +717,153 @@ public class IdeWindow {
 		run.start();
 	}
 
+	/** The debug controls: for the script on the adapter if there is one, else the in-process session. */
+	private void resumeScript() {
+		LoupeSession l = loupe;
+		if( l == null ) {
+			debugSession.resume();
+		} else {
+			adapterContinues(l, ()->l.resume());
+		}
+	}
+
+	private void stepOverScript() {
+		LoupeSession l = loupe;
+		if( l == null ) {
+			debugSession.stepOver();
+		} else {
+			adapterContinues(l, ()->l.stepOver());
+		}
+	}
+
+	private void stepIntoScript() {
+		LoupeSession l = loupe;
+		if( l == null ) {
+			debugSession.stepInto();
+		} else {
+			adapterContinues(l, ()->l.stepInto());
+		}
+	}
+
+	private void suspendScript() {
+		LoupeSession l = loupe;
+		if( l == null ) {
+			debugSession.suspend();
+		} else {
+			l.suspend();
+		}
+	}
+
+	/** Sends the editor's breakpoints, then the request that lets the script go on. */
+	private void adapterContinues(LoupeSession l, java.util.function.Supplier<java.util.concurrent.CompletableFuture<Void>> request) {
+		java.util.List<Breakpoint> bps = new java.util.ArrayList<>(editor.getBreakpoints().values());
+		loupePaused = false;
+		editor.setCurrentLine(-1);
+		debugPanel.freezeVariables();
+		status.setText("Running...");
+		updateControls();
+		BACKGROUND.execute(()->{
+			try {
+				l.syncBreakpoints(bps);
+				request.get().get();
+			} catch (Exception e) {
+				Platform.runLater(()->report("The adapter couldn't continue", e));
+			}
+		});
+	}
+
+	/** Debugs code on the fsh Loupe adapter in this JVM instead of in-process. */
+	private void startWithAdapter(String code) {
+		if( !stdIn.getText().isBlank() || !stdOut.getText().isBlank() || !stdErr.getText().isBlank()) {
+			status.setText("The adapter doesn't redirect the script's streams: clear the redirect fields");
+			return;
+		}
+		debugging = true;
+		debugSession.setActive(false);
+		for(Breakpoint bp : editor.getBreakpoints().values()) {
+			bp.reset();
+		}
+		log.clear();
+		debugPanel.clearLog();
+		debugPanel.clearVariables();
+		showDebugPanel.setSelected(true);
+		LoupeSession session;
+		try {
+			session = LoupeSession.inProcess(new LoupeSession.Listener() {
+				@Override
+				public void paused(int line, String reason, Map<String,Object> variables) {
+					Platform.runLater(()->{
+						loupePaused = true;
+						editor.setCurrentLine(line);
+						debugPanel.setVariables(variables, true);
+						status.setText("Paused at line "+(line+1));
+						updateControls();
+					});
+				}
+
+				@Override
+				public void output(String category, String text) {
+					Platform.runLater(()->("stderr".equals(category) ? console.getStdErr() : console.getStdOut()).print(text));
+				}
+
+				@Override
+				public void breakpoint(Breakpoint bp, String status, int line, String message) {
+					if( "rejected".equals(status)) {
+						Platform.runLater(()->IdeWindow.this.status.setText("Breakpoint on line "+(bp.getLine()+1)+": "+message));
+					}
+				}
+
+				@Override
+				public void finished(int exitCode, boolean killed, Exception error) {
+					Platform.runLater(()->{
+						LoupeSession l = loupe;
+						loupe = null;
+						loupePaused = false;
+						editor.setCurrentLine(-1);
+						debugPanel.freezeVariables();
+						if( error != null ) {
+							report("The debug session failed", error);
+						}
+						updateControls();
+						status.setText((killed ? "Stopped" : "Finished")+", exit code "+exitCode);
+						if( l != null ) {
+							l.close();
+						}
+					});
+				}
+			});
+		} catch (java.io.IOException e) {
+			report("Can't start the adapter", e);
+			return;
+		}
+		loupe = session;
+		updateControls();
+		status.setText("Debugging...");
+		String name = scriptFile != null ? scriptFile.getAbsolutePath() : "fsh";
+		java.util.List<String> args = us.bringardner.fsh.ide.core.ScriptText.splitArguments(arguments.getText());
+		java.util.List<Breakpoint> bps = new java.util.ArrayList<>(editor.getBreakpoints().values());
+		BACKGROUND.execute(()->{
+			try {
+				session.start(code, name, args, bps);
+			} catch (Exception e) {
+				Platform.runLater(()->{
+					loupe = null;
+					session.close();
+					updateControls();
+					report("The script couldn't start on the adapter", e);
+				});
+			}
+		});
+	}
+
 	/** Stops the script that's running, if any. */
 	void stop() {
+		LoupeSession l = loupe;
+		if( l != null ) {
+			status.setText("Stopping...");
+			l.terminate();
+			return;
+		}
 		ScriptRun run = currentRun;
 		if( run != null && run.isRunning()) {
 			status.setText("Stopping...");
@@ -719,8 +873,8 @@ public class IdeWindow {
 
 	/** Enables what can be done now: idle, running, debugging, or paused. */
 	private void updateControls() {
-		boolean running = currentRun != null;
-		boolean paused = running && pausedContext != null;
+		boolean running = currentRun != null || loupe != null;
+		boolean paused = running && (pausedContext != null || loupePaused);
 		runButton.setDisable(running);
 		runItem.setDisable(running);
 		debugButton.setDisable(running);
@@ -747,7 +901,7 @@ public class IdeWindow {
 
 	/** Stopped at a breakpoint or step. */
 	boolean isPaused() {
-		return pausedContext != null;
+		return pausedContext != null || loupePaused;
 	}
 
 	// ---- breakpoints, variables and the syntax check
@@ -798,6 +952,21 @@ public class IdeWindow {
 
 	/** Sets a variable of the paused script to what was typed. */
 	void setVariable(Variable v, String value) {
+		LoupeSession l = loupe;
+		if( l != null ) {
+			if( !loupePaused ) {
+				return;
+			}
+			BACKGROUND.execute(()->{
+				try {
+					Map<String,Object> vars = l.setVariable(v.getName(), value);
+					Platform.runLater(()->debugPanel.setVariables(vars, true));
+				} catch (Exception e) {
+					Platform.runLater(()->report("Can't set "+v.getName(), e));
+				}
+			});
+			return;
+		}
 		ShellContext ctx = pausedContext;
 		if( ctx == null ) {
 			return;
@@ -832,7 +1001,7 @@ public class IdeWindow {
 	}
 
 	boolean isRunning() {
-		return currentRun != null;
+		return currentRun != null || loupe != null;
 	}
 
 	DebugSession debugSession() {

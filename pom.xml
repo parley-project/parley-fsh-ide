@@ -256,6 +256,17 @@
 			<artifactId>fsh</artifactId>
 			<version>${fsh.version}</version>
 		</dependency>
+		<!-- The Loupe debugging protocol, and fsh's adapter for it (LoupeSession). -->
+		<dependency>
+			<groupId>us.bringardner.parley</groupId>
+			<artifactId>parley-loupe</artifactId>
+			<version>${parley.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>us.bringardner</groupId>
+			<artifactId>fsh-loupe</artifactId>
+			<version>${fsh.version}</version>
+		</dependency>
 		<!-- Used directly: FileSource -->
 		<dependency>
 			<groupId>us.bringardner.parley</groupId>

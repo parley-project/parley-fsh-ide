@@ -78,6 +78,19 @@ File > Clear Run Settings forgets them all.
 Scripts saved by earlier versions carry them in comment lines (`#BjlIdeScriptArgs=` ...); those
 are read, and the next save moves them out of the script.
 
+## Debugging through a Loupe adapter
+
+**Run > Debug Through the Loupe Adapter** debugs the script on fsh's Loupe adapter
+([fsh-loupe](../fsh-loupe), started in this JVM) instead of through fsh's hooks directly.
+The IDE then speaks the [Loupe](../parley-loupe/PROTOCOL.md) protocol, the same one other
+tools (and editors, through parley-loupe's DAP bridge) use. `LoupeSession`, in `core`, is the
+client and has no UI; it can also talk to an adapter that is a program (`exec`) or listening
+on a socket (`connect`).
+
+Through the adapter the script has no standard input, its streams can't be redirected, and the
+log of every statement run isn't kept; breakpoint conditions, hit counts, steps and editing
+variables work as before.
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
