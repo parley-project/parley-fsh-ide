@@ -14,11 +14,10 @@ package us.bringardner.fsh.ide.fx;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.prefs.Preferences;
-
-import java.util.Map;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -41,17 +40,16 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import us.bringardner.fsh.ShellContext;
 import us.bringardner.fsh.ide.core.Breakpoint;
 import us.bringardner.fsh.ide.core.CompileError;
 import us.bringardner.fsh.ide.core.Configuration;
-import us.bringardner.fsh.ide.core.DebugVariables;
-import us.bringardner.fsh.ide.core.LoupeSession;
-import us.bringardner.fsh.ide.core.LogBatcher;
 import us.bringardner.fsh.ide.core.DebugSession;
+import us.bringardner.fsh.ide.core.DebugVariables;
+import us.bringardner.fsh.ide.core.LogBatcher;
+import us.bringardner.fsh.ide.core.LoupeSession;
 import us.bringardner.fsh.ide.core.RecentFiles;
 import us.bringardner.fsh.ide.core.RunSettings;
 import us.bringardner.fsh.ide.core.RunSettingsStore;

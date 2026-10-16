@@ -49,7 +49,6 @@ import us.bringardner.parley.loupe.protocol.Loupe;
 import us.bringardner.parley.loupe.protocol.OutputEvent;
 import us.bringardner.parley.loupe.protocol.RemoveBreakpointParams;
 import us.bringardner.parley.loupe.protocol.Scope;
-import us.bringardner.parley.loupe.protocol.ScopesParams;
 import us.bringardner.parley.loupe.protocol.ScopesResult;
 import us.bringardner.parley.loupe.protocol.SetVariableParams;
 import us.bringardner.parley.loupe.protocol.Snapshot;
