@@ -12,6 +12,7 @@
  */
 package us.bringardner.fsh.ide;
 
+import us.bringardner.swing.dialog.SettingsDialog;
 import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.fsh.ide.core.Breakpoint;
 import us.bringardner.fsh.ide.core.Configuration;
@@ -287,8 +288,9 @@ public class FshIDE extends JFrame  {
 				}
 			});
 		}
-		// The gradient look, as in parley-files-viewer: before any window is made
-		GradientLook.install();
+		// The gradient look, as in parley-files-viewer, with the font and colors the user chose in
+		// the appearance settings: before any window is made
+		GradientLook.install(prefs);
 		EventQueue.invokeLater(()->openWindow());
 	}
 
@@ -346,6 +348,11 @@ public class FshIDE extends JFrame  {
 		// macOS: the application menu's About item
 		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_ABOUT)) {
 			Desktop.getDesktop().setAboutHandler((e)->AboutWindow.open());
+		}
+		// macOS: the application menu's Preferences item (elsewhere File > Preferences)
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_PREFERENCES)) {
+			Desktop.getDesktop().setPreferencesHandler((e)->EventQueue.invokeLater(()->
+				showAppearance(ideWindows.isEmpty() ? null : ideWindows.get(ideWindows.size()-1))));
 		}
 		FshIDE frame = new FshIDE();
 		frame.setIconImages(imageList);
@@ -1078,8 +1085,16 @@ public class FshIDE extends JFrame  {
 
 
 	protected void actionPreferences() {
+		showAppearance(this);
+	}
 
-
+	/**
+	 * The appearance settings (the font and colors, shared with the other Parley applications
+	 * through swing-widgets), saved in the IDE's preferences; the JavaFX IDE uses the colors too.
+	 * The editor keeps its own font.
+	 */
+	static void showAppearance(java.awt.Window owner) {
+		SettingsDialog.showDialog(owner, prefs);
 	}
 
 	protected void actionHelp() {
