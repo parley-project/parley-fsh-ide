@@ -1,5 +1,6 @@
 package us.bringardner.fsh.ide;
 
+import us.bringardner.swing.gradient.GradientLook;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
@@ -64,6 +65,9 @@ public class ConsoleOutputFrame extends JFrame {
 		
 		textArea = new JTextArea();
 		scrollPane.setViewportView(textArea);
+
+		// the gradient look (swing-widgets' GradientLook), as in parley-files-viewer
+		GradientLook.apply(this);
 	}
 
 	protected void actionClear() {

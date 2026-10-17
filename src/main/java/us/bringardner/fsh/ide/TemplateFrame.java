@@ -12,6 +12,7 @@
 */
 package us.bringardner.fsh.ide;
 
+import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.fsh.ide.core.Template;
 import us.bringardner.fsh.ide.core.Configuration;
 
@@ -252,9 +253,10 @@ public class TemplateFrame extends JFrame {
 					setTitle("");
 				}
 			}
-		}).start(); 
+		}).start();
 
-
+		// the gradient look (swing-widgets' GradientLook), as in parley-files-viewer
+		GradientLook.apply(this);
 	}
 
 	protected void actionSelection(ListSelectionEvent e) {	

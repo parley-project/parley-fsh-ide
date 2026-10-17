@@ -12,6 +12,7 @@
 */
 package us.bringardner.fsh.ide;
 
+import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.fsh.ide.core.Breakpoint;
 
 import java.awt.BorderLayout;
@@ -166,6 +167,9 @@ public class BreakpointPropertiesDialog extends JDialog {
 				}
 			}
 		});
+
+		// the gradient look (swing-widgets' GradientLook), as in parley-files-viewer
+		GradientLook.apply(this);
 	}
 	
 	/**

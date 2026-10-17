@@ -12,6 +12,7 @@
  */
 package us.bringardner.fsh.ide;
 
+import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.fsh.ide.core.Breakpoint;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.CompileError;
@@ -286,6 +287,8 @@ public class FshIDE extends JFrame  {
 				}
 			});
 		}
+		// The gradient look, as in parley-files-viewer: before any window is made
+		GradientLook.install();
 		EventQueue.invokeLater(()->openWindow());
 	}
 
@@ -1001,6 +1004,9 @@ public class FshIDE extends JFrame  {
 				showError(ex, "Can't read last edited file = "+name);
 			}
 		}
+
+		// the gradient look (swing-widgets' GradientLook), as in parley-files-viewer
+		GradientLook.apply(this);
 	}
 
 

@@ -12,6 +12,7 @@
 */
 package us.bringardner.fsh.ide;
 
+import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.fsh.ide.core.Template;
 
 import java.awt.BorderLayout;
@@ -102,6 +103,9 @@ public class TemplateNewDialog extends JDialog {
 				buttonPane.add(cancelButton);
 			}
 		}
+
+		// the gradient look (swing-widgets' GradientLook), as in parley-files-viewer
+		GradientLook.apply(this);
 	}
 	
 	public boolean showDialog() {

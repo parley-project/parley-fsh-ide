@@ -12,6 +12,7 @@
 */
 package us.bringardner.fsh.ide;
 
+import us.bringardner.swing.gradient.GradientLook;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -229,6 +230,9 @@ public class FindDialog extends JDialog {
 				buttonPane.add(cancelButton);
 			}
 		}
+
+		// the gradient look (swing-widgets' GradientLook), as in parley-files-viewer
+		GradientLook.apply(this);
 	}
 
 	protected void replaceAll() {

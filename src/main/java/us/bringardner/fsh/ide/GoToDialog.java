@@ -12,6 +12,7 @@
 */
 package us.bringardner.fsh.ide;
 
+import us.bringardner.swing.gradient.GradientLook;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -81,6 +82,9 @@ public class GoToDialog extends JDialog {
 			contentPanel.add(textField);
 			textField.setColumns(10);
 		}
+
+		// the gradient look (swing-widgets' GradientLook), as in parley-files-viewer
+		GradientLook.apply(this);
 	}
 	
 	public int getLine( ) {

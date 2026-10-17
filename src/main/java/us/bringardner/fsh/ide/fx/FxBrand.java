@@ -72,9 +72,13 @@ public final class FxBrand {
 		}
 	}
 
-	/** Puts the app icons on a dialog's window (a dialog does not take them from its owner). */
+	/**
+	 * Puts the app icons and the gradient look on a dialog. A dialog is its own window, so it takes
+	 * neither from the window that owns it.
+	 */
 	public static void apply(Dialog<?> dialog) {
 		apply(dialog.getDialogPane().getScene().getWindow());
+		us.bringardner.fx.gradient.GradientLook.apply(dialog);
 	}
 
 	/** #RRGGBB, for CSS. */

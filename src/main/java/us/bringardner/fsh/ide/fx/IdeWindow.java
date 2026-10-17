@@ -12,6 +12,7 @@
  */
 package us.bringardner.fsh.ide.fx;
 
+import us.bringardner.fx.gradient.GradientLook;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -205,6 +206,8 @@ public class IdeWindow {
 		root.setBottom(status);
 
 		Scene scene = new Scene(root, 1100, 760);
+		// the gradient look shared with parley-files-viewer, then the IDE's own editor and console styles
+		GradientLook.apply(scene);
 		scene.getStylesheets().add(IdeWindow.class.getResource("fsh-ide.css").toExternalForm());
 		stage.setScene(scene);
 		restoreBounds();
