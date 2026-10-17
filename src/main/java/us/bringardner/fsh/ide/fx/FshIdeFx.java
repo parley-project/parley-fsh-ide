@@ -13,6 +13,7 @@
 package us.bringardner.fsh.ide.fx;
 
 import javafx.application.Platform;
+import us.bringardner.parley.brand.ParleyBrand;
 
 /**
  * Starts the JavaFX fsh-ide. (A plain main rather than a JavaFX Application, so it also starts
@@ -22,6 +23,25 @@ public class FshIdeFx {
 
 	public static void main(String[] args) {
 		Platform.setImplicitExit(true);
-		Platform.startup(()->new IdeWindow().show());
+		Platform.startup(()->{
+			setDockIcon();
+			new IdeWindow().show();
+		});
+	}
+
+	/**
+	 * The Dock / taskbar icon. JavaFX sets it from the stage icons on Windows and Linux but not on
+	 * macOS, where it stays the generic Java icon unless set through java.awt.Taskbar, as the Swing
+	 * IDE does. Best effort: where that isn't supported it does nothing.
+	 */
+	static void setDockIcon() {
+		try {
+			if( java.awt.Taskbar.isTaskbarSupported()
+					&& java.awt.Taskbar.getTaskbar().isSupported(java.awt.Taskbar.Feature.ICON_IMAGE) ) {
+				java.awt.Taskbar.getTaskbar().setIconImage(ParleyBrand.icon(512, FxBrand.BADGE));
+			}
+		} catch (Throwable e) {
+			// headless, or no taskbar: the window icons are enough
+		}
 	}
 }

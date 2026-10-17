@@ -88,6 +88,7 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 		if( owner != null ) {
 			d.initOwner(owner);
 		}
+		FxBrand.apply(d);
 		return d.showAndWait().orElse(Result.CANCELED);
 	}
 }

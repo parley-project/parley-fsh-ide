@@ -177,6 +177,8 @@ public class IdeWindow {
 	IdeWindow(Stage stage, Preferences prefs) {
 		this.stage = stage;
 		this.prefs = prefs;
+		// The Parley app icon with the terminal badge
+		FxBrand.apply(stage);
 		recent = RecentFiles.parse(prefs == null ? null : prefs.get(PREF_RECENT_LIST, null));
 
 		BorderPane root = new BorderPane();
@@ -293,7 +295,10 @@ public class IdeWindow {
 				replace, new SeparatorMenuItem(), goTo, complete, new SeparatorMenuItem(), foldAll, unfoldAll,
 				new SeparatorMenuItem(), spelling);
 
-		MenuBar bar = new MenuBar(file, edit, run);
+		MenuItem about = item("About fsh-ide", null, ()->AboutStage.open(stage));
+		Menu help = new Menu("Help", null, about);
+
+		MenuBar bar = new MenuBar(file, edit, run, help);
 		bar.setUseSystemMenuBar(true);
 		return bar;
 	}
@@ -459,6 +464,7 @@ public class IdeWindow {
 	protected boolean confirm(String question) {
 		Alert a = new Alert(AlertType.CONFIRMATION, question, ButtonType.YES, ButtonType.NO);
 		a.initOwner(stage);
+		FxBrand.apply(a);
 		return a.showAndWait().filter(b->b == ButtonType.YES).isPresent();
 	}
 
@@ -467,6 +473,7 @@ public class IdeWindow {
 		Alert a = new Alert(AlertType.ERROR, error == null ? "" : String.valueOf(error.getMessage()));
 		a.setHeaderText(title);
 		a.initOwner(stage);
+		FxBrand.apply(a);
 		a.showAndWait();
 	}
 
@@ -931,6 +938,7 @@ public class IdeWindow {
 	protected Integer askLine(int current, int max) {
 		javafx.scene.control.TextInputDialog d = new javafx.scene.control.TextInputDialog(""+current);
 		d.initOwner(stage);
+		FxBrand.apply(d);
 		d.setTitle("Go to Line");
 		d.setHeaderText(null);
 		d.setContentText("Line (1-"+max+"):");

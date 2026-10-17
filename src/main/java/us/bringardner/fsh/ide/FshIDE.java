@@ -340,6 +340,10 @@ public class FshIDE extends JFrame  {
 			// The Dock / taskbar shows the icon large
 			bar.setIconImage(ParleyBrand.icon(512, "terminal"));
 		}
+		// macOS: the application menu's About item
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_ABOUT)) {
+			Desktop.getDesktop().setAboutHandler((e)->AboutWindow.open());
+		}
 		FshIDE frame = new FshIDE();
 		frame.setIconImages(imageList);
 
@@ -747,6 +751,15 @@ public class FshIDE extends JFrame  {
 
 
 
+
+		// Help > About; on macOS it is in the application menu instead (see openWindow)
+		if (!(Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_ABOUT))) {
+			JMenu helpMenu = new JMenu("Help");
+			JMenuItem aboutItem = new JMenuItem("About fsh-ide");
+			aboutItem.addActionListener((e)->AboutWindow.open());
+			helpMenu.add(aboutItem);
+			menuBar.add(helpMenu);
+		}
 
 		JButton btnHelp = new JButton("");
 		menuBar.add(btnHelp);
