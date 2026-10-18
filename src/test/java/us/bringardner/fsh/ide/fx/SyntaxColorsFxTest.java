@@ -21,15 +21,16 @@ import org.junit.jupiter.api.Test;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import us.bringardner.fsh.ide.core.SyntaxColors;
+import us.bringardner.swing.gradient.Theme;
 
-/** The JavaFX IDE's script editor in the colors chosen in the Swing IDE. */
+/** The JavaFX IDE's script editor in the theme's syntax colors. */
 public class SyntaxColorsFxTest {
 
 	@Test
-	public void followingTheThemeAddsNothing() throws Exception {
+	public void aThemeWithoutColorsOfItsOwnAddsNothing() throws Exception {
 		Scene scene = Fx.call(()->{
 			Scene s = new Scene(new StackPane());
-			IdeWindow.applySyntaxColors(s, SyntaxColors.followTheme());
+			IdeWindow.applySyntaxColors(s, Theme.DARK);
 			return s;
 		});
 		assertTrue(scene.getStylesheets().isEmpty());
@@ -37,11 +38,14 @@ public class SyntaxColorsFxTest {
 	}
 
 	@Test
-	public void chosenColorsComeAsAStylesheet() throws Exception {
+	public void aThemesOwnColorsComeAsAStylesheet() throws Exception {
 		SyntaxColors c = SyntaxColors.named("Monokai");
+		java.util.Map<String, String> extras = new java.util.HashMap<>();
+		c.toValues().forEach((k, v)->extras.put(SyntaxColors.EXTENSION_ID + "." + k, v));
+		Theme theme = Theme.GOLD.withExtras(extras);
 		Scene scene = Fx.call(()->{
 			Scene s = new Scene(new StackPane());
-			IdeWindow.applySyntaxColors(s, c);
+			IdeWindow.applySyntaxColors(s, theme);
 			return s;
 		});
 		assertTrue(scene.getRoot().getStyleClass().contains(SyntaxColors.CSS_CLASS));

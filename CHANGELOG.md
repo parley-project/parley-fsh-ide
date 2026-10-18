@@ -9,13 +9,15 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   (default), Dark, Light, Copper, Sage, Ocean, Slate, Plum, or one made from any color, chosen in
   File > Preferences with the font. The editors follow the theme: a dark theme gives a dark editor
   with matching syntax colors, in both IDEs. The JavaFX IDE uses the theme chosen in the Swing IDE.
-- File > Editor Colors: the script editors' syntax colors, set apart from the theme. "Follow the
-  theme" (the default: light colors with a light theme, the Parley dark ones with a dark theme), a
-  ready-made scheme (Light, Parley dark, Dark, Eclipse, IDEA, Monokai, Visual Studio, Druid), or any
-  of the 14 colors changed (background, text, keywords, commands, comments, strings, variables,
-  numbers, operators, selection, current line, line numbers and their background, caret), with a
-  preview. Kept in the IDE's preferences (`SyntaxColors`, in the UI-free core); the JavaFX IDE
-  uses the colors chosen in the Swing IDE too, from its next start.
+- The script editors' syntax colors are part of the theme. The theme designer (Preferences > New
+  theme... or Edit theme...) has a Script editor page (`EditorThemeExtension`, a swing-widgets
+  `ThemeExtension`): load a ready-made scheme (Light, Parley dark, Dark, Eclipse, IDEA, Monokai,
+  Visual Studio, Druid) and change any of the 14 colors (background, text, keywords, commands,
+  comments, strings, variables, numbers, operators, selection, current line, line numbers and their
+  background, caret), with a preview. A new theme starts with the colors of the theme it is made
+  from; a theme without its own, such as a built-in one, gets the light colors, or the Parley dark
+  ones for a dark theme. Kept in the theme file as `fsh-ide.editor.*` settings (`SyntaxColors`, in
+  the UI-free core), and the JavaFX IDE uses them too.
 - A script's arguments and redirects are no longer written into the script. They're kept per
   user in `~/.fsh-ide/run-settings` (`RunSettingsStore`), by the script's full path (a remote
   script's URL, without any password). Saving a script writes only its code; if it has no

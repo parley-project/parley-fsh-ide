@@ -12,25 +12,30 @@
  */
 package us.bringardner.fsh.ide.core;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.prefs.Preferences;
+import java.util.Map;
 
 /**
  * The script editors' syntax colors: one color for each part of the editor ({@link #ROLES}), as
- * 0xRRGGBB. "Follow the theme" (the default) means the light colors with a light appearance theme and
- * the Parley dark ones with a dark theme; the user can choose a ready-made scheme ({@link #SCHEMES}) or
- * change any color, which makes a custom set. Kept in the IDE's preferences, where the Swing IDE sets
- * it (File &gt; Editor Colors) and both IDEs read it.
+ * 0xRRGGBB. They are part of the appearance theme: the Swing IDE adds a "Script editor" page to the
+ * theme designer, and a theme keeps them as {@code fsh-ide.editor.<key>} settings
+ * ({@link #EXTENSION_ID}, {@link #KEYS}). A theme without them, such as a built-in one, gets
+ * {@link #defaults(boolean)}: the light colors, or the Parley dark ones for a dark theme. A new
+ * theme starts with those of the theme it is made from. The ready-made schemes ({@link #SCHEMES})
+ * are starting points for the designer.
  * <p>
- * No UI toolkit here: the Swing IDE turns it into RSyntaxTextArea colors, the JavaFX IDE into a
+ * No UI toolkit here: the Swing IDE turns them into RSyntaxTextArea colors, the JavaFX IDE into a
  * stylesheet ({@link #css()}).
  */
 public final class SyntaxColors {
 
-	public static final String FOLLOW_THEME = "Follow the theme";
+	/** The prefix of the syntax colors' settings in a theme. */
+	public static final String EXTENSION_ID = "fsh-ide.editor";
+
+	/** The name of colors that aren't one of the ready-made schemes. */
 	public static final String CUSTOM = "Custom";
 
 	/** What each color is for. */
@@ -38,13 +43,14 @@ public final class SyntaxColors {
 			"Keywords", "Commands", "Comments", "Strings", "Variables", "Numbers", "Operators", "Selection",
 			"Current line", "Line numbers", "Line number background", "Caret"));
 
+	/** Each color's key in a theme (after {@link #EXTENSION_ID}), in the order of {@link #ROLES}. */
+	public static final List<String> KEYS = Collections.unmodifiableList(Arrays.asList("background", "text",
+			"keywords", "commands", "comments", "strings", "variables", "numbers", "operators", "selection",
+			"currentLine", "lineNumbers", "lineNumberBackground", "caret"));
+
 	public static final int BACKGROUND = 0, TEXT = 1, KEYWORDS = 2, COMMANDS = 3, COMMENTS = 4, STRINGS = 5,
 			VARIABLES = 6, NUMBERS = 7, OPERATORS = 8, SELECTION = 9, CURRENT_LINE = 10, LINE_NUMBERS = 11,
 			GUTTER = 12, CARET = 13;
-
-	/** The preference keys: the scheme's name, and a custom set's colors. */
-	public static final String PREF_SCHEME = "SyntaxScheme";
-	public static final String PREF_COLORS = "SyntaxColors";
 
 	/** RSyntaxTextArea's own light colors. */
 	public static final SyntaxColors LIGHT = scheme("Light",
@@ -69,8 +75,6 @@ public final class SyntaxColors {
 			scheme("Druid",
 					"#001C00 #66AA66 #885522 #44AAEE #325232 #009000 #EEAACC #EEAACC #66AA66 #143014 #102C10 #66AA66 #001C00 #88EE88")));
 
-	private static final SyntaxColors FOLLOW = new SyntaxColors(FOLLOW_THEME, null);
-
 	private final String name;
 	private final int[] rgb;
 
@@ -83,9 +87,9 @@ public final class SyntaxColors {
 		return new SyntaxColors(name, parse(hexes.split(" ")));
 	}
 
-	/** The default: the colors follow the appearance theme. */
-	public static SyntaxColors followTheme() {
-		return FOLLOW;
+	/** The colors for a theme that has none of its own: light, or Parley dark for a dark theme. */
+	public static SyntaxColors defaults(boolean darkTheme) {
+		return darkTheme ? PARLEY_DARK : LIGHT;
 	}
 
 	/**
@@ -114,38 +118,92 @@ public final class SyntaxColors {
 		return null;
 	}
 
-	public String getName() {
-		return name;
+	// ---------------------------------------------------------------- in a theme
+
+	/**
+	 * The colors from a theme's settings ({@link #KEYS} to #RRGGBB); a color missing or not a color
+	 * is the default's.
+	 *
+	 * @param values the settings, keys without the prefix
+	 * @param darkTheme whether the theme is dark, for the defaults
+	 */
+	public static SyntaxColors fromValues(Map<String, String> values, boolean darkTheme) {
+		int[] c = defaults(darkTheme).rgb();
+		boolean own = false;
+		for(int i = 0; i < c.length; i++) {
+			String v = values == null ? null : values.get(KEYS.get(i));
+			if( v != null && v.trim().matches("#[0-9A-Fa-f]{6}") ) {
+				c[i] = Integer.parseInt(v.trim().substring(1), 16);
+				own = true;
+			}
+		}
+		if( !own ) {
+			return defaults(darkTheme);
+		}
+		SyntaxColors ret = custom(c);
+		for(SyntaxColors s : SCHEMES) {
+			if( Arrays.equals(s.rgb, ret.rgb) ) {
+				return s;
+			}
+		}
+		return ret;
 	}
 
-	public boolean isFollowTheme() {
-		return rgb == null;
+	/**
+	 * The colors of a theme, from all its settings ({@code Theme.getExtras()}, keys with prefixes).
+	 *
+	 * @param extras the theme's settings
+	 * @param darkTheme whether the theme is dark
+	 */
+	public static SyntaxColors ofTheme(Map<String, String> extras, boolean darkTheme) {
+		return fromValues(own(extras), darkTheme);
+	}
+
+	/** True if a theme's settings ({@code Theme.getExtras()}) have syntax colors of their own. */
+	public static boolean hasColors(Map<String, String> extras) {
+		return !own(extras).isEmpty();
+	}
+
+	private static Map<String, String> own(Map<String, String> extras) {
+		Map<String, String> ret = new LinkedHashMap<>();
+		String prefix = EXTENSION_ID + ".";
+		if( extras != null ) {
+			for(Map.Entry<String, String> e : extras.entrySet()) {
+				if( e.getKey().startsWith(prefix) ) {
+					ret.put(e.getKey().substring(prefix.length()), e.getValue());
+				}
+			}
+		}
+		return ret;
+	}
+
+	/** These colors as a theme's settings: {@link #KEYS} to #RRGGBB. */
+	public Map<String, String> toValues() {
+		Map<String, String> ret = new LinkedHashMap<>();
+		for(int i = 0; i < rgb.length; i++) {
+			ret.put(KEYS.get(i), toHex(rgb[i]));
+		}
+		return ret;
+	}
+
+	// ---------------------------------------------------------------- the colors
+
+	public String getName() {
+		return name;
 	}
 
 	public boolean isCustom() {
 		return CUSTOM.equals(name);
 	}
 
-	/**
-	 * The colors to paint with: these, or (following the theme) the light or Parley dark ones.
-	 *
-	 * @param darkTheme whether the appearance theme is dark
-	 */
-	public SyntaxColors resolve(boolean darkTheme) {
-		return rgb != null ? this : darkTheme ? PARLEY_DARK : LIGHT;
-	}
-
-	/** One color, 0xRRGGBB. Not for "Follow the theme": {@link #resolve} first. */
+	/** One color, 0xRRGGBB. */
 	public int rgb(int role) {
-		if( rgb == null ) {
-			throw new IllegalStateException("Follow the theme has no colors of its own: resolve it first");
-		}
 		return rgb[role];
 	}
 
 	/** All the colors, 0xRRGGBB (a copy). */
 	public int[] rgb() {
-		return rgb == null ? null : rgb.clone();
+		return rgb.clone();
 	}
 
 	/** One color as #RRGGBB. */
@@ -170,46 +228,6 @@ public final class SyntaxColors {
 		int c = rgb(BACKGROUND);
 		double lum = (0.299 * (c >> 16 & 0xFF) + 0.587 * (c >> 8 & 0xFF) + 0.114 * (c & 0xFF)) / 255;
 		return lum < 0.5;
-	}
-
-	// ---------------------------------------------------------------- preferences
-
-	/** The colors kept in preferences; "Follow the theme" if none (or what's there doesn't make sense). */
-	public static SyntaxColors load(Preferences prefs) {
-		if( prefs == null ) {
-			return FOLLOW;
-		}
-		String n = prefs.get(PREF_SCHEME, null);
-		if( n == null || FOLLOW_THEME.equalsIgnoreCase(n) ) {
-			return FOLLOW;
-		}
-		if( CUSTOM.equalsIgnoreCase(n) ) {
-			try {
-				return custom(parse(prefs.get(PREF_COLORS, "").split(",")));
-			} catch (RuntimeException e) {
-				return FOLLOW;
-			}
-		}
-		SyntaxColors s = named(n);
-		return s == null ? FOLLOW : s;
-	}
-
-	/** Keeps these colors in preferences. */
-	public void save(Preferences prefs) {
-		if( isFollowTheme() ) {
-			prefs.remove(PREF_SCHEME);
-			prefs.remove(PREF_COLORS);
-		} else if( isCustom() ) {
-			prefs.put(PREF_SCHEME, CUSTOM);
-			List<String> hexes = new ArrayList<>();
-			for(int c : rgb) {
-				hexes.add(toHex(c));
-			}
-			prefs.put(PREF_COLORS, String.join(",", hexes));
-		} else {
-			prefs.put(PREF_SCHEME, name);
-			prefs.remove(PREF_COLORS);
-		}
 	}
 
 	private static int[] parse(String[] hexes) {

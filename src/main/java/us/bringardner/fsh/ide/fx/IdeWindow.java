@@ -210,7 +210,7 @@ public class IdeWindow {
 		// the gradient look shared with parley-files-viewer, then the IDE's own editor and console styles
 		GradientLook.apply(scene);
 		scene.getStylesheets().add(IdeWindow.class.getResource("fsh-ide.css").toExternalForm());
-		applySyntaxColors(scene, SyntaxColors.load(prefs));
+		applySyntaxColors(scene, us.bringardner.swing.gradient.Theme.current());
 		stage.setScene(scene);
 		restoreBounds();
 		stage.setOnCloseRequest(e->{
@@ -1091,13 +1091,15 @@ public class IdeWindow {
 	Stage stage() { return stage; }
 
 	/**
-	 * The syntax colors chosen in the Swing IDE (File &gt; Editor Colors), on the script editor; for
-	 * "Follow the theme" the editor keeps fsh-ide.css's light or dark colors.
+	 * The theme's syntax colors on the script editor, when it has its own (set on the Swing IDE's
+	 * theme designer, Script editor page); otherwise the editor keeps fsh-ide.css's light or dark
+	 * colors.
 	 */
-	static void applySyntaxColors(Scene scene, SyntaxColors colors) {
-		if( colors.isFollowTheme() ) {
+	static void applySyntaxColors(Scene scene, us.bringardner.swing.gradient.Theme theme) {
+		if( !SyntaxColors.hasColors(theme.getExtras()) ) {
 			return;
 		}
+		SyntaxColors colors = SyntaxColors.ofTheme(theme.getExtras(), theme.isDark());
 		scene.getRoot().getStyleClass().add(SyntaxColors.CSS_CLASS);
 		scene.getStylesheets().add("data:text/css;base64,"
 				+ java.util.Base64.getEncoder().encodeToString(colors.css().getBytes(java.nio.charset.StandardCharsets.UTF_8)));

@@ -14,6 +14,7 @@ package us.bringardner.fsh.ide;
 
 import us.bringardner.swing.dialog.SettingsDialog;
 import us.bringardner.swing.gradient.GradientLook;
+import us.bringardner.swing.gradient.ThemeExtensions;
 import us.bringardner.fsh.ide.core.Breakpoint;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.CompileError;
@@ -27,7 +28,6 @@ import us.bringardner.fsh.ide.core.ScriptParser;
 import us.bringardner.fsh.ide.core.ScriptRun;
 import us.bringardner.fsh.ide.core.ScriptText;
 import us.bringardner.fsh.ide.core.LegacyPreferences;
-import us.bringardner.fsh.ide.core.SyntaxColors;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -291,8 +291,9 @@ public class FshIDE extends JFrame  {
 		}
 		// The gradient look, as in parley-files-viewer, with the font and colors the user chose in
 		// the appearance settings: before any window is made
+		// the script editor's syntax colors are part of the theme, with a page in the theme designer
+		ThemeExtensions.register(new EditorThemeExtension());
 		GradientLook.install(prefs);
-		EditorColors.setChosen(SyntaxColors.load(prefs));
 		EventQueue.invokeLater(()->openWindow());
 	}
 
@@ -659,10 +660,6 @@ public class FshIDE extends JFrame  {
 			}
 		});
 		fileMenu.add(mntmNewMenuItem_7);
-
-		JMenuItem editorColorsItem = new JMenuItem("Editor Colors...");
-		editorColorsItem.addActionListener(e->SyntaxColorsDialog.showDialog(this, prefs));
-		fileMenu.add(editorColorsItem);
 		fileMenu.add(mntmNewMenuItem);
 		fileMenu.add(openRecentMenu);
 
@@ -1097,8 +1094,8 @@ public class FshIDE extends JFrame  {
 	/**
 	 * The appearance settings (the theme and font, shared with the other Parley applications
 	 * through swing-widgets), saved in the IDE's preferences; the JavaFX IDE uses the theme too.
-	 * The editors keep their own font; their colors are File > Editor Colors (EditorColors), which by
-	 * default follow the theme.
+	 * The editors keep their own font; their colors are the theme's (EditorColors): the theme designer
+	 * has a Script editor page for them.
 	 */
 	static void showAppearance(java.awt.Window owner) {
 		if( SettingsDialog.showDialog(owner, prefs) ) {

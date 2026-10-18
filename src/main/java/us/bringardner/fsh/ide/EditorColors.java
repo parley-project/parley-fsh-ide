@@ -30,9 +30,9 @@ import org.fife.ui.rtextarea.Gutter;
 import us.bringardner.fsh.ide.core.SyntaxColors;
 
 /**
- * The script editors' colors: the syntax colors the user chose (File &gt; Editor Colors, kept in
- * the IDE's preferences as {@link SyntaxColors}), or by default ones that follow the theme
- * (swing-widgets' Theme): RSyntaxTextArea's own light colors with a light theme, the Parley dark
+ * The script editors' colors, which are part of the appearance theme (swing-widgets' Theme): the
+ * syntax colors set on the theme designer's Script editor page ({@link EditorThemeExtension}), or
+ * for a theme without its own, RSyntaxTextArea's light colors with a light theme and the Parley dark
  * ones (editor-dark.xml: ink background, gold keywords) with a dark one.
  */
 final class EditorColors {
@@ -64,29 +64,13 @@ final class EditorColors {
 		TOKENS[SyntaxColors.OPERATORS] = new int[] {TokenTypes.OPERATOR};
 	}
 
-	/** The colors chosen; by default they follow the theme. */
-	private static SyntaxColors chosen = SyntaxColors.followTheme();
-
 	private EditorColors() {
 	}
 
-	/** The colors chosen (perhaps "Follow the theme"). */
-	static SyntaxColors getChosen() {
-		return chosen;
-	}
-
-	/** Sets the colors chosen; {@link #applyToOpenWindows()} puts them on the open editors. */
-	static void setChosen(SyntaxColors colors) {
-		chosen = colors == null ? SyntaxColors.followTheme() : colors;
-	}
-
-	static boolean darkTheme() {
-		return us.bringardner.swing.gradient.Theme.current().isDark();
-	}
-
-	/** The colors to paint with now: the chosen ones, or the theme's. */
+	/** The colors of the theme in effect. */
 	static SyntaxColors current() {
-		return chosen.resolve(darkTheme());
+		us.bringardner.swing.gradient.Theme t = us.bringardner.swing.gradient.Theme.current();
+		return SyntaxColors.ofTheme(t.getExtras(), t.isDark());
 	}
 
 	/** The highlight for the line a debugged script is stopped on. */
@@ -102,7 +86,7 @@ final class EditorColors {
 		apply(editor, current());
 	}
 
-	/** Gives an editor these colors (resolved, not "Follow the theme"), keeping its font. */
+	/** Gives an editor these colors, keeping its font. */
 	static void apply(RSyntaxTextArea editor, SyntaxColors colors) {
 		// the light or dark editor colors first, for the parts with no color of their own here
 		// (bracket matching, fold icons and so on), then these colors
@@ -147,7 +131,7 @@ final class EditorColors {
 		return new Color(colors.rgb(role));
 	}
 
-	/** Gives every editor in the open windows the current colors (after a change). */
+	/** Gives every editor in the open windows the current theme's colors (after a theme change). */
 	static void applyToOpenWindows() {
 		for(Window w : Window.getWindows()) {
 			if( w.isDisplayable() ) {
@@ -166,7 +150,7 @@ final class EditorColors {
 		}
 	}
 
-	/** An editor that shows colors not (yet) chosen, which a change to the chosen ones leaves alone. */
+	/** An editor that shows colors other than the theme's (a preview), which a theme change leaves alone. */
 	interface Preview {
 	}
 }

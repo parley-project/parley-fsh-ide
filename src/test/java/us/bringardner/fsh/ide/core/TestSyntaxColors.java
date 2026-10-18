@@ -19,45 +19,33 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.prefs.Preferences;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** The script editors' syntax colors, and how they're kept. */
+/** The script editors' syntax colors, as a theme keeps them. */
 public class TestSyntaxColors {
 
-	private Preferences prefs;
-
-	@BeforeEach
-	public void node() {
-		prefs = Preferences.userRoot().node("us/bringardner/fsh/ide/test/syntax-" + System.nanoTime());
-	}
-
-	@AfterEach
-	public void removeNode() throws Exception {
-		prefs.removeNode();
-	}
-
 	@Test
-	public void theDefaultFollowsTheTheme() {
-		SyntaxColors c = SyntaxColors.load(prefs);
-		assertTrue(c.isFollowTheme());
-		assertSame(SyntaxColors.LIGHT, c.resolve(false));
-		assertSame(SyntaxColors.PARLEY_DARK, c.resolve(true));
-		assertNull(c.rgb());
-		assertThrows(IllegalStateException.class, ()->c.rgb(SyntaxColors.TEXT));
-		assertSame(SyntaxColors.followTheme(), SyntaxColors.load(null));
+	public void aThemeWithoutColorsGetsTheDefaults() {
+		assertSame(SyntaxColors.LIGHT, SyntaxColors.defaults(false));
+		assertSame(SyntaxColors.PARLEY_DARK, SyntaxColors.defaults(true));
+		assertSame(SyntaxColors.LIGHT, SyntaxColors.ofTheme(Map.of(), false));
+		assertSame(SyntaxColors.PARLEY_DARK, SyntaxColors.ofTheme(Map.of("other-app.x", "1"), true));
+		assertSame(SyntaxColors.PARLEY_DARK, SyntaxColors.ofTheme(null, true));
+		assertFalse(SyntaxColors.hasColors(Map.of("other-app.x", "1")));
+		assertFalse(SyntaxColors.hasColors(null));
 	}
 
 	@Test
 	public void theSchemesHaveEveryColor() {
 		assertEquals(8, SyntaxColors.SCHEMES.size());
+		assertEquals(SyntaxColors.ROLES.size(), SyntaxColors.KEYS.size());
 		for(SyntaxColors s : SyntaxColors.SCHEMES) {
 			assertEquals(SyntaxColors.ROLES.size(), s.rgb().length, s.getName());
-			assertSame(s, s.resolve(true), "a scheme is its own colors");
 			assertSame(s, SyntaxColors.named(s.getName().toUpperCase()));
+			assertFalse(s.isCustom());
 		}
 		assertFalse(SyntaxColors.LIGHT.isDark());
 		assertTrue(SyntaxColors.PARLEY_DARK.isDark());
@@ -68,44 +56,45 @@ public class TestSyntaxColors {
 	}
 
 	@Test
+	public void aThemesColorsAreItsSettings() {
+		SyntaxColors custom = SyntaxColors.named("Monokai").withColor(SyntaxColors.KEYWORDS, 0x00C0FF);
+		Map<String, String> values = custom.toValues();
+		assertEquals("#00C0FF", values.get("keywords"));
+		assertEquals("#2E2E2E", values.get("background"));
+		assertEquals(custom, SyntaxColors.fromValues(values, false));
+
+		Map<String, String> extras = new HashMap<>();
+		values.forEach((k, v)->extras.put(SyntaxColors.EXTENSION_ID + "." + k, v));
+		extras.put("other-app.x", "1");
+		assertTrue(SyntaxColors.hasColors(extras));
+		assertEquals(custom, SyntaxColors.ofTheme(extras, false));
+
+		// a scheme's colors are that scheme
+		assertSame(SyntaxColors.named("Druid"), SyntaxColors.fromValues(SyntaxColors.named("Druid").toValues(), false));
+	}
+
+	@Test
+	public void missingOrBadColorsAreTheDefaults() {
+		SyntaxColors c = SyntaxColors.fromValues(Map.of("keywords", "#123456", "strings", "red"), true);
+		assertTrue(c.isCustom());
+		assertEquals(0x123456, c.rgb(SyntaxColors.KEYWORDS));
+		assertEquals(SyntaxColors.PARLEY_DARK.rgb(SyntaxColors.STRINGS), c.rgb(SyntaxColors.STRINGS));
+		assertEquals(SyntaxColors.PARLEY_DARK.rgb(SyntaxColors.BACKGROUND), c.rgb(SyntaxColors.BACKGROUND));
+		assertSame(SyntaxColors.LIGHT, SyntaxColors.fromValues(Map.of("strings", "red"), false));
+		assertSame(SyntaxColors.LIGHT, SyntaxColors.fromValues(null, false));
+	}
+
+	@Test
 	public void changingAColorMakesACustomSet() {
 		SyntaxColors c = SyntaxColors.named("Eclipse").withColor(SyntaxColors.STRINGS, 0xFF123456);
 		assertTrue(c.isCustom());
 		assertEquals(0x123456, c.rgb(SyntaxColors.STRINGS), "only RGB is kept");
-		assertEquals(SyntaxColors.named("Eclipse").rgb(SyntaxColors.KEYWORDS), c.rgb(SyntaxColors.KEYWORDS));
 		assertEquals(0x7F0055, SyntaxColors.named("Eclipse").rgb(SyntaxColors.KEYWORDS), "the scheme is unchanged");
 		int[] rgb = c.rgb();
 		rgb[0] = 0;
 		assertEquals(0xFFFFFF, c.rgb(0), "a copy");
 		assertThrows(IllegalArgumentException.class, ()->SyntaxColors.custom(new int[3]));
 		assertThrows(IllegalArgumentException.class, ()->SyntaxColors.custom(null));
-	}
-
-	@Test
-	public void theChoiceIsKept() throws Exception {
-		SyntaxColors.named("Monokai").save(prefs);
-		assertSame(SyntaxColors.named("Monokai"), SyntaxColors.load(prefs));
-		assertNull(prefs.get(SyntaxColors.PREF_COLORS, null));
-
-		SyntaxColors custom = SyntaxColors.LIGHT.withColor(SyntaxColors.KEYWORDS, 0x00C0FF);
-		custom.save(prefs);
-		assertEquals(custom, SyntaxColors.load(prefs));
-		assertTrue(prefs.get(SyntaxColors.PREF_COLORS, "").startsWith("#FFFFFF,#000000,#00C0FF,"));
-
-		SyntaxColors.followTheme().save(prefs);
-		assertTrue(SyntaxColors.load(prefs).isFollowTheme());
-		assertNull(prefs.get(SyntaxColors.PREF_SCHEME, null));
-	}
-
-	@Test
-	public void whatDoesntMakeSenseFollowsTheTheme() {
-		prefs.put(SyntaxColors.PREF_SCHEME, "No such scheme");
-		assertTrue(SyntaxColors.load(prefs).isFollowTheme());
-		prefs.put(SyntaxColors.PREF_SCHEME, SyntaxColors.CUSTOM);
-		prefs.put(SyntaxColors.PREF_COLORS, "#FFFFFF,#000000");
-		assertTrue(SyntaxColors.load(prefs).isFollowTheme(), "too few colors");
-		prefs.put(SyntaxColors.PREF_COLORS, "blue" + ",#000000".repeat(SyntaxColors.ROLES.size() - 1));
-		assertTrue(SyntaxColors.load(prefs).isFollowTheme(), "not a color");
 	}
 
 	@Test

@@ -61,10 +61,12 @@ Templates and settings are kept in `~/.fsh-ide/Config.xml`; window positions and
 recent files in Java preferences. Both are copied across from BjlShellIde's
 locations the first time fsh-ide starts.
 
-File > Preferences sets the look (the theme and font, shared with the other Parley applications),
-and File > Editor Colors the script editors' syntax colors: by default they follow the theme, or
-choose a ready-made scheme or change any color. Both are kept in Java preferences, and the JavaFX
-IDE uses what the Swing IDE saved.
+File > Preferences sets the look: the theme and font, shared with the other Parley applications,
+and kept in Java preferences; the JavaFX IDE uses what the Swing IDE saved. The script editors'
+syntax colors are part of the theme: New theme... and Edit theme... there have a Script editor
+page, where a ready-made scheme can be loaded and any color changed. A new theme starts with the
+colors of the theme it is made from; the built-in themes have the light colors, or the Parley dark
+ones for the Dark theme.
 
 ## Arguments and redirects
 
