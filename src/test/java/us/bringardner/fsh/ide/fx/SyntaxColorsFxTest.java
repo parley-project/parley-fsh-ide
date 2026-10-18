@@ -52,7 +52,15 @@ public class SyntaxColorsFxTest {
 		assertEquals(1, scene.getStylesheets().size());
 		String url = scene.getStylesheets().get(0);
 		assertTrue(url.startsWith("data:text/css;base64,"));
-		assertEquals(c.css(), new String(java.util.Base64.getDecoder().decode(url.substring(url.indexOf(',') + 1)),
-				java.nio.charset.StandardCharsets.UTF_8));
+		assertTrue(new String(java.util.Base64.getDecoder().decode(url.substring(url.indexOf(',') + 1)),
+				java.nio.charset.StandardCharsets.UTF_8).endsWith(c.css()));
+
+		// another theme's colors replace them; a theme without its own takes them off
+		Theme other = Theme.DARK.withExtras(extras);
+		Fx.run(()->IdeWindow.applySyntaxColors(scene, other));
+		assertEquals(1, scene.getStylesheets().size(), "replaced, not added");
+		Fx.run(()->IdeWindow.applySyntaxColors(scene, Theme.LIGHT));
+		assertTrue(scene.getStylesheets().isEmpty());
+		assertFalse(scene.getRoot().getStyleClass().contains(SyntaxColors.CSS_CLASS));
 	}
 }

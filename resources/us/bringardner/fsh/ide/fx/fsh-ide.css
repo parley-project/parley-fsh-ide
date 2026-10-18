@@ -2,6 +2,9 @@
 .script-editor {
 	-fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
 	-fx-font-size: 13px;
+	/* not a bold or italic font chosen in Settings for everything else */
+	-fx-font-weight: normal;
+	-fx-font-style: normal;
 }
 .script-editor .lineno {
 	-fx-background-color: #f2f2f2;
@@ -17,6 +20,8 @@
 .console {
 	-fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
 	-fx-font-size: 12px;
+	-fx-font-weight: normal;
+	-fx-font-style: normal;
 }
 .console .error { -fx-fill: #c62828; }
 .console .prompt { -fx-fill: #555555; }

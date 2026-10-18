@@ -72,7 +72,7 @@ public class EditorThemeExtension implements ThemeExtension {
 	}
 
 	/** A script to show the colors on: a keyword, a command, a comment, strings, variables, numbers, operators. */
-	static final String SAMPLE = "# Copy the day's reports\n"
+	public static final String SAMPLE = "# Copy the day's reports\n"
 			+ "count=0\n"
 			+ "for f in $(ls reports)\n"
 			+ "do\n"

@@ -180,6 +180,7 @@ public class IdeWindow {
 
 	IdeWindow(Stage stage, Preferences prefs) {
 		this.stage = stage;
+		registerThemePages();
 		// the windows Quit closes
 		OPEN.add(this);
 		stage.addEventHandler(javafx.stage.WindowEvent.WINDOW_HIDDEN, e->OPEN.remove(this));
@@ -254,7 +255,8 @@ public class IdeWindow {
 	 * File and Help elsewhere. The same as the Swing IDE's.
 	 */
 	private MenuBar menuBar() {
-		StandardMenus menus = new StandardMenus(APP_NAME).about(()->AboutStage.open(stage)).quit(IdeWindow::okToQuit);
+		StandardMenus menus = new StandardMenus(APP_NAME).about(()->AboutStage.open(stage)).settings(this::actionSettings)
+				.quit(IdeWindow::okToQuit);
 
 		menus.file.getItems().addAll(item("New", "Shortcut+N", this::actionNew),
 				item("Open...", "Shortcut+O", this::actionOpen), recentMenu, new SeparatorMenuItem(),
@@ -289,11 +291,11 @@ public class IdeWindow {
 				item("Go to Line...", "Shortcut+L", this::actionGoToLine), new SeparatorMenuItem(),
 				item("Complete", "Ctrl+Space", completion::show), new SeparatorMenuItem(), spelling);
 
-		// View: the editor's and console's text size (the font is chosen in the Swing IDE), and folding
+		// View: the editor's and console's font and text size, and folding
 		menus.view.getItems().addAll(item("Bigger Text", "Shortcut+PLUS", ()->changeEditorFont(EditorFont::bigger)),
 				item("Smaller Text", "Shortcut+MINUS", ()->changeEditorFont(EditorFont::smaller)),
 				item("Reset Text Size", "Shortcut+DIGIT0", ()->changeEditorFont(EditorFont::resetSize)),
-				new SeparatorMenuItem(),
+				item("Editor Font...", null, this::actionEditorFont), new SeparatorMenuItem(),
 				// folding on [ and ], with Alt (Option): + and - are the text size
 				item("Fold", "Shortcut+Alt+OPEN_BRACKET", editor::foldAtCaret),
 				item("Unfold", "Shortcut+Alt+CLOSE_BRACKET", editor::unfoldAtCaret),
@@ -1146,18 +1148,65 @@ public class IdeWindow {
 	Stage stage() { return stage; }
 
 	/**
-	 * The theme's syntax colors on the script editor, when it has its own (set on the Swing IDE's
-	 * theme designer, Script editor page); otherwise the editor keeps fsh-ide.css's light or dark
-	 * colors.
+	 * The theme's syntax colors on the script editor, when it has its own (set on the theme
+	 * designer's Script editor page); otherwise the editor keeps fsh-ide.css's light or dark colors.
+	 * The colors of the theme before are taken off first.
 	 */
 	static void applySyntaxColors(Scene scene, us.bringardner.swing.gradient.Theme theme) {
+		scene.getStylesheets().removeIf(s->s.startsWith("data:text/css;base64,") && isCss(s, SyntaxColors.CSS_CLASS));
+		scene.getRoot().getStyleClass().remove(SyntaxColors.CSS_CLASS);
 		if( !SyntaxColors.hasColors(theme.getExtras()) ) {
 			return;
 		}
 		SyntaxColors colors = SyntaxColors.ofTheme(theme.getExtras(), theme.isDark());
 		scene.getRoot().getStyleClass().add(SyntaxColors.CSS_CLASS);
-		scene.getStylesheets().add("data:text/css;base64,"
-				+ java.util.Base64.getEncoder().encodeToString(colors.css().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+		scene.getStylesheets().add("data:text/css;base64," + java.util.Base64.getEncoder().encodeToString(
+				("/* " + SyntaxColors.CSS_CLASS + " */\n" + colors.css()).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+	}
+
+	/** True if a data: stylesheet is the one marked with this class (the comment it starts with). */
+	private static boolean isCss(String url, String cssClass) {
+		String css = new String(java.util.Base64.getDecoder().decode(url.substring(url.indexOf(',') + 1)),
+				java.nio.charset.StandardCharsets.UTF_8);
+		return css.startsWith("/* " + cssClass + " */");
+	}
+
+	/**
+	 * The theme designer's Script editor page (the syntax colors, part of each theme), in this IDE
+	 * as in the Swing one.
+	 */
+	static void registerThemePages() {
+		if( us.bringardner.swing.gradient.ThemeExtensions.all().stream().noneMatch(x->x.getId().equals(SyntaxColors.EXTENSION_ID)) ) {
+			us.bringardner.swing.gradient.ThemeExtensions.register(new us.bringardner.fsh.ide.EditorThemeExtension());
+		}
+		us.bringardner.fx.dialog.FxThemePages.register(SyntaxColors.EXTENSION_ID, EditorThemePage::new);
+	}
+
+	/**
+	 * Settings...: the theme and font, shared with the other Parley applications (fx-widgets'
+	 * SettingsDialog). OK puts them on every open window, the syntax colors of the theme included.
+	 */
+	void actionSettings() {
+		if( us.bringardner.fx.dialog.SettingsDialog.showDialog(stage, prefs) ) {
+			themeChanged();
+		}
+	}
+
+	/** The current theme's syntax colors on every open IDE window (the look itself is already on them). */
+	static void themeChanged() {
+		for(IdeWindow w : new java.util.ArrayList<>(OPEN)) {
+			if( w.stage.getScene() != null ) {
+				applySyntaxColors(w.stage.getScene(), us.bringardner.swing.gradient.Theme.current());
+			}
+		}
+	}
+
+	/** View > Editor Font...: the editors' and console's font, kept and put on every open IDE window. */
+	void actionEditorFont() {
+		EditorFont f = EditorFontDialog.choose(stage, EditorFont.load(prefs));
+		if( f != null ) {
+			changeEditorFont(old->f);
+		}
 	}
 
 	/**
@@ -1176,9 +1225,7 @@ public class IdeWindow {
 	}
 
 	private static boolean isEditorFontCss(String url) {
-		String css = new String(java.util.Base64.getDecoder().decode(url.substring(url.indexOf(',') + 1)),
-				java.nio.charset.StandardCharsets.UTF_8);
-		return css.startsWith("/* " + EditorFont.CSS_CLASS + " */");
+		return isCss(url, EditorFont.CSS_CLASS);
 	}
 
 	/** Changes the editor font, keeps it, and puts it on every open IDE window. */

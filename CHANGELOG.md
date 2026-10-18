@@ -6,6 +6,10 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
 
+- The JavaFX IDE has Settings… too (fx-widgets' SettingsDialog), the same as the Swing IDE's: the
+  theme and font with a preview, and New theme…, Edit theme… and Delete theme with the Script editor
+  page for the syntax colors. OK changes the open windows at once. View > Editor Font… is in the
+  JavaFX IDE as well. Before, the JavaFX IDE used what was chosen in the Swing IDE.
 - The menus follow the standard Parley layout, the same in the Swing and JavaFX IDEs and in
   parley-files-viewer: File, Edit (Undo, Redo, Cut, Copy, Paste, Select All, Find…, Find Next,
   Go to Line…), View, Run, Window and Help. Settings… (⌘,) opens the appearance dialog. Debug is

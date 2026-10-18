@@ -62,7 +62,7 @@ recent files in Java preferences. Both are copied across from BjlShellIde's
 locations the first time fsh-ide starts.
 
 Settings… (⌘, on macOS, in the application menu; Ctrl+, at the end of the File menu elsewhere) sets the look: the theme and font, shared with the other Parley applications,
-and kept in Java preferences; the JavaFX IDE uses what the Swing IDE saved. The script editors'
+and kept in Java preferences, so both IDEs share it; each has its own Settings dialog. The script editors'
 syntax colors are part of the theme: New theme... and Edit theme... there have a Script editor
 page, where a ready-made scheme can be loaded and any color changed. A new theme starts with the
 colors of the theme it is made from; the built-in themes have the light colors, or the Parley dark
@@ -71,7 +71,7 @@ ones for the Dark theme.
 The script editors and the console have their own font, apart from the look's: View > Bigger
 Text and Smaller Text (⌘+ and ⌘−, Ctrl on Windows and Linux) change its size, Reset Text Size (⌘0)
 goes back to 13 points, and View > Editor Font... chooses a fixed-width font. Both IDEs keep it in
-Java preferences (the JavaFX IDE has the size keys; the font is chosen in the Swing IDE).
+Java preferences.
 
 Folding is on the bracket keys, the same in both IDEs: ⌥⌘[ folds the block the caret is in and
 ⌥⌘] unfolds it; with Shift, all blocks (Ctrl and Alt on Windows and Linux).

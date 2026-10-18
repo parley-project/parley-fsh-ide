@@ -12,8 +12,6 @@
  */
 package us.bringardner.fsh.ide.fx;
 
-import us.bringardner.swing.gradient.Theme;
-import us.bringardner.swing.gradient.Appearance;
 import java.util.prefs.Preferences;
 import javafx.application.Platform;
 import us.bringardner.parley.brand.ParleyBrand;
@@ -25,10 +23,8 @@ import us.bringardner.parley.brand.ParleyBrand;
 public class FshIdeFx {
 
 	public static void main(String[] args) {
-		// the theme chosen in the appearance settings (the Swing IDE's File > Preferences; both IDEs
-		// keep their preferences in the same place)
-		Appearance saved = Appearance.load(Preferences.userRoot().node(IdeWindow.PREFERENCES_NODE));
-		Theme.setCurrent(saved.getTheme());
+		// the theme and font chosen in Settings... (both IDEs keep their preferences in the same place)
+		us.bringardner.fx.dialog.SettingsDialog.load(Preferences.userRoot().node(IdeWindow.PREFERENCES_NODE));
 		Platform.setImplicitExit(true);
 		Platform.startup(()->{
 			setDockIcon();
