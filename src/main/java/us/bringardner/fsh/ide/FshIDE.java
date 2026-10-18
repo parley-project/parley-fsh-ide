@@ -1101,7 +1101,8 @@ public class FshIDE extends JFrame  {
 		JMenu view = new JMenu("View");
 		int shortcut = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 		JMenuItem bigger = new JMenuItem("Bigger Text");
-		bigger.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_EQUALS, shortcut));
+		// shown as ⌘+, as Mac applications show it; ⌘=, ⇧⌘= and the keypad's + all work (TextSizeKeys)
+		bigger.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_PLUS, shortcut));
 		bigger.addActionListener(e->actionBiggerText());
 		JMenuItem smaller = new JMenuItem("Smaller Text");
 		smaller.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_MINUS, shortcut));

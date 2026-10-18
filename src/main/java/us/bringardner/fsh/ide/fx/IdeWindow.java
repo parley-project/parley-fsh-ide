@@ -213,6 +213,7 @@ public class IdeWindow {
 		scene.getStylesheets().add(IdeWindow.class.getResource("fsh-ide.css").toExternalForm());
 		applySyntaxColors(scene, us.bringardner.swing.gradient.Theme.current());
 		applyEditorFont(scene, EditorFont.load(prefs));
+		scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, this::textSizeKeys);
 		stage.setScene(scene);
 		restoreBounds();
 		stage.setOnCloseRequest(e->{
@@ -306,7 +307,8 @@ public class IdeWindow {
 		Menu help = new Menu("Help", null, about);
 
 		// View: the editor's and console's text bigger or smaller, kept for both IDEs
-		MenuItem bigger = item("Bigger Text", "Shortcut+EQUALS", ()->changeEditorFont(EditorFont::bigger));
+		// the menu shows ⌘+; the keys themselves, the keypad's too, are caught by textSizeKeys
+		MenuItem bigger = item("Bigger Text", "Shortcut+PLUS", ()->changeEditorFont(EditorFont::bigger));
 		MenuItem smaller = item("Smaller Text", "Shortcut+MINUS", ()->changeEditorFont(EditorFont::smaller));
 		MenuItem actual = item("Actual Size", "Shortcut+DIGIT0", ()->changeEditorFont(EditorFont::actualSize));
 		Menu view = new Menu("View", null, bigger, smaller, actual);
@@ -1165,5 +1167,31 @@ public class IdeWindow {
 
 	void actualSize() {
 		changeEditorFont(EditorFont::actualSize);
+	}
+
+	/**
+	 * Shortcut and + (= with or without shift, or the keypad's +), - (or the keypad's -) and 0: the
+	 * editor's and console's text bigger, smaller and the standard size, whichever key is used. The
+	 * menu items show them, but a menu accelerator takes one key only.
+	 */
+	void textSizeKeys(javafx.scene.input.KeyEvent e) {
+		if( !e.isShortcutDown() || e.isAltDown() ) {
+			return;
+		}
+		javafx.scene.input.KeyCode k = e.getCode();
+		String t = e.getText();
+		java.util.function.UnaryOperator<EditorFont> change = null;
+		if( k == javafx.scene.input.KeyCode.EQUALS || k == javafx.scene.input.KeyCode.PLUS
+				|| k == javafx.scene.input.KeyCode.ADD || "=".equals(t) || "+".equals(t) ) {
+			change = EditorFont::bigger;
+		} else if( k == javafx.scene.input.KeyCode.MINUS || k == javafx.scene.input.KeyCode.SUBTRACT || "-".equals(t) ) {
+			change = EditorFont::smaller;
+		} else if( !e.isShiftDown() && (k == javafx.scene.input.KeyCode.DIGIT0 || k == javafx.scene.input.KeyCode.NUMPAD0) ) {
+			change = EditorFont::actualSize;
+		}
+		if( change != null ) {
+			changeEditorFont(change);
+			e.consume();
+		}
 	}
 }

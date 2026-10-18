@@ -115,7 +115,26 @@ public class IdeWindowTest {
 		assertFalse(Fx.call(()->w.stage().getScene().getRoot().getStyleClass()
 				.contains(us.bringardner.fsh.ide.core.EditorFont.CSS_CLASS)));
 		assertEquals(sheets - 1, (int) Fx.call(()->w.stage().getScene().getStylesheets().size()));
+
+		// the keys: the keypad's + and -, shortcut = and shortcut 0; others pass by
+		Fx.run(()->w.textSizeKeys(key(javafx.scene.input.KeyCode.ADD, "+", false)));
+		Fx.run(()->w.textSizeKeys(key(javafx.scene.input.KeyCode.EQUALS, "=", false)));
+		assertEquals(15, Fx.call(w::editorFont).getSize());
+		Fx.run(()->w.textSizeKeys(key(javafx.scene.input.KeyCode.SUBTRACT, "-", false)));
+		assertEquals(14, Fx.call(w::editorFont).getSize());
+		javafx.scene.input.KeyEvent other = key(javafx.scene.input.KeyCode.S, "s", false);
+		Fx.run(()->w.textSizeKeys(other));
+		assertFalse(other.isConsumed());
+		Fx.run(()->w.textSizeKeys(key(javafx.scene.input.KeyCode.DIGIT0, "0", false)));
+		assertEquals(us.bringardner.fsh.ide.core.EditorFont.defaults(), Fx.call(w::editorFont));
 		Fx.run(()->w.stage().close());
+	}
+
+	/** A key pressed with the shortcut key (Cmd on macOS, Ctrl elsewhere). */
+	private static javafx.scene.input.KeyEvent key(javafx.scene.input.KeyCode code, String text, boolean shift) {
+		boolean mac = System.getProperty("os.name", "").toLowerCase().startsWith("mac");
+		return new javafx.scene.input.KeyEvent(javafx.scene.input.KeyEvent.KEY_PRESSED, text, text, code, shift,
+				!mac, false, mac);
 	}
 
 	@Test
