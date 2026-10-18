@@ -12,6 +12,7 @@
  */
 package us.bringardner.fsh.ide.fx;
 
+import us.bringardner.fsh.ide.core.SyntaxColors;
 import us.bringardner.fx.gradient.GradientLook;
 import java.io.IOException;
 import java.util.List;
@@ -209,6 +210,7 @@ public class IdeWindow {
 		// the gradient look shared with parley-files-viewer, then the IDE's own editor and console styles
 		GradientLook.apply(scene);
 		scene.getStylesheets().add(IdeWindow.class.getResource("fsh-ide.css").toExternalForm());
+		applySyntaxColors(scene, SyntaxColors.load(prefs));
 		stage.setScene(scene);
 		restoreBounds();
 		stage.setOnCloseRequest(e->{
@@ -1087,4 +1089,17 @@ public class IdeWindow {
 	String statusText() { return status.getText(); }
 	CheckMenuItem useSelectionItem() { return useSelection; }
 	Stage stage() { return stage; }
+
+	/**
+	 * The syntax colors chosen in the Swing IDE (File &gt; Editor Colors), on the script editor; for
+	 * "Follow the theme" the editor keeps fsh-ide.css's light or dark colors.
+	 */
+	static void applySyntaxColors(Scene scene, SyntaxColors colors) {
+		if( colors.isFollowTheme() ) {
+			return;
+		}
+		scene.getRoot().getStyleClass().add(SyntaxColors.CSS_CLASS);
+		scene.getStylesheets().add("data:text/css;base64,"
+				+ java.util.Base64.getEncoder().encodeToString(colors.css().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+	}
 }

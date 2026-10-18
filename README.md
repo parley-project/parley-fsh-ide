@@ -61,6 +61,11 @@ Templates and settings are kept in `~/.fsh-ide/Config.xml`; window positions and
 recent files in Java preferences. Both are copied across from BjlShellIde's
 locations the first time fsh-ide starts.
 
+File > Preferences sets the look (the theme and font, shared with the other Parley applications),
+and File > Editor Colors the script editors' syntax colors: by default they follow the theme, or
+choose a ready-made scheme or change any color. Both are kept in Java preferences, and the JavaFX
+IDE uses what the Swing IDE saved.
+
 ## Arguments and redirects
 
 A script's arguments and its stdin, stdout and stderr files are not written into the script:
