@@ -236,7 +236,110 @@ public class Configuration {
 	}
 
 	
+	/**
+	 * The built-in templates. In the code, "${name}" is a field the user fills in (its name is the
+	 * text inserted; fields with the same name change together), "${cursor}" is where the caret
+	 * goes, and "$$" is a "$" ({@link TemplateText}).
+	 */
 	private static Template defaultTemplates [] = {
+			new Template( "true", "true"),
+			new Template( "false", "false"),
+			new Template( "until", "until-loop", 
+					"until [ ${condition} ]\n"
+					+ "do\n"
+					+ "  ${echo}\n"
+					+ "done\n"),
+			new Template( "while", "while-loop", 
+					"while [ ${condition} ]\n"
+					+ "do\n"
+					+ "  ${echo}\n"
+					+ "done\n"),
+			
+			new Template( "for", "for-c-style", 
+					"for((${var}=${start}; ${var}<${end}; ${var}++))\n"
+					+ "do\n"
+					+ "\techo $$${var}\n"
+					+ "done\n"),
+			new Template( "for", "for-array", 
+					"for ${i} in ${1 2}\n"
+					+ "do\n"
+					+ "\techo $$${i}\n"
+					+ "done\n"),
+			new Template( "for", "for-list", 
+					"for ${word} in ${list of words}\n"
+					+ "do\n"
+					+ "\techo \"$$${word}\"\n"
+					+ "done\n"),
+			
+			new Template( "for", "for-range", 
+					"for ${i} in {${start}..${stop}..${increment}}\n"
+					+ "do\n"
+					+ "\techo $$${i}\n"
+					+ "done\n"),
+			
+			new Template( "if", "if", 
+					"if [ ${condition} ]; then\n"
+					+ "  # code to be executed if the condition is true\n"
+					+ "  ${echo}\n"
+					+ "fi\n"),
+			new Template( "if-else", "if-else", 
+					"if [ ${condition} ]; then\n"
+					+ "  # code to be executed if the condition is true\n"
+					+ "  ${echo}\n"
+					+ "else\n"
+					+ "  # code to be executed if the condition is false\n"
+					+ "  ${echo}\n"
+					+ "fi\n"),
+			new Template( "expression", "expression $((x % 2))", "$$(( ${cursor} ))"),
+			new Template( "parameterPlusword", "parameter:+word (If parameter is null or unset, nothing is substituted, otherwise the expansion of word is substituted. The value of parameter is not used.)", 
+					"$${${parameter}:+${word}}"),
+			new Template( "parameterMinusword", "parameter:-word (If parameter is unset or null, the expansion of word is substituted. Otherwise, the value of parameter is substituted.)", 
+					"$${${parameter}:-${word}}"),
+			new Template( "parameterEqword", "parameter:=word (If parameter is unset or null, the expansion of word is assigned to parameter, and the result of the expansion is the final value of parameter. Positional parameters and special parameters may not be assigned in this way.)", 
+					"$${${parameter}:=${word}}"),
+			
+			new Template( "parameter?word", 
+					"parameter:?word (If parameter is null or unset, the shell writes the expansion of word (or a message to that effect if word is not present) to the standard error and, if it is not interactive, exits with a non-zero status. An interactive shell does not exit, but does not execute the command associated with the expansion. Otherwise, the value of parameter is substituted.)", 
+					"$${${parameter}:?${parameter is not set}}"),
+			
+			
+			new Template( "case", "case-statement", 
+					"case ${word} in\n"
+					+ "  option1 | option2 ) echo \"type1\";;\n"
+					+ "  option3 | option4 ) echo \"type2\";;\n"
+					+ "  *) echo \"an unknown type\";;\n"
+					+ "esac\n"),
+			
+			new Template( "case", "case-statement-variable", 
+					"case $$${var} in\n"
+					+ "  option1 | option2 ) echo \"$$${var} is type1\";;\n"
+					+ "  option3 | option4 ) echo \"$$${var} is type2\";;\n"
+					+ "  *) echo \"$$${var} is an unknown type\";;\n"
+					+ "esac\n"),
+			
+			new Template( "select01", "select", 
+					"select ${name} in ${list}\n"
+					+ "do\n"
+					+ "\techo you picked $$${name}\n"
+					+ "\tbreak\n"
+					+ "done\n"
+					),
+			
+			new Template( "select02", "select-variable", 
+					"select ${name} in $$${var}\n"
+					+ "do\n"
+					+ "\techo you picked $$${name}\n"
+					+ "\tbreak\n"
+					+ "done\n"
+					),
+	};
+
+	/**
+	 * Built-in templates as earlier versions had them. A saved configuration has a copy of each, so
+	 * an unchanged copy is taken out when it's read; one the user changed is theirs and stays.
+	 */
+	private static Template retiredTemplates [] = {
+
 			new Template( "true", "true"),
 			new Template( "false", "false"),
 			new Template( "until", "until-loop", 
@@ -329,11 +432,14 @@ public class Configuration {
 					+ "done"
 					),
 			
-			//new Template( "name", "name2", ""),
-			
 	};
-	
+
 	private static void populateDefault(List<Template> templates) {
+		for(Template t : retiredTemplates) {
+			if( !java.util.Arrays.asList(defaultTemplates).contains(t) ) {
+				templates.remove(t);
+			}
+		}
 		for(Template t : defaultTemplates) {
 			if(!templates.contains(t)) {
 				templates.add(t);

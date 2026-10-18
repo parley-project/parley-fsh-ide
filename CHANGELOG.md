@@ -132,6 +132,12 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Fixed
 
+- The built-in templates insert code that runs. if and if-else had branches with only a comment (a
+  syntax error); while and until tested `[ false ]` and `[ true ]`, which are always true (so while
+  never ended), and now have a condition field; the for, select and case templates echoed the
+  variable's name rather than its value (`echo i`), and now echo `$i`, linked to the loop variable's
+  field. The do-statement template, not valid on its own, is gone. Unchanged copies of the old
+  templates in a saved configuration are replaced; edited ones are kept.
 - The JavaFX IDE's editor and console are in a fixed-width font everywhere. fsh-ide.css listed
   several families ("Menlo", "Consolas", ...), but JavaFX's CSS takes only one, so where Menlo
   isn't installed (Windows, Linux) the console was in the proportional System font; the family is
