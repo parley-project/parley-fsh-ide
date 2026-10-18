@@ -61,7 +61,7 @@ Templates and settings are kept in `~/.fsh-ide/Config.xml`; window positions and
 recent files in Java preferences. Both are copied across from BjlShellIde's
 locations the first time fsh-ide starts.
 
-File > Preferences sets the look: the theme and font, shared with the other Parley applications,
+Settings… (⌘, on macOS, in the application menu; Ctrl+, at the end of the File menu elsewhere) sets the look: the theme and font, shared with the other Parley applications,
 and kept in Java preferences; the JavaFX IDE uses what the Swing IDE saved. The script editors'
 syntax colors are part of the theme: New theme... and Edit theme... there have a Script editor
 page, where a ready-made scheme can be loaded and any color changed. A new theme starts with the

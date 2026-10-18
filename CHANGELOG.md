@@ -5,6 +5,13 @@
 First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
+
+- The menus follow the standard Parley layout, the same in the Swing and JavaFX IDEs and in
+  parley-files-viewer: File, Edit (Undo, Redo, Cut, Copy, Paste, Select All, Find…, Find Next,
+  Go to Line…), View, Run, Window and Help. Settings… (⌘,) opens the appearance dialog. Debug is
+  now ⇧⌘D (⌘D is the editor's Delete Line). The run options (Run Selected Code Only, Run When
+  Opened, Profile) and Show Debug View moved to the Run menu; the empty Import and Export menus
+  were dropped.
 - The look of parley-files-viewer (swing-widgets' and fx-widgets' GradientLook), with themes: Gold
   (default), Dark, Light, Copper, Sage, Ocean, Slate, Plum, or one made from any color, chosen in
   File > Preferences with the font. The editors follow the theme: a dark theme gives a dark editor

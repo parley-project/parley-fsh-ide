@@ -376,46 +376,17 @@ public class EditorPanel extends JPanel {
 		createAutoComplete();
 		
 
+		// ⌘F, ⌘G, ⌘L, ⌘N, ⌘O and ⌘S are the window's menus (Edit and File); the editor keeps ⌘P
+		// (the matching brace) and ⌘I (format), and Alt-F finds the next match
 		editorPane.addKeyListener(new KeyAdapter() {
-			private FindDialog findDialog;
 
 			@Override
 
 			public void keyPressed(KeyEvent e) {
 				int c = e.getKeyCode();
-				//System.out.println("Edtor.keyPressed c="+((int)c));
 				boolean keep = true;
 				if( e.isControlDown() || e.isMetaDown()) {
-					// P = 16,  F = 6 ,   S = 19
-					if( c == KeyEvent.VK_F) {// 6 == F
-						if( findDialog == null ) {
-							findDialog = new FindDialog();
-						}
-						if( !findDialog.isVisible()) {
-							findDialog.showDialog(editorPane);
-						}
-						keep = false;
-					} else if( c == KeyEvent.VK_G ) {
-						GoToDialog dialog = new GoToDialog();
-						Point loc3 = editorPane.getLocationOnScreen();
-						Point loc = editorPane.getCaret().getMagicCaretPosition();
-						if( loc != null ) {
-							loc3.x+=loc.x;
-							loc3.y+=loc.y;
-						}
-
-						dialog.setLocation(loc3);
-						int line = dialog.getLine();
-						if( line >0) {
-							try {
-								editorPane.setCaretPosition(editorPane.getLineStartOffset(line-1));
-							} catch (BadLocationException e1) {
-							}
-						}
-					} else if( c == KeyEvent.VK_N ) {
-						actionNew();
-						keep = false;
-					} else if( c == KeyEvent.VK_P ) { // P
+					if( c == KeyEvent.VK_P ) { // P
 						keep = false;
 						Document doc = editorPane.getDocument();
 						int dot = editorPane.getCaretPosition();
@@ -435,24 +406,13 @@ public class EditorPanel extends JPanel {
 							break;
 
 						}
-					} else if( c == KeyEvent.VK_O ) { // O
-						actionOpen();
-						keep = false;
-					} else if( c == KeyEvent.VK_S ) { // S
-						actionSave();
-						keep = false;
 					} else if( c == KeyEvent.VK_I ) { // I
 						actionFormat();
 						keep = false;
 					} 
 				} else if(e.isAltDown()) {
-					if( c == KeyEvent.VK_F) {// 102 == F
-						if( findDialog == null ) {
-							findDialog = new FindDialog();
-							findDialog.showDialog(editorPane);
-						} else {
-							findDialog.find();
-						}
+					if( c == KeyEvent.VK_F) {
+						findNext();
 						keep = false;
 					}
 				}
@@ -479,9 +439,46 @@ public class EditorPanel extends JPanel {
 	
 	
 
-	private void actionNew() {
-		firePropertyChange(ACTION_NEW, true, false);
+	private FindDialog findDialog;
+
+	/** Edit > Find...: the find dialog, on this editor. */
+	public void showFind() {
+		if( findDialog == null ) {
+			findDialog = new FindDialog();
+		}
+		if( !findDialog.isVisible()) {
+			findDialog.showDialog(editorPane);
+		}
 	}
+
+	/** Edit > Find Next: the next match of what was last looked for (or the find dialog, the first time). */
+	public void findNext() {
+		if( findDialog == null ) {
+			showFind();
+		} else {
+			findDialog.find();
+		}
+	}
+
+	/** Edit > Go to Line...: asks for a line number and moves the caret there. */
+	public void goToLine() {
+		GoToDialog dialog = new GoToDialog();
+		Point loc3 = editorPane.getLocationOnScreen();
+		Point loc = editorPane.getCaret().getMagicCaretPosition();
+		if( loc != null ) {
+			loc3.x+=loc.x;
+			loc3.y+=loc.y;
+		}
+		dialog.setLocation(loc3);
+		int line = dialog.getLine();
+		if( line >0) {
+			try {
+				editorPane.setCaretPosition(editorPane.getLineStartOffset(line-1));
+			} catch (BadLocationException e1) {
+			}
+		}
+	}
+
 
 
 
@@ -607,16 +604,8 @@ public class EditorPanel extends JPanel {
 
 
 
-	private void actionSave() {
-		firePropertyChange(ACTION_SAVE, true, false);
-
-	}
 
 
-	private void actionOpen() {
-		firePropertyChange(ACTION_OPEN, true, false);
-
-	}
 
 
 	public void setText(String string, FileSource scriptFile) {

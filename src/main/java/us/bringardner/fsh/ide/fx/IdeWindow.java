@@ -15,6 +15,7 @@ package us.bringardner.fsh.ide.fx;
 import us.bringardner.fsh.ide.core.EditorFont;
 import us.bringardner.fsh.ide.core.SyntaxColors;
 import us.bringardner.fx.gradient.GradientLook;
+import us.bringardner.fx.menu.StandardMenus;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +111,7 @@ public class IdeWindow {
 	private final MenuItem stepOverItem = new MenuItem("Step Over");
 	private final MenuItem stepIntoItem = new MenuItem("Step Into");
 	private final MenuItem suspendItem = new MenuItem("Suspend");
-	private final CheckMenuItem showDebugPanel = new CheckMenuItem("Show Side Panel");
+	private final CheckMenuItem showDebugPanel = new CheckMenuItem("Show Debug View");
 	private final FindBar findBar = new FindBar(editor);
 	private final CompletionPopup completion = new CompletionPopup(editor, ()->Configuration.getInstance().getTemplates());
 	private final DebugPanel debugPanel = new DebugPanel();
@@ -179,6 +180,9 @@ public class IdeWindow {
 
 	IdeWindow(Stage stage, Preferences prefs) {
 		this.stage = stage;
+		// the windows Quit closes
+		OPEN.add(this);
+		stage.addEventHandler(javafx.stage.WindowEvent.WINDOW_HIDDEN, e->OPEN.remove(this));
 		this.prefs = prefs;
 		// The Parley app icon with the terminal badge
 		FxBrand.apply(stage);
@@ -244,26 +248,62 @@ public class IdeWindow {
 		updateTitle();
 	}
 
+	/**
+	 * The window's menus, laid out as in every Parley application (fx-widgets' StandardMenus): File,
+	 * Edit, View, Run, Window and Help, with About and Quit in the application menu on macOS and in
+	 * File and Help elsewhere. The same as the Swing IDE's.
+	 */
 	private MenuBar menuBar() {
-		MenuItem newFile = item("New", "Shortcut+N", this::actionNew);
-		MenuItem open = item("Open...", "Shortcut+O", this::actionOpen);
-		MenuItem save = item("Save", "Shortcut+S", this::actionSave);
-		MenuItem saveAs = item("Save As...", "Shortcut+Shift+S", this::actionSaveAs);
-		MenuItem reload = item("Reload", null, this::actionReload);
-		MenuItem newWindow = item("New Window", "Shortcut+Shift+N", ()->new IdeWindow().show());
-		MenuItem closeItem = item("Close", "Shortcut+W", ()->{
-			if( close()) {
-				stage.close();
+		StandardMenus menus = new StandardMenus(APP_NAME).about(()->AboutStage.open(stage)).quit(IdeWindow::okToQuit);
+
+		menus.file.getItems().addAll(item("New", "Shortcut+N", this::actionNew),
+				item("Open...", "Shortcut+O", this::actionOpen), recentMenu, new SeparatorMenuItem(),
+				item("Save", "Shortcut+S", this::actionSave), item("Save As...", "Shortcut+Shift+S", this::actionSaveAs),
+				item("Reload", null, this::actionReload), new SeparatorMenuItem(),
+				item("Clear Run Settings...", null, this::actionClearRunSettings), new SeparatorMenuItem(),
+				item("New Window", "Shortcut+Shift+N", ()->new IdeWindow().show()),
+				item("Close", "Shortcut+W", ()->{
+					if( close()) {
+						stage.close();
+					}
+				}));
+
+		CheckMenuItem spelling = new CheckMenuItem("Check Spelling");
+		spelling.setSelected(prefs == null || prefs.getBoolean(PREF_SPELLING, true));
+		editor.setSpellChecking(spelling.isSelected());
+		spelling.selectedProperty().addListener((o, was, is)->{
+			editor.setSpellChecking(is);
+			if( prefs != null ) {
+				prefs.putBoolean(PREF_SPELLING, is);
 			}
 		});
-		MenuItem clearRunSettings = item("Clear Run Settings...", null, this::actionClearRunSettings);
-		Menu file = new Menu("File", null, newFile, open, recentMenu, new SeparatorMenuItem(),
-				save, saveAs, reload, new SeparatorMenuItem(), clearRunSettings, new SeparatorMenuItem(),
-				newWindow, closeItem);
+		menus.edit.getItems().addAll(item("Undo", "Shortcut+Z", ()->editor.getCodeArea().undo()),
+				item("Redo", "Shortcut+Shift+Z", ()->editor.getCodeArea().redo()), new SeparatorMenuItem(),
+				// on whichever text has the focus: the editor, the arguments, the console
+				item("Cut", "Shortcut+X", ()->onFocusedText("cut")), item("Copy", "Shortcut+C", ()->onFocusedText("copy")),
+				item("Paste", "Shortcut+V", ()->onFocusedText("paste")),
+				item("Select All", "Shortcut+A", ()->onFocusedText("selectAll")), new SeparatorMenuItem(),
+				item("Find...", "Shortcut+F", ()->findBar.show(false)), item("Find Next", "Shortcut+G", ()->findBar.findNext(true)),
+				item("Find Previous", "Shortcut+Shift+G", ()->findBar.findNext(false)),
+				item("Replace...", "Shortcut+Alt+F", ()->findBar.show(true)),
+				item("Go to Line...", "Shortcut+L", this::actionGoToLine), new SeparatorMenuItem(),
+				item("Complete", "Ctrl+Space", completion::show), new SeparatorMenuItem(), spelling);
+
+		// View: the editor's and console's text size (the font is chosen in the Swing IDE), and folding
+		menus.view.getItems().addAll(item("Bigger Text", "Shortcut+PLUS", ()->changeEditorFont(EditorFont::bigger)),
+				item("Smaller Text", "Shortcut+MINUS", ()->changeEditorFont(EditorFont::smaller)),
+				item("Reset Text Size", "Shortcut+DIGIT0", ()->changeEditorFont(EditorFont::resetSize)),
+				new SeparatorMenuItem(),
+				// folding on [ and ], with Alt (Option): + and - are the text size
+				item("Fold", "Shortcut+Alt+OPEN_BRACKET", editor::foldAtCaret),
+				item("Unfold", "Shortcut+Alt+CLOSE_BRACKET", editor::unfoldAtCaret),
+				item("Fold All", "Shortcut+Alt+Shift+OPEN_BRACKET", editor::foldAll),
+				item("Unfold All", "Shortcut+Alt+Shift+CLOSE_BRACKET", editor::unfoldAll));
 
 		runItem.setAccelerator(KeyCombination.keyCombination("Shortcut+R"));
 		runItem.setOnAction(e->run());
-		debugItem.setAccelerator(KeyCombination.keyCombination("Shortcut+D"));
+		// shift: as in the Swing IDE, whose editor keeps ⌘D for deleting a line
+		debugItem.setAccelerator(KeyCombination.keyCombination("Shortcut+Shift+D"));
 		debugItem.setOnAction(e->debug());
 		stopItem.setAccelerator(KeyCombination.keyCombination("Shortcut+PERIOD"));
 		stopItem.setOnAction(e->stop());
@@ -274,52 +314,54 @@ public class IdeWindow {
 		stepIntoItem.setAccelerator(KeyCombination.keyCombination("F5"));
 		stepIntoItem.setOnAction(e->stepIntoScript());
 		suspendItem.setOnAction(e->suspendScript());
-		MenuItem toggle = item("Toggle Breakpoint", "Shortcut+B", ()->editor.toggleBreakpoint(editor.getCaretLine()));
-		MenuItem clear = item("Clear Console", "Shortcut+K", console::clear);
 		Menu run = new Menu("Run", null, runItem, debugItem, stopItem, new SeparatorMenuItem(),
 				resumeItem, stepOverItem, stepIntoItem, suspendItem, new SeparatorMenuItem(),
-				toggle, useSelection, useAdapter, clear, new SeparatorMenuItem(), showDebugPanel);
+				item("Toggle Breakpoint", "Shortcut+B", ()->editor.toggleBreakpoint(editor.getCaretLine())),
+				new SeparatorMenuItem(), useSelection, useAdapter, new SeparatorMenuItem(),
+				item("Clear Console", "Shortcut+K", console::clear), showDebugPanel);
 
-		MenuItem undo = item("Undo", "Shortcut+Z", ()->editor.getCodeArea().undo());
-		MenuItem redo = item("Redo", "Shortcut+Shift+Z", ()->editor.getCodeArea().redo());
-		MenuItem find = item("Find...", "Shortcut+F", ()->findBar.show(false));
-		MenuItem findNext = item("Find Next", "Shortcut+G", ()->findBar.findNext(true));
-		MenuItem findPrevious = item("Find Previous", "Shortcut+Shift+G", ()->findBar.findNext(false));
-		MenuItem replace = item("Replace...", "Shortcut+Alt+F", ()->findBar.show(true));
-		MenuItem goTo = item("Go to Line...", "Shortcut+L", this::actionGoToLine);
-		MenuItem complete = item("Complete", "Ctrl+Space", completion::show);
-		// folding on [ and ], with Alt (Option): + and - are the text size (View)
-		MenuItem fold = item("Fold", "Shortcut+Alt+OPEN_BRACKET", editor::foldAtCaret);
-		MenuItem unfold = item("Unfold", "Shortcut+Alt+CLOSE_BRACKET", editor::unfoldAtCaret);
-		MenuItem foldAll = item("Fold All", "Shortcut+Alt+Shift+OPEN_BRACKET", editor::foldAll);
-		MenuItem unfoldAll = item("Unfold All", "Shortcut+Alt+Shift+CLOSE_BRACKET", editor::unfoldAll);
-		CheckMenuItem spelling = new CheckMenuItem("Check Spelling");
-		spelling.setSelected(prefs == null || prefs.getBoolean(PREF_SPELLING, true));
-		editor.setSpellChecking(spelling.isSelected());
-		spelling.selectedProperty().addListener((o, was, is)->{
-			editor.setSpellChecking(is);
-			if( prefs != null ) {
-				prefs.putBoolean(PREF_SPELLING, is);
-			}
-		});
-		Menu edit = new Menu("Edit", null, undo, redo, new SeparatorMenuItem(), find, findNext, findPrevious,
-				replace, new SeparatorMenuItem(), goTo, complete, new SeparatorMenuItem(), fold, unfold, foldAll, unfoldAll,
-				new SeparatorMenuItem(), spelling);
-
-		MenuItem about = item("About fsh-ide", null, ()->AboutStage.open(stage));
-		Menu help = new Menu("Help", null, about);
-
-		// View: the editor's and console's text bigger or smaller, kept for both IDEs
-		// the menu shows ⌘+; the keys themselves, the keypad's too, are caught by textSizeKeys
-		MenuItem bigger = item("Bigger Text", "Shortcut+PLUS", ()->changeEditorFont(EditorFont::bigger));
-		MenuItem smaller = item("Smaller Text", "Shortcut+MINUS", ()->changeEditorFont(EditorFont::smaller));
-		MenuItem reset = item("Reset Text Size", "Shortcut+DIGIT0", ()->changeEditorFont(EditorFont::resetSize));
-		Menu view = new Menu("View", null, bigger, smaller, reset);
-
-		MenuBar bar = new MenuBar(file, edit, view, run, help);
-		bar.setUseSystemMenuBar(true);
-		return bar;
+		return menus.build(stage, run);
 	}
+
+	/** The application's name: the macOS application menu and Help > About show it. */
+	static final String APP_NAME = "fsh-ide";
+
+	/** The IDE windows open now, for Quit. */
+	private static final java.util.List<IdeWindow> OPEN = new java.util.ArrayList<>();
+
+	/** Quit (Exit): closes every IDE window, each asking about unsaved changes; false if one stays open. */
+	static boolean okToQuit() {
+		for(IdeWindow w : new java.util.ArrayList<>(OPEN)) {
+			if( !w.close() ) {
+				return false;
+			}
+			w.stage.close();
+		}
+		return true;
+	}
+
+	/** Cut, Copy, Paste or Select All on the text with the focus: a field, or else the editor. */
+	private void onFocusedText(String action) {
+		javafx.scene.Node n = stage.getScene() == null ? null : stage.getScene().getFocusOwner();
+		if( n instanceof javafx.scene.control.TextInputControl ) {
+			javafx.scene.control.TextInputControl t = (javafx.scene.control.TextInputControl) n;
+			switch (action) {
+			case "cut": t.cut(); break;
+			case "copy": t.copy(); break;
+			case "paste": t.paste(); break;
+			default: t.selectAll(); break;
+			}
+		} else {
+			org.fxmisc.richtext.CodeArea t = editor.getCodeArea();
+			switch (action) {
+			case "cut": t.cut(); break;
+			case "copy": t.copy(); break;
+			case "paste": t.paste(); break;
+			default: t.selectAll(); break;
+			}
+		}
+	}
+
 
 	private static MenuItem item(String text, String accelerator, Runnable action) {
 		MenuItem item = new MenuItem(text);

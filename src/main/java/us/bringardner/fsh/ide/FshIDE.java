@@ -15,6 +15,7 @@ package us.bringardner.fsh.ide;
 import us.bringardner.swing.dialog.SettingsDialog;
 import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.swing.gradient.ThemeExtensions;
+import us.bringardner.swing.menu.StandardMenus;
 import us.bringardner.fsh.ide.core.Breakpoint;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.CompileError;
@@ -43,6 +44,7 @@ import java.awt.Rectangle;
 import java.awt.Taskbar;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -279,6 +281,8 @@ public class FshIDE extends JFrame  {
 	 * Launch the application.
 	 */
 	public static void main(String [] args) {
+		// on macOS each window's menus at the top of the screen, under the application's name
+		StandardMenus.useScreenMenuBar(APP_NAME);
 		// A GraalVM native image has no java.home, and AWT needs one (font configuration): use the
 		// folder of the executable, where the image keeps the AWT libraries.
 		if( System.getProperty("java.home") == null ) {
@@ -350,15 +354,7 @@ public class FshIDE extends JFrame  {
 			// The Dock / taskbar shows the icon large
 			bar.setIconImage(ParleyBrand.icon(512, "terminal"));
 		}
-		// macOS: the application menu's About item
-		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_ABOUT)) {
-			Desktop.getDesktop().setAboutHandler((e)->AboutWindow.open());
-		}
-		// macOS: the application menu's Preferences item (elsewhere File > Preferences)
-		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_PREFERENCES)) {
-			Desktop.getDesktop().setPreferencesHandler((e)->EventQueue.invokeLater(()->
-				showAppearance(ideWindows.isEmpty() ? null : ideWindows.get(ideWindows.size()-1))));
-		}
+		// About, Settings and Quit: in the application menu on macOS (StandardMenus, see buildMenus)
 		FshIDE frame = new FshIDE();
 		frame.setIconImages(imageList);
 
@@ -642,152 +638,19 @@ public class FshIDE extends JFrame  {
 		flowLayout.setAlignment(FlowLayout.LEFT);
 		controlPanel.add(menuPanel, BorderLayout.SOUTH);
 
-		JMenuBar menuBar = new JMenuBar();
-		controlPanel.add(menuBar, BorderLayout.NORTH);
-
-		JMenu fileMenu = new JMenu("File");
-		menuBar.add(fileMenu);
-
-		JMenuItem mntmNewMenuItem = new JMenuItem("Open");
-		mntmNewMenuItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionOpen();
-			}
-		});
-
-		JMenuItem mntmNewMenuItem_7 = new JMenuItem("Preferences");
-		mntmNewMenuItem_7.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionPreferences();
-			}
-		});
-		fileMenu.add(mntmNewMenuItem_7);
-		fileMenu.add(mntmNewMenuItem);
-		fileMenu.add(openRecentMenu);
-
-		JMenuItem newFileMenu = new JMenuItem("New File");
-		newFileMenu.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionNew();
-			}
-		});
-		fileMenu.add(newFileMenu);
-
-		JMenuItem newWindowMenu = new JMenuItem("New Window");
-		newWindowMenu.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionNewWindow();
-			}
-		});
-		fileMenu.add(newWindowMenu);
-
-		JMenuItem mntmNewMenuItem_1 = new JMenuItem("Save");
-		mntmNewMenuItem_1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionSave();
-			}
-		});
-		fileMenu.add(mntmNewMenuItem_1);
-
-		buildRecentMenu();
-
-		JMenuItem mntmNewMenuItem_2 = new JMenuItem("Save As");
-		mntmNewMenuItem_2.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionSaveAs();
-			}
-		});
-		fileMenu.add(mntmNewMenuItem_2);
-
-
-		JMenuItem mntmNewMenuItem_3 = new JMenuItem("Reload");
-		mntmNewMenuItem_3.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionReload();
-			}
-		});
-		fileMenu.add(mntmNewMenuItem_3);
-
-		JMenuItem clearRunSettings = new JMenuItem("Clear Run Settings...");
-		clearRunSettings.setToolTipText("Forget the arguments and redirects kept for every script");
-		clearRunSettings.addActionListener(e -> actionClearRunSettings());
-		fileMenu.add(clearRunSettings);
-
-
+		// the editor's own menu: Reload, and Breakpoint
 		JMenuItem item = new JMenuItem("Reload");
 		item.addActionListener((e)-> actionReload());
 		editorPane.appendMenu(item);
-
-
 		item = new JMenuItem("Breakpoint");
-		//item.addActionListener((e)-> actionBreakpoint());
 		editorPane.appendMenu(item);
 
-
-		JMenu mnNewMenu_1 = new JMenu("Import");
-		fileMenu.add(mnNewMenu_1);
-
-
-
-		JMenu mnNewMenu_2 = new JMenu("Export");
-		fileMenu.add(mnNewMenu_2);
-
-
-
-		fileMenu.add(new JSeparator());
-
-
-
-		JMenuItem mntmNewMenuItem_6 = new JMenuItem("Exit");
-		mntmNewMenuItem_6.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionExit();
-			}
-		});
-		fileMenu.add(mntmNewMenuItem_6);
-
-		menuBar.add(viewMenu());
-
-		JMenu mnNewMenu = new JMenu("Debug");
-		menuBar.add(mnNewMenu);
-
-
-		useSelectedCodeCheckItem = new JCheckBoxMenuItem("Use selected code");
+		// the Run menu's options (the menus themselves: buildMenus)
+		useSelectedCodeCheckItem = new JCheckBoxMenuItem("Run Selected Code Only");
 		useSelectedCodeCheckItem.setSelected(true);
-		mnNewMenu.add(useSelectedCodeCheckItem);
-
-
-		autoExecuteCheckItem = new JCheckBoxMenuItem("Execute on load");
+		autoExecuteCheckItem = new JCheckBoxMenuItem("Run When Opened");
 		autoExecuteCheckItem.setSelected(false);
-		mnNewMenu.add(autoExecuteCheckItem);
-
 		profileCheckItem = new JCheckBoxMenuItem("Profile");
-		mnNewMenu.add(profileCheckItem);
-
-
-
-
-
-
-		// Help > About; on macOS it is in the application menu instead (see openWindow)
-		if (!(Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_ABOUT))) {
-			JMenu helpMenu = new JMenu("Help");
-			JMenuItem aboutItem = new JMenuItem("About fsh-ide");
-			aboutItem.addActionListener((e)->AboutWindow.open());
-			helpMenu.add(aboutItem);
-			menuBar.add(helpMenu);
-		}
-
-		JButton btnHelp = new JButton("");
-		menuBar.add(btnHelp);
-		btnHelp.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionHelp();
-			}
-		});
-		btnHelp.setPreferredSize(new Dimension(40, 40));
-		//btnHelp.setIcon(new ImageIcon(getClass().getResource("/HelpBlack.png")));
-		btnHelp.setToolTipText("Help");
 
 		showDebugViewCheckBox = new JCheckBox("Debug View");
 		showDebugViewCheckBox.addActionListener(new ActionListener() {
@@ -892,13 +755,9 @@ public class FshIDE extends JFrame  {
 
 
 
-		// macOS: the screen-top menu bar. Elsewhere that action isn't supported
-		// (setDefaultMenuBar throws), so the menu goes on the window instead.
-		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_MENU_BAR)) {
-			Desktop.getDesktop().setDefaultMenuBar(menuBar);
-		} else {
-			setJMenuBar(menuBar);
-		}
+		// the menus every Parley application has (swing-widgets' StandardMenus): in the window's menu
+		// bar, which on macOS is at the top of the screen
+		buildMenus();
 
 
 		debugPanel = new JPanel();
@@ -1092,13 +951,124 @@ public class FshIDE extends JFrame  {
 	}
 
 
+	/** The application's name: the macOS application menu and Help > About show it. */
+	static final String APP_NAME = "fsh-ide";
+
+	/**
+	 * The window's menus, laid out as in every Parley application (StandardMenus): File, Edit, View,
+	 * Run, Window and Help, with About, Settings... and Quit in the application menu on macOS and in
+	 * File and Help elsewhere. The same as the JavaFX IDE's.
+	 */
+	private void buildMenus() {
+		StandardMenus menus = new StandardMenus(APP_NAME).about(AboutWindow::open)
+				.settings(()->showAppearance(this)).quit(FshIDE::okToQuit);
+		int shift = StandardMenus.SHIFT;
+
+		JMenu file = menus.file;
+		file.add(StandardMenus.item("New", KeyEvent.VK_N, this::actionNew));
+		file.add(StandardMenus.item("Open...", KeyEvent.VK_O, this::actionOpen));
+		file.add(openRecentMenu);
+		buildRecentMenu();
+		file.addSeparator();
+		file.add(StandardMenus.item("Save", KeyEvent.VK_S, this::actionSave));
+		file.add(StandardMenus.item("Save As...", StandardMenus.keys(KeyEvent.VK_S, shift), this::actionSaveAs));
+		file.add(StandardMenus.item("Reload", null, this::actionReload));
+		file.addSeparator();
+		JMenuItem clearRunSettings = StandardMenus.item("Clear Run Settings...", null, this::actionClearRunSettings);
+		clearRunSettings.setToolTipText("Forget the arguments and redirects kept for every script");
+		file.add(clearRunSettings);
+		file.addSeparator();
+		file.add(StandardMenus.item("New Window", StandardMenus.keys(KeyEvent.VK_N, shift), this::actionNewWindow));
+		file.add(StandardMenus.item("Close", KeyEvent.VK_W, this::actionExit));
+
+		JMenu edit = menus.edit;
+		edit.add(StandardMenus.item("Undo", KeyEvent.VK_Z, ()->editorPane.getTextArea().undoLastAction()));
+		edit.add(StandardMenus.item("Redo", StandardMenus.keys(KeyEvent.VK_Z, shift), ()->editorPane.getTextArea().redoLastAction()));
+		edit.addSeparator();
+		// on whichever text field has the focus: the editor, the arguments, the console
+		edit.add(textItem("Cut", KeyEvent.VK_X, new javax.swing.text.DefaultEditorKit.CutAction()));
+		edit.add(textItem("Copy", KeyEvent.VK_C, new javax.swing.text.DefaultEditorKit.CopyAction()));
+		edit.add(textItem("Paste", KeyEvent.VK_V, new javax.swing.text.DefaultEditorKit.PasteAction()));
+		edit.add(textItem("Select All", KeyEvent.VK_A, new javax.swing.text.TextAction("select-all") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				javax.swing.text.JTextComponent t = getFocusedComponent();
+				if( t != null ) {
+					t.selectAll();
+				}
+			}
+		}));
+		edit.addSeparator();
+		edit.add(StandardMenus.item("Find...", KeyEvent.VK_F, editorPane::showFind));
+		edit.add(StandardMenus.item("Find Next", KeyEvent.VK_G, editorPane::findNext));
+		edit.add(StandardMenus.item("Go to Line...", KeyEvent.VK_L, editorPane::goToLine));
+
+		fillViewMenu(menus.view);
+
+		JMenu run = new JMenu("Run");
+		run.add(StandardMenus.item("Run", KeyEvent.VK_R, ()->actionExecute(true)));
+		// shift: the editor's own ⌘D deletes the line
+		run.add(StandardMenus.item("Debug", StandardMenus.keys(KeyEvent.VK_D, shift), ()->actionDebug(true)));
+		run.add(StandardMenus.item("Stop", KeyEvent.VK_PERIOD, this::actionStop));
+		run.addSeparator();
+		run.add(useSelectedCodeCheckItem);
+		run.add(autoExecuteCheckItem);
+		run.add(profileCheckItem);
+		run.addSeparator();
+		// the same setting as the toolbar's Debug View check box
+		JCheckBoxMenuItem debugView = new JCheckBoxMenuItem("Show Debug View");
+		debugView.setModel(showDebugViewCheckBox.getModel());
+		run.add(debugView);
+
+		menus.install(this, run);
+	}
+
+	/** An Edit item that acts on the text field with the focus. */
+	private static JMenuItem textItem(String text, int key, javax.swing.Action action) {
+		JMenuItem item = new JMenuItem(action);
+		item.setText(text);
+		item.setAccelerator(StandardMenus.keys(key, 0));
+		return item;
+	}
+
+	/** Run > Stop: stops the script running or being debugged. */
+	protected void actionStop() {
+		if( runState == IdeRunstate.Running ) {
+			actionExecute(true);
+		} else if( runState == IdeRunstate.Debugging ) {
+			actionDebug(true);
+		}
+	}
+
+	/**
+	 * Quit (Exit): closes every IDE window, each asking about unsaved changes; false if one stays
+	 * open.
+	 */
+	static boolean okToQuit() {
+		for(FshIDE w : new ArrayList<>(ideWindows)) {
+			if( !w.okToDiscard() ) {
+				return false;
+			}
+		}
+		for(FshIDE w : new ArrayList<>(ideWindows)) {
+			ideWindows.remove(w);
+			if( w.boundsTimer.isRunning() ) {
+				w.saveBounds();
+			}
+			w.changeTimer.stop();
+			w.dispose();
+		}
+		return true;
+	}
+
 	/**
 	 * View: the editors' and console's text bigger or smaller (also with ⌘+ / ⌘−, or Ctrl), back to
 	 * the standard size (⌘0), or another fixed-width font. The menu items show the keys; TextSizeKeys
 	 * handles them.
 	 */
-	private JMenu viewMenu() {
-		JMenu view = new JMenu("View");
+	private void fillViewMenu(JMenu view) {
 		int shortcut = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 		JMenuItem bigger = new JMenuItem("Bigger Text");
 		// shown as ⌘+, as Mac applications show it; ⌘=, ⇧⌘= and the keypad's + all work (TextSizeKeys)
@@ -1130,7 +1100,6 @@ public class FshIDE extends JFrame  {
 				java.awt.event.KeyEvent.VK_CLOSE_BRACKET, all));
 		// the keys themselves work wherever the menu bar is (see TextSizeKeys)
 		TextSizeKeys.install();
-		return view;
 	}
 
 	/**
