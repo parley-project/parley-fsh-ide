@@ -24,6 +24,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.prefs.Preferences;
 
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
+
 import javax.swing.JTextPane;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -53,13 +57,53 @@ final class EditorFonts {
 		current = EditorFont.load(prefs);
 	}
 
-	/** Makes a font the editor font: on every open editor and console, and kept in prefs (if not null). */
+	/**
+	 * Makes a font the editor font (View > Editor Font...): on every open editor and console, in
+	 * place of any window's own size, and kept in prefs (if not null).
+	 */
 	static void choose(EditorFont font, Preferences prefs) {
 		current = font;
 		if( prefs != null ) {
 			font.save(prefs);
 		}
+		for(Window w : Window.getWindows()) {
+			JRootPane root = rootPane(w);
+			if( root != null ) {
+				root.putClientProperty(WINDOW_FONT, null);
+			}
+		}
 		applyToOpenWindows();
+	}
+
+	/** The client property (on a window's root pane) of the font one window has for now. */
+	static final String WINDOW_FONT = "fsh-ide.editorFont";
+
+	/**
+	 * A font for one window, for this session only (the text size keys): its editors and console
+	 * take it; other windows and the font kept in preferences don't change.
+	 *
+	 * @param w the window
+	 * @param font its font, or null for the editor font
+	 */
+	static void setWindowFont(Window w, EditorFont font) {
+		JRootPane root = rootPane(w);
+		if( root == null ) {
+			return;
+		}
+		root.putClientProperty(WINDOW_FONT, font == null || font.equals(current) ? null : font);
+		applyAll(w);
+	}
+
+	/** The font of a component's window: its own for this session, or the editor font. */
+	static EditorFont fontOf(Component c) {
+		Window w = c instanceof Window ? (Window) c : SwingUtilities.getWindowAncestor(c);
+		JRootPane root = rootPane(w);
+		Object f = root == null ? null : root.getClientProperty(WINDOW_FONT);
+		return f instanceof EditorFont ? (EditorFont) f : current;
+	}
+
+	private static JRootPane rootPane(Window w) {
+		return w instanceof RootPaneContainer ? ((RootPaneContainer) w).getRootPane() : null;
 	}
 
 	/** The java.awt.Font for an editor font. */
@@ -69,7 +113,7 @@ final class EditorFonts {
 
 	/** Gives an editor the editor font. */
 	static void apply(RSyntaxTextArea editor) {
-		Font f = font(current);
+		Font f = font(fontOf(editor));
 		if( !f.equals(editor.getFont()) ) {
 			editor.setFont(f);
 		}
@@ -83,7 +127,7 @@ final class EditorFonts {
 	/** Gives a console the editor font, keeping the console's own style (italic). */
 	static void apply(ConsolePanel console) {
 		for(JTextPane pane : panes(console, new ArrayList<>())) {
-			pane.setFont(font(current).deriveFont(pane.getFont().getStyle()));
+			pane.setFont(font(fontOf(console)).deriveFont(pane.getFont().getStyle()));
 		}
 	}
 

@@ -97,24 +97,28 @@ public class IdeWindowTest {
 	@Test
 	public void theViewMenuChangesTheEditorFont() throws Exception {
 		TestWindow w = window();
+		TestWindow other = Fx.call(()->new TestWindow(prefs));
 		assertEquals(us.bringardner.fsh.ide.core.EditorFont.defaults(), Fx.call(w::editorFont));
 		assertFalse(Fx.call(()->w.stage().getScene().getRoot().getStyleClass()
 				.contains(us.bringardner.fsh.ide.core.EditorFont.CSS_CLASS)), "the standard font adds nothing");
+		int sheets = Fx.call(()->w.stage().getScene().getStylesheets().size());
+
+		// the text size: this window only, for this session only
 		Fx.run(w::biggerText);
 		Fx.run(w::biggerText);
 		assertEquals(15, Fx.call(w::editorFont).getSize());
-		assertEquals(15, prefs.getInt(us.bringardner.fsh.ide.core.EditorFont.PREF_SIZE, -1), "kept");
+		assertEquals(-1, prefs.getInt(us.bringardner.fsh.ide.core.EditorFont.PREF_SIZE, -1), "not kept");
+		assertEquals(13, Fx.call(other::editorFont).getSize(), "the other window keeps its size");
 		assertTrue(Fx.call(()->w.stage().getScene().getRoot().getStyleClass()
 				.contains(us.bringardner.fsh.ide.core.EditorFont.CSS_CLASS)));
-		int sheets = Fx.call(()->w.stage().getScene().getStylesheets().size());
 		Fx.run(w::smallerText);
 		assertEquals(14, Fx.call(w::editorFont).getSize());
-		assertEquals(sheets, (int) Fx.call(()->w.stage().getScene().getStylesheets().size()), "replaced, not added");
+		assertEquals(sheets + 1, (int) Fx.call(()->w.stage().getScene().getStylesheets().size()), "replaced, not added");
 		Fx.run(w::resetSize);
 		assertEquals(us.bringardner.fsh.ide.core.EditorFont.defaults(), Fx.call(w::editorFont));
 		assertFalse(Fx.call(()->w.stage().getScene().getRoot().getStyleClass()
 				.contains(us.bringardner.fsh.ide.core.EditorFont.CSS_CLASS)));
-		assertEquals(sheets - 1, (int) Fx.call(()->w.stage().getScene().getStylesheets().size()));
+		assertEquals(sheets, (int) Fx.call(()->w.stage().getScene().getStylesheets().size()));
 
 		// the keys: the keypad's + and -, shortcut = and shortcut 0; others pass by
 		Fx.run(()->w.textSizeKeys(key(javafx.scene.input.KeyCode.ADD, "+", false)));
@@ -122,12 +126,25 @@ public class IdeWindowTest {
 		assertEquals(15, Fx.call(w::editorFont).getSize());
 		Fx.run(()->w.textSizeKeys(key(javafx.scene.input.KeyCode.SUBTRACT, "-", false)));
 		assertEquals(14, Fx.call(w::editorFont).getSize());
-		javafx.scene.input.KeyEvent other = key(javafx.scene.input.KeyCode.S, "s", false);
-		Fx.run(()->w.textSizeKeys(other));
-		assertFalse(other.isConsumed());
+		javafx.scene.input.KeyEvent otherKey = key(javafx.scene.input.KeyCode.S, "s", false);
+		Fx.run(()->w.textSizeKeys(otherKey));
+		assertFalse(otherKey.isConsumed());
+
+		// Editor Font... is for good: kept, and on every window, in place of a window's own size
+		us.bringardner.fsh.ide.core.EditorFont chosen = us.bringardner.fsh.ide.core.EditorFont.of(null, 18);
+		Fx.run(()->w.chooseEditorFont(chosen));
+		assertEquals(18, prefs.getInt(us.bringardner.fsh.ide.core.EditorFont.PREF_SIZE, -1));
+		assertEquals(chosen, Fx.call(w::editorFont));
+		assertEquals(chosen, Fx.call(other::editorFont));
+		// and Reset Text Size goes back to it
+		Fx.run(w::biggerText);
+		assertEquals(20, Fx.call(w::editorFont).getSize());
 		Fx.run(()->w.textSizeKeys(key(javafx.scene.input.KeyCode.DIGIT0, "0", false)));
-		assertEquals(us.bringardner.fsh.ide.core.EditorFont.defaults(), Fx.call(w::editorFont));
-		Fx.run(()->w.stage().close());
+		assertEquals(chosen, Fx.call(w::editorFont));
+		Fx.run(()->{
+			w.stage().close();
+			other.stage().close();
+		});
 	}
 
 	/** A key pressed with the shortcut key (Cmd on macOS, Ctrl elsewhere). */

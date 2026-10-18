@@ -82,24 +82,30 @@ final class TextSizeKeys implements KeyEventDispatcher {
 		}
 		int code = e.getKeyCode();
 		char c = e.getKeyChar();
+		// the window the key was pressed in: only its text changes
+		Window w = window(e);
 		if( code == KeyEvent.VK_EQUALS || code == KeyEvent.VK_PLUS || code == KeyEvent.VK_ADD || c == '=' || c == '+' ) {
-			return FshIDE::actionBiggerText;
+			return ()->FshIDE.actionBiggerText(w);
 		}
 		if( code == KeyEvent.VK_MINUS || code == KeyEvent.VK_SUBTRACT || c == '-' ) {
-			return FshIDE::actionSmallerText;
+			return ()->FshIDE.actionSmallerText(w);
 		}
 		if( (code == KeyEvent.VK_0 || code == KeyEvent.VK_NUMPAD0 || c == '0') && mods == shortcut ) {
-			return FshIDE::actionResetTextSize;
+			return ()->FshIDE.actionResetTextSize(w);
 		}
 		return null;
 	}
 
 	/** Only in the IDE's own windows (its main windows and the template editor), not its dialogs. */
 	private static boolean inIde(KeyEvent e) {
-		Window w = e.getComponent() == null ? null : SwingUtilities.getWindowAncestor(e.getComponent());
-		if( e.getComponent() instanceof Window ) {
-			w = (Window) e.getComponent();
-		}
+		Window w = window(e);
 		return w instanceof FshIDE || w instanceof TemplateFrame;
+	}
+
+	private static Window window(KeyEvent e) {
+		if( e.getComponent() instanceof Window ) {
+			return (Window) e.getComponent();
+		}
+		return e.getComponent() == null ? null : SwingUtilities.getWindowAncestor(e.getComponent());
 	}
 }

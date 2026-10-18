@@ -6,6 +6,9 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
 
+- Bigger Text, Smaller Text and their keys change the window you're in, for this session only;
+  View > Editor Font... is what changes the editor font for good, in every window. Reset Text Size
+  goes back to the font chosen with Editor Font... (it was 13 points), in both IDEs.
 - The JavaFX IDE has Settings… too (fx-widgets' SettingsDialog), the same as the Swing IDE's: the
   theme and font with a preview, and New theme…, Edit theme… and Delete theme with the Script editor
   page for the syntax colors. OK changes the open windows at once. View > Editor Font… is in the

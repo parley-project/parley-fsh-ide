@@ -1073,13 +1073,13 @@ public class FshIDE extends JFrame  {
 		JMenuItem bigger = new JMenuItem("Bigger Text");
 		// shown as ⌘+, as Mac applications show it; ⌘=, ⇧⌘= and the keypad's + all work (TextSizeKeys)
 		bigger.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_PLUS, shortcut));
-		bigger.addActionListener(e->actionBiggerText());
+		bigger.addActionListener(e->actionBiggerText(this));
 		JMenuItem smaller = new JMenuItem("Smaller Text");
 		smaller.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_MINUS, shortcut));
-		smaller.addActionListener(e->actionSmallerText());
+		smaller.addActionListener(e->actionSmallerText(this));
 		JMenuItem reset = new JMenuItem("Reset Text Size");
 		reset.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_0, shortcut));
-		reset.addActionListener(e->actionResetTextSize());
+		reset.addActionListener(e->actionResetTextSize(this));
 		JMenuItem font = new JMenuItem("Editor Font...");
 		font.addActionListener(e->EditorFontDialog.showDialog(this, prefs));
 		view.add(bigger);
@@ -1119,16 +1119,22 @@ public class FshIDE extends JFrame  {
 		return item;
 	}
 
-	static void actionBiggerText() {
-		EditorFonts.choose(EditorFonts.current().bigger(), prefs);
+	/**
+	 * View > Bigger Text (and its keys): this window's editors and console, for this session only;
+	 * View > Editor Font... is what changes the font for good.
+	 */
+	static void actionBiggerText(java.awt.Window w) {
+		EditorFonts.setWindowFont(w, EditorFonts.fontOf(w).bigger());
 	}
 
-	static void actionSmallerText() {
-		EditorFonts.choose(EditorFonts.current().smaller(), prefs);
+	/** View > Smaller Text: as Bigger Text. */
+	static void actionSmallerText(java.awt.Window w) {
+		EditorFonts.setWindowFont(w, EditorFonts.fontOf(w).smaller());
 	}
 
-	static void actionResetTextSize() {
-		EditorFonts.choose(EditorFonts.current().resetSize(), prefs);
+	/** View > Reset Text Size: this window back to the editor font, as last set with Editor Font.... */
+	static void actionResetTextSize(java.awt.Window w) {
+		EditorFonts.setWindowFont(w, null);
 	}
 
 	protected void actionPreferences() {

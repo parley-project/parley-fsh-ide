@@ -68,10 +68,11 @@ page, where a ready-made scheme can be loaded and any color changed. A new theme
 colors of the theme it is made from; the built-in themes have the light colors, or the Parley dark
 ones for the Dark theme.
 
-The script editors and the console have their own font, apart from the look's: View > Bigger
-Text and Smaller Text (⌘+ and ⌘−, Ctrl on Windows and Linux) change its size, Reset Text Size (⌘0)
-goes back to 13 points, and View > Editor Font... chooses a fixed-width font. Both IDEs keep it in
-Java preferences.
+The script editors and the console have their own font, apart from the look's. View > Editor
+Font... chooses it, a fixed-width family and a size, for every window, and both IDEs keep it in Java
+preferences. View > Bigger Text and Smaller Text (⌘+ and ⌘−, Ctrl on Windows and Linux) change the
+size in the window you're in, for now only: other windows and the font kept don't change. Reset Text
+Size (⌘0) puts the window back to the font chosen with Editor Font....
 
 Folding is on the bracket keys, the same in both IDEs: ⌥⌘[ folds the block the caret is in and
 ⌥⌘] unfolds it; with Shift, all blocks (Ctrl and Alt on Windows and Linux).

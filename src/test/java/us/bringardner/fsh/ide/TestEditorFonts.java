@@ -92,6 +92,50 @@ public class TestEditorFonts {
 	}
 
 	@Test
+	public void theTextSizeIsOneWindowsForThisSession() throws Exception {
+		SwingUtilities.invokeAndWait(()->{
+			JFrame a = new JFrame();
+			JFrame b = new JFrame();
+			RSyntaxTextArea inA = new RSyntaxTextArea(5, 20);
+			RSyntaxTextArea inB = new RSyntaxTextArea(5, 20);
+			a.add(new RTextScrollPane(inA));
+			b.add(new RTextScrollPane(inB));
+			a.pack();
+			b.pack();
+			try {
+				EditorFonts.choose(EditorFont.defaults(), null);
+				FshIDE.actionBiggerText(a);
+				FshIDE.actionBiggerText(a);
+				assertEquals(15, inA.getFont().getSize());
+				assertEquals(13, inB.getFont().getSize(), "the other window keeps its size");
+				assertEquals(-1, prefs.getInt(EditorFont.PREF_SIZE, -1), "not kept");
+				// a theme change keeps each window's size
+				EditorColors.applyToOpenWindows();
+				assertEquals(15, inA.getFont().getSize());
+				assertEquals(13, inB.getFont().getSize());
+				FshIDE.actionSmallerText(a);
+				assertEquals(14, inA.getFont().getSize());
+				FshIDE.actionResetTextSize(a);
+				assertEquals(13, inA.getFont().getSize());
+
+				// Editor Font... is for good, on every window, and Reset Text Size goes back to it
+				FshIDE.actionBiggerText(a);
+				EditorFonts.choose(EditorFont.of(null, 18), prefs);
+				assertEquals(18, inA.getFont().getSize());
+				assertEquals(18, inB.getFont().getSize());
+				assertEquals(18, prefs.getInt(EditorFont.PREF_SIZE, -1));
+				FshIDE.actionBiggerText(b);
+				assertEquals(20, inB.getFont().getSize());
+				FshIDE.actionResetTextSize(b);
+				assertEquals(18, inB.getFont().getSize());
+			} finally {
+				a.dispose();
+				b.dispose();
+			}
+		});
+	}
+
+	@Test
 	public void theDialogChoosesAFixedWidthFamilyAndSize() throws Exception {
 		assertFalse(EditorFonts.fixedWidthFamilies().isEmpty(), "every system has a fixed-width font");
 		SwingUtilities.invokeAndWait(()->{

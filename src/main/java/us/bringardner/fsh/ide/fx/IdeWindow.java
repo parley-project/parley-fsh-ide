@@ -292,9 +292,9 @@ public class IdeWindow {
 				item("Complete", "Ctrl+Space", completion::show), new SeparatorMenuItem(), spelling);
 
 		// View: the editor's and console's font and text size, and folding
-		menus.view.getItems().addAll(item("Bigger Text", "Shortcut+PLUS", ()->changeEditorFont(EditorFont::bigger)),
-				item("Smaller Text", "Shortcut+MINUS", ()->changeEditorFont(EditorFont::smaller)),
-				item("Reset Text Size", "Shortcut+DIGIT0", ()->changeEditorFont(EditorFont::resetSize)),
+		menus.view.getItems().addAll(item("Bigger Text", "Shortcut+PLUS", this::biggerText),
+				item("Smaller Text", "Shortcut+MINUS", this::smallerText),
+				item("Reset Text Size", "Shortcut+DIGIT0", this::resetSize),
 				item("Editor Font...", null, this::actionEditorFont), new SeparatorMenuItem(),
 				// folding on [ and ], with Alt (Option): + and - are the text size
 				item("Fold", "Shortcut+Alt+OPEN_BRACKET", editor::foldAtCaret),
@@ -1201,13 +1201,32 @@ public class IdeWindow {
 		}
 	}
 
-	/** View > Editor Font...: the editors' and console's font, kept and put on every open IDE window. */
+	/**
+	 * View > Editor Font...: the editors' and console's font for good: kept, and put on every open IDE
+	 * window in place of any window's own size.
+	 */
 	void actionEditorFont() {
 		EditorFont f = EditorFontDialog.choose(stage, EditorFont.load(prefs));
 		if( f != null ) {
-			changeEditorFont(old->f);
+			chooseEditorFont(f);
 		}
 	}
+
+	/** Makes a font the editor font: kept, and on every open IDE window. */
+	void chooseEditorFont(EditorFont font) {
+		if( prefs != null ) {
+			font.save(prefs);
+		}
+		for(IdeWindow w : new java.util.ArrayList<>(OPEN)) {
+			w.windowFont = null;
+			if( w.stage.getScene() != null ) {
+				applyEditorFont(w.stage.getScene(), font);
+			}
+		}
+	}
+
+	/** This window's own font for this session (the text size keys), or null for the editor font. */
+	private EditorFont windowFont;
 
 	/**
 	 * The editor font (kept in the IDE's preferences, set here or in the Swing IDE) on the script
@@ -1228,37 +1247,35 @@ public class IdeWindow {
 		return isCss(url, EditorFont.CSS_CLASS);
 	}
 
-	/** Changes the editor font, keeps it, and puts it on every open IDE window. */
-	private void changeEditorFont(java.util.function.UnaryOperator<EditorFont> change) {
-		EditorFont font = change.apply(EditorFont.load(prefs));
-		if( prefs != null ) {
-			font.save(prefs);
-		}
+	/**
+	 * The text size keys (and View > Bigger Text, Smaller Text): this window's editor and console
+	 * only, for this session; nothing is kept. View > Editor Font... changes the font for good.
+	 */
+	private void changeWindowFont(java.util.function.UnaryOperator<EditorFont> change) {
+		EditorFont font = change.apply(editorFont());
+		windowFont = font.equals(EditorFont.load(prefs)) ? null : font;
 		applyEditorFont(stage.getScene(), font);
-		// and the other open IDE windows
-		for(javafx.stage.Window w : javafx.stage.Window.getWindows()) {
-			if( w != stage && w.getScene() != null && w.getScene().getRoot().lookup(".script-editor") != null ) {
-				applyEditorFont(w.getScene(), font);
-			}
-		}
 	}
 
-	/** The editor font now on this window, for tests. */
+	/** The editor font now on this window: its own for this session, or the one kept. */
 	EditorFont editorFont() {
-		return EditorFont.load(prefs);
+		return windowFont != null ? windowFont : EditorFont.load(prefs);
 	}
 
-	/** Bigger Text, Smaller Text and Reset Text Size, for tests. */
+	/** View > Bigger Text: this window, for this session. */
 	void biggerText() {
-		changeEditorFont(EditorFont::bigger);
+		changeWindowFont(EditorFont::bigger);
 	}
 
+	/** View > Smaller Text: this window, for this session. */
 	void smallerText() {
-		changeEditorFont(EditorFont::smaller);
+		changeWindowFont(EditorFont::smaller);
 	}
 
+	/** View > Reset Text Size: this window back to the editor font, as last set with Editor Font.... */
 	void resetSize() {
-		changeEditorFont(EditorFont::resetSize);
+		windowFont = null;
+		applyEditorFont(stage.getScene(), EditorFont.load(prefs));
 	}
 
 	/**
@@ -1272,17 +1289,17 @@ public class IdeWindow {
 		}
 		javafx.scene.input.KeyCode k = e.getCode();
 		String t = e.getText();
-		java.util.function.UnaryOperator<EditorFont> change = null;
+		Runnable action = null;
 		if( k == javafx.scene.input.KeyCode.EQUALS || k == javafx.scene.input.KeyCode.PLUS
 				|| k == javafx.scene.input.KeyCode.ADD || "=".equals(t) || "+".equals(t) ) {
-			change = EditorFont::bigger;
+			action = this::biggerText;
 		} else if( k == javafx.scene.input.KeyCode.MINUS || k == javafx.scene.input.KeyCode.SUBTRACT || "-".equals(t) ) {
-			change = EditorFont::smaller;
+			action = this::smallerText;
 		} else if( !e.isShiftDown() && (k == javafx.scene.input.KeyCode.DIGIT0 || k == javafx.scene.input.KeyCode.NUMPAD0) ) {
-			change = EditorFont::resetSize;
+			action = this::resetSize;
 		}
-		if( change != null ) {
-			changeEditorFont(change);
+		if( action != null ) {
+			action.run();
 			e.consume();
 		}
 	}
