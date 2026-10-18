@@ -96,10 +96,10 @@ final class TextSizeKeys implements KeyEventDispatcher {
 		return null;
 	}
 
-	/** Only in the IDE's own windows (its main windows and the template editor), not its dialogs. */
+	/** Only in the IDE's own windows, not its dialogs. */
 	private static boolean inIde(KeyEvent e) {
 		Window w = window(e);
-		return w instanceof FshIDE || w instanceof TemplateFrame;
+		return w instanceof FshIDE;
 	}
 
 	private static Window window(KeyEvent e) {

@@ -1177,6 +1177,8 @@ public class IdeWindow {
 			us.bringardner.swing.gradient.ThemeExtensions.register(new us.bringardner.fsh.ide.EditorThemeExtension());
 		}
 		us.bringardner.fx.dialog.FxThemePages.register(SyntaxColors.EXTENSION_ID, EditorThemePage::new);
+		// Settings has a Templates tab, after Appearance
+		us.bringardner.fx.dialog.FxSettingsPages.register(TemplatesPage.ID, TemplatesPage::new);
 	}
 
 	/**

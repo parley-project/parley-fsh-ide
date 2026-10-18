@@ -297,6 +297,8 @@ public class FshIDE extends JFrame  {
 		// the appearance settings: before any window is made
 		// the script editor's syntax colors are part of the theme, with a page in the theme designer
 		ThemeExtensions.register(new EditorThemeExtension());
+		// Settings has a Templates tab, after Appearance
+		us.bringardner.swing.dialog.SettingsPages.register(TemplatesPage.ID, TemplatesPage::new);
 		GradientLook.install(prefs);
 		// the editors' and console's font, apart from the appearance font
 		EditorFonts.load(prefs);

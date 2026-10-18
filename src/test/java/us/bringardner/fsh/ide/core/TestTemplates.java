@@ -82,7 +82,8 @@ public class TestTemplates {
 		assertFalse(now.contains(oldWhile), "the old built-in goes");
 		assertFalse(now.contains(oldDo), "the dropped one goes");
 		assertTrue(now.contains(edited), "the user's own stays");
-		assertTrue(now.stream().anyMatch(t->"while-loop".equals(t.getDescription()) && t.getCode().contains("${condition}")));
+		assertEquals(1, now.stream().filter(t->"while-loop".equals(t.getDescription())).count(),
+				"the user's version takes the built-in's place");
 		assertTrue(now.stream().noneMatch(t->"do-statement".equals(t.getDescription())));
 	}
 }

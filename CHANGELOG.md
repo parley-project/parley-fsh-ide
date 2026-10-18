@@ -6,6 +6,11 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
 
+- Settings has a Templates tab, after Appearance, in both IDEs: the autocompletion templates in a
+  list, to change (name, description and code, with a note saying whether the code parses), add
+  (New), delete, or put back as they come (Restore Defaults, which keeps your own). OK keeps them
+  and the open editors offer them at once. A built-in template you delete stays deleted; one you
+  change takes the built-in's place. The old template window, which nothing opened, is gone.
 - More templates for autocompletion: function, read-lines, read-command, elif, heredoc, subst,
   or-exit, if-not, if-file, if-dir, if-empty, if-set, match (`=~` with `BASH_REMATCH`), the string
   operations strip-prefix, strip-suffix, replace, length and substring, array, for-each, map,

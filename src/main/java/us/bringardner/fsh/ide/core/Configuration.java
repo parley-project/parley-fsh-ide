@@ -62,6 +62,9 @@ public class Configuration {
 
 	private List<Template> templates;
 
+	/** The built-in templates the user deleted ({@link #keyOf(Template)}), so they stay deleted. */
+	private List<String> deletedTemplates;
+
 	private double[] drawingBackgroundColor = {0.999};
 
 
@@ -92,7 +95,7 @@ public class Configuration {
 			if( ret.templates == null ) {
 				ret.templates = new ArrayList<>();
 			}
-			populateDefault(ret.templates);
+			ret.populateDefault();
 			if( ret.defaultColors == null ) {
 				ret.defaultColors = new TreeMap<>();
 			}
@@ -230,9 +233,44 @@ public class Configuration {
 	}
 
 
+	/**
+	 * The templates, as the template manager leaves them. A built-in template that isn't among them
+	 * was deleted, and stays deleted until it's restored ({@link #getDefaultTemplates()}).
+	 */
 	public void setTemplates(List<Template> templates) {
 		this.templates = templates == null ? new ArrayList<>() : new ArrayList<>(templates);
-		populateDefault(this.templates);
+		List<String> deleted = new ArrayList<>();
+		for(Template t : defaultTemplates) {
+			if( this.templates.stream().noneMatch(x->keyOf(x).equals(keyOf(t))) ) {
+				deleted.add(keyOf(t));
+			}
+		}
+		deletedTemplates = deleted;
+		populateDefault();
+	}
+
+	/** The built-in templates, as a new list. */
+	public static List<Template> getDefaultTemplates() {
+		List<Template> ret = new ArrayList<>();
+		for(Template t : defaultTemplates) {
+			ret.add(t.copy());
+		}
+		return ret;
+	}
+
+	/** True if t has a built-in template's name and description (its code may have been changed). */
+	public static boolean isBuiltIn(Template t) {
+		for(Template d : defaultTemplates) {
+			if( keyOf(d).equals(keyOf(t)) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** What a template is known by: several share a name (for), so the description too. */
+	static String keyOf(Template t) {
+		return t.getName() + "\n" + t.getDescription();
 	}
 
 	
@@ -542,14 +580,24 @@ public class Configuration {
 			
 	};
 
-	private static void populateDefault(List<Template> templates) {
+	/**
+	 * Takes out unchanged copies of retired built-ins, and adds each built-in that's missing, unless
+	 * the user deleted it. A built-in the user changed (the same name and description, other code)
+	 * is theirs, and the built-in isn't added beside it.
+	 */
+	private void populateDefault() {
+		if( templates == null ) {
+			templates = new ArrayList<>();
+		}
 		for(Template t : retiredTemplates) {
 			if( !java.util.Arrays.asList(defaultTemplates).contains(t) ) {
 				templates.remove(t);
 			}
 		}
+		List<String> deleted = deletedTemplates == null ? List.of() : deletedTemplates;
 		for(Template t : defaultTemplates) {
-			if(!templates.contains(t)) {
+			String key = keyOf(t);
+			if( !deleted.contains(key) && templates.stream().noneMatch(x->keyOf(x).equals(key)) ) {
 				templates.add(t);
 			}
 		}
@@ -564,7 +612,7 @@ public class Configuration {
 		ret.setLineWrap(false);
 		ret.setTabSize(4);
 
-		populateDefault(ret.templates);
+		ret.populateDefault();
 
 		return ret;
 	}
