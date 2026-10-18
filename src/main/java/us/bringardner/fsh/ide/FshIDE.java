@@ -1094,7 +1094,8 @@ public class FshIDE extends JFrame  {
 
 	/**
 	 * View: the editors' and console's text bigger or smaller (also with ⌘+ / ⌘−, or Ctrl), back to
-	 * the standard size, or another fixed-width font.
+	 * the standard size (⌘0), or another fixed-width font. The menu items show the keys; TextSizeKeys
+	 * handles them.
 	 */
 	private JMenu viewMenu() {
 		JMenu view = new JMenu("View");
@@ -1115,17 +1116,8 @@ public class FshIDE extends JFrame  {
 		view.add(actual);
 		view.addSeparator();
 		view.add(font);
-		// ⌘+ (shift and =, or the keypad's +) makes the text bigger too
-		javax.swing.JRootPane root = getRootPane();
-		for(int key : new int[] {java.awt.event.KeyEvent.VK_PLUS, java.awt.event.KeyEvent.VK_ADD}) {
-			root.registerKeyboardAction(e->actionBiggerText(), javax.swing.KeyStroke.getKeyStroke(key, shortcut),
-					javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
-		}
-		root.registerKeyboardAction(e->actionBiggerText(), javax.swing.KeyStroke.getKeyStroke(
-				java.awt.event.KeyEvent.VK_EQUALS, shortcut | java.awt.event.InputEvent.SHIFT_DOWN_MASK),
-				javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
-		root.registerKeyboardAction(e->actionSmallerText(), javax.swing.KeyStroke.getKeyStroke(
-				java.awt.event.KeyEvent.VK_SUBTRACT, shortcut), javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
+		// the keys themselves work wherever the menu bar is (see TextSizeKeys)
+		TextSizeKeys.install();
 		return view;
 	}
 

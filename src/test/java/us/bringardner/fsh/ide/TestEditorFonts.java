@@ -119,6 +119,28 @@ public class TestEditorFonts {
 		});
 	}
 
+	@Test
+	public void theTextSizeKeys() {
+		java.awt.Component c = new javax.swing.JTextField();
+		int cmd = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+		int shift = java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+		int other = cmd == java.awt.event.InputEvent.META_DOWN_MASK ? java.awt.event.InputEvent.CTRL_DOWN_MASK
+				: java.awt.event.InputEvent.META_DOWN_MASK;
+		assertNotNull(TextSizeKeys.action(key(c, cmd, java.awt.event.KeyEvent.VK_EQUALS, '=')), "shortcut =");
+		assertNotNull(TextSizeKeys.action(key(c, cmd | shift, java.awt.event.KeyEvent.VK_EQUALS, '+')), "shortcut +");
+		assertNotNull(TextSizeKeys.action(key(c, cmd, java.awt.event.KeyEvent.VK_ADD, '+')), "keypad +");
+		assertNotNull(TextSizeKeys.action(key(c, cmd, java.awt.event.KeyEvent.VK_MINUS, '-')), "shortcut -");
+		assertNotNull(TextSizeKeys.action(key(c, cmd, java.awt.event.KeyEvent.VK_0, '0')), "shortcut 0");
+		assertTrue(TextSizeKeys.action(key(c, cmd | shift, java.awt.event.KeyEvent.VK_0, ')')) == null, "shift 0 is not");
+		assertTrue(TextSizeKeys.action(key(c, 0, java.awt.event.KeyEvent.VK_EQUALS, '=')) == null, "typing = is not");
+		assertTrue(TextSizeKeys.action(key(c, other, java.awt.event.KeyEvent.VK_EQUALS, '=')) == null, "another modifier");
+		assertTrue(TextSizeKeys.action(key(c, cmd, java.awt.event.KeyEvent.VK_S, 's')) == null, "another key");
+	}
+
+	private static java.awt.event.KeyEvent key(java.awt.Component c, int mods, int code, char ch) {
+		return new java.awt.event.KeyEvent(c, java.awt.event.KeyEvent.KEY_PRESSED, 0L, mods, code, ch);
+	}
+
 	private static JTextPane find(java.awt.Container c) {
 		for(java.awt.Component k : c.getComponents()) {
 			if( k instanceof JTextPane ) {
