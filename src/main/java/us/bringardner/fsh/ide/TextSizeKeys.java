@@ -77,7 +77,7 @@ final class TextSizeKeys implements KeyEventDispatcher {
 			return FshIDE::actionSmallerText;
 		}
 		if( (code == KeyEvent.VK_0 || code == KeyEvent.VK_NUMPAD0 || c == '0') && mods == shortcut ) {
-			return FshIDE::actionActualSize;
+			return FshIDE::actionResetTextSize;
 		}
 		return null;
 	}

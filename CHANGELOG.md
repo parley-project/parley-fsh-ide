@@ -19,7 +19,7 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   ones for a dark theme. Kept in the theme file as `fsh-ide.editor.*` settings (`SyntaxColors`, in
   the UI-free core), and the JavaFX IDE uses them too.
 - The editors' and console's font, apart from the appearance font: View > Bigger Text (⌘+),
-  Smaller Text (⌘−) and Actual Size (⌘0), and in the Swing IDE View > Editor Font... (a
+  Smaller Text (⌘−) and Reset Text Size (⌘0), and in the Swing IDE View > Editor Font... (a
   fixed-width family and a size, with a preview). The line numbers follow the size. Kept in the
   IDE's preferences (`EditorFont`, in the UI-free core) for both IDEs; until it is changed, the
   editors keep the 13-point monospaced font they have always had.

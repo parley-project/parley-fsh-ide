@@ -69,7 +69,7 @@ colors of the theme it is made from; the built-in themes have the light colors, 
 ones for the Dark theme.
 
 The script editors and the console have their own font, apart from the look's: View > Bigger
-Text and Smaller Text (⌘+ and ⌘−, Ctrl on Windows and Linux) change its size, Actual Size (⌘0)
+Text and Smaller Text (⌘+ and ⌘−, Ctrl on Windows and Linux) change its size, Reset Text Size (⌘0)
 goes back to 13 points, and View > Editor Font... chooses a fixed-width font. Both IDEs keep it in
 Java preferences (the JavaFX IDE has the size keys; the font is chosen in the Swing IDE).
 

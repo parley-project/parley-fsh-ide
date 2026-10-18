@@ -63,7 +63,7 @@ public class TestEditorFont {
 			f = f.smaller();
 			assertEquals(size, f.getSize());
 		}
-		assertEquals(13, f.withFamily("Menlo").withSize(30).actualSize().getSize());
+		assertEquals(13, f.withFamily("Menlo").withSize(30).resetSize().getSize());
 		assertEquals("Menlo", f.withFamily(" Menlo ").getFamily());
 		assertNull(f.withFamily("  ").getFamily());
 		assertEquals(EditorFont.MAX_SIZE, EditorFont.of(null, 400).getSize());

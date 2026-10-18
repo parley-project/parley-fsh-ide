@@ -1107,14 +1107,14 @@ public class FshIDE extends JFrame  {
 		JMenuItem smaller = new JMenuItem("Smaller Text");
 		smaller.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_MINUS, shortcut));
 		smaller.addActionListener(e->actionSmallerText());
-		JMenuItem actual = new JMenuItem("Actual Size");
-		actual.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_0, shortcut));
-		actual.addActionListener(e->actionActualSize());
+		JMenuItem reset = new JMenuItem("Reset Text Size");
+		reset.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_0, shortcut));
+		reset.addActionListener(e->actionResetTextSize());
 		JMenuItem font = new JMenuItem("Editor Font...");
 		font.addActionListener(e->EditorFontDialog.showDialog(this, prefs));
 		view.add(bigger);
 		view.add(smaller);
-		view.add(actual);
+		view.add(reset);
 		view.addSeparator();
 		view.add(font);
 		view.addSeparator();
@@ -1158,8 +1158,8 @@ public class FshIDE extends JFrame  {
 		EditorFonts.choose(EditorFonts.current().smaller(), prefs);
 	}
 
-	static void actionActualSize() {
-		EditorFonts.choose(EditorFonts.current().actualSize(), prefs);
+	static void actionResetTextSize() {
+		EditorFonts.choose(EditorFonts.current().resetSize(), prefs);
 	}
 
 	protected void actionPreferences() {

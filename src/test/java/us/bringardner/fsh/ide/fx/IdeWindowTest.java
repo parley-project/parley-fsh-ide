@@ -110,7 +110,7 @@ public class IdeWindowTest {
 		Fx.run(w::smallerText);
 		assertEquals(14, Fx.call(w::editorFont).getSize());
 		assertEquals(sheets, (int) Fx.call(()->w.stage().getScene().getStylesheets().size()), "replaced, not added");
-		Fx.run(w::actualSize);
+		Fx.run(w::resetSize);
 		assertEquals(us.bringardner.fsh.ide.core.EditorFont.defaults(), Fx.call(w::editorFont));
 		assertFalse(Fx.call(()->w.stage().getScene().getRoot().getStyleClass()
 				.contains(us.bringardner.fsh.ide.core.EditorFont.CSS_CLASS)));

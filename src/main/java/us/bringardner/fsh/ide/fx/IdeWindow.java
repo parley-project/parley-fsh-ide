@@ -313,8 +313,8 @@ public class IdeWindow {
 		// the menu shows ⌘+; the keys themselves, the keypad's too, are caught by textSizeKeys
 		MenuItem bigger = item("Bigger Text", "Shortcut+PLUS", ()->changeEditorFont(EditorFont::bigger));
 		MenuItem smaller = item("Smaller Text", "Shortcut+MINUS", ()->changeEditorFont(EditorFont::smaller));
-		MenuItem actual = item("Actual Size", "Shortcut+DIGIT0", ()->changeEditorFont(EditorFont::actualSize));
-		Menu view = new Menu("View", null, bigger, smaller, actual);
+		MenuItem reset = item("Reset Text Size", "Shortcut+DIGIT0", ()->changeEditorFont(EditorFont::resetSize));
+		Menu view = new Menu("View", null, bigger, smaller, reset);
 
 		MenuBar bar = new MenuBar(file, edit, view, run, help);
 		bar.setUseSystemMenuBar(true);
@@ -1159,7 +1159,7 @@ public class IdeWindow {
 		return EditorFont.load(prefs);
 	}
 
-	/** Bigger Text, Smaller Text and Actual Size, for tests. */
+	/** Bigger Text, Smaller Text and Reset Text Size, for tests. */
 	void biggerText() {
 		changeEditorFont(EditorFont::bigger);
 	}
@@ -1168,8 +1168,8 @@ public class IdeWindow {
 		changeEditorFont(EditorFont::smaller);
 	}
 
-	void actualSize() {
-		changeEditorFont(EditorFont::actualSize);
+	void resetSize() {
+		changeEditorFont(EditorFont::resetSize);
 	}
 
 	/**
@@ -1190,7 +1190,7 @@ public class IdeWindow {
 		} else if( k == javafx.scene.input.KeyCode.MINUS || k == javafx.scene.input.KeyCode.SUBTRACT || "-".equals(t) ) {
 			change = EditorFont::smaller;
 		} else if( !e.isShiftDown() && (k == javafx.scene.input.KeyCode.DIGIT0 || k == javafx.scene.input.KeyCode.NUMPAD0) ) {
-			change = EditorFont::actualSize;
+			change = EditorFont::resetSize;
 		}
 		if( change != null ) {
 			changeEditorFont(change);

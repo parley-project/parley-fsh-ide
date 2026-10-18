@@ -19,7 +19,7 @@ import java.util.prefs.Preferences;
  * The font of the script editors and the console: a fixed-width family (or the platform's standard
  * monospaced font) and a size. It is the IDE's own, apart from the appearance font that menus and
  * tables use, and kept in the IDE's preferences, where both IDEs find it. View &gt; Bigger Text and
- * Smaller Text change the size a step at a time; Actual Size goes back to {@link #DEFAULT_SIZE}.
+ * Smaller Text change the size a step at a time; Reset Text Size goes back to {@link #DEFAULT_SIZE}.
  * <p>
  * No UI toolkit here: the Swing IDE makes a java.awt.Font of it, the JavaFX IDE a stylesheet
  * ({@link #css()}).
@@ -112,7 +112,7 @@ public final class EditorFont {
 	}
 
 	/** The same family at the default size. */
-	public EditorFont actualSize() {
+	public EditorFont resetSize() {
 		return withSize(DEFAULT_SIZE);
 	}
 
