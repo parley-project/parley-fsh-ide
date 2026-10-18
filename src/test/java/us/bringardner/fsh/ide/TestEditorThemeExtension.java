@@ -147,6 +147,21 @@ public class TestEditorThemeExtension {
 		});
 	}
 
+	private static javax.swing.JTextPane findPane(java.awt.Container c) {
+		for(java.awt.Component k : c.getComponents()) {
+			if( k instanceof javax.swing.JTextPane ) {
+				return (javax.swing.JTextPane) k;
+			}
+			if( k instanceof java.awt.Container ) {
+				javax.swing.JTextPane p = findPane((java.awt.Container) k);
+				if( p != null ) {
+					return p;
+				}
+			}
+		}
+		return null;
+	}
+
 	@Test
 	public void aNewThemeTakesItsParentsColorsAndTheEditorsFollowTheTheme() throws Exception {
 		SwingUtilities.invokeAndWait(()->{
@@ -184,8 +199,16 @@ public class TestEditorThemeExtension {
 							editor.getSyntaxScheme().getStyle(TokenTypes.RESERVED_WORD).foreground);
 					assertEquals(EditorColors.DEBUG_LINE_DARK, EditorColors.debugLine());
 
+					// a console in the window follows too
+					us.bringardner.fsh.ConsolePanel console = new us.bringardner.fsh.ConsolePanel();
+					f.add(new javax.swing.JScrollPane(console), java.awt.BorderLayout.SOUTH);
+
 					Theme.setCurrent(Theme.named("Ocean"));
 					EditorColors.applyToOpenWindows();
+					Color oceanBackground = new Color(EditorThemeExtension.matching(Theme.named("Ocean")).rgb(SyntaxColors.BACKGROUND));
+					javax.swing.JTextPane pane = findPane(console);
+					assertEquals(oceanBackground, pane.getBackground(), "the console: the editor's background");
+					assertEquals(oceanBackground, ((javax.swing.JViewport) console.getParent()).getBackground());
 					assertEquals(new Color(EditorThemeExtension.matching(Theme.named("Ocean")).rgb(SyntaxColors.BACKGROUND)),
 							editor.getBackground(), "back to a light theme: its tint");
 				} finally {

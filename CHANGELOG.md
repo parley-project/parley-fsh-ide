@@ -6,6 +6,9 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
 
+- The console matches the script editor above it: the same background, text, caret and selection
+  colors, following the theme (it was white in light themes). Errors stay red; in the JavaFX IDE,
+  prompts are in the comment color. In both IDEs.
 - Settings has a Templates tab, after Appearance, in both IDEs: the autocompletion templates in a
   list, to change (name, description and code, with a note saying whether the code parses), add
   (New), delete, or put back as they come (Restore Defaults, which keeps your own). OK keeps them

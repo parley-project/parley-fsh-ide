@@ -365,8 +365,9 @@ public final class SyntaxColors {
 
 	/**
 	 * A stylesheet giving the JavaFX IDE's script editor these colors (for a root with
-	 * {@link #CSS_CLASS}). Its rules are more specific than the IDE's own, light or dark. The JavaFX
-	 * editor doesn't mark commands, numbers, operators or the caret's line, so those colors aren't used there.
+	 * {@link #CSS_CLASS}), and its console the same background, text, caret and selection. Its rules
+	 * are more specific than the IDE's own, light or dark. The JavaFX editor doesn't mark commands,
+	 * numbers, operators or the caret's line, so those colors aren't used there.
 	 */
 	public String css() {
 		String p = ".root." + CSS_CLASS + " .script-editor";
@@ -387,6 +388,15 @@ public final class SyntaxColors {
 		// the line a debugged script is stopped on: light or dark to go with the background
 		b.append(p).append(" .current-line { -fx-background-color: ").append(isDark() ? "#33401C" : "#D9F2D9")
 		.append("; }\n");
+		// the console, under the editor: the same background and text; prompts as comments are,
+		// errors red (lighter on a dark background)
+		String c = ".root." + CSS_CLASS + " .console";
+		b.append(c).append(" { -fx-background-color: ").append(hex(BACKGROUND)).append("; }\n");
+		b.append(c).append(" .text { -fx-fill: ").append(hex(TEXT)).append("; }\n");
+		b.append(c).append(" .prompt { -fx-fill: ").append(hex(COMMENTS)).append("; }\n");
+		b.append(c).append(" .error { -fx-fill: ").append(isDark() ? "#E06C5A" : "#C62828").append("; }\n");
+		b.append(c).append(" .caret { -fx-stroke: ").append(hex(CARET)).append("; }\n");
+		b.append(c).append(" .selection { -fx-fill: ").append(hex(SELECTION)).append("; }\n");
 		return b.toString();
 	}
 

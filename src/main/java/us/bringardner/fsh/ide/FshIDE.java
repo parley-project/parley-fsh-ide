@@ -781,8 +781,10 @@ public class FshIDE extends JFrame  {
 		contentPane.add(centerSplitPane, BorderLayout.CENTER);
 		JScrollPane stdViewScrollPane = new JScrollPane();
 		outputTextArea = new ConsolePanel();
-		EditorFonts.apply(outputTextArea);		
+		EditorFonts.apply(outputTextArea);
 		stdViewScrollPane.setViewportView(outputTextArea);
+		// the editor's colors: not a white console under a tinted editor
+		EditorColors.apply(outputTextArea);
 
 
 

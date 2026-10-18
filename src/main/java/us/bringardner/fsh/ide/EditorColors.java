@@ -133,6 +133,41 @@ final class EditorColors {
 		return new Color(colors.rgb(role));
 	}
 
+	/**
+	 * Gives a console the editors' background, text, caret and selection colors (its errors stay
+	 * red), so it matches the editor above it.
+	 */
+	static void apply(us.bringardner.fsh.ConsolePanel console) {
+		SyntaxColors colors = current();
+		for(java.awt.Component k : panes(console, new java.util.ArrayList<>())) {
+			javax.swing.JTextPane pane = (javax.swing.JTextPane) k;
+			pane.setBackground(color(colors, SyntaxColors.BACKGROUND));
+			pane.setForeground(color(colors, SyntaxColors.TEXT));
+			pane.setCaretColor(color(colors, SyntaxColors.CARET));
+			pane.setSelectionColor(color(colors, SyntaxColors.SELECTION));
+			pane.repaint();
+		}
+		console.setBackground(color(colors, SyntaxColors.BACKGROUND));
+		// below the text, the scroll pane's viewport shows (the gradient look clears the panel)
+		java.awt.Container viewport = javax.swing.SwingUtilities.getAncestorOfClass(javax.swing.JViewport.class, console);
+		if( viewport != null ) {
+			viewport.setBackground(color(colors, SyntaxColors.BACKGROUND));
+		}
+		console.repaint();
+	}
+
+	private static java.util.List<java.awt.Component> panes(Container c, java.util.List<java.awt.Component> ret) {
+		if( c instanceof javax.swing.JTextPane ) {
+			ret.add(c);
+		}
+		for(Component k : c.getComponents()) {
+			if( k instanceof Container ) {
+				panes((Container) k, ret);
+			}
+		}
+		return ret;
+	}
+
 	/** Gives every editor in the open windows the current theme's colors (after a theme change). */
 	static void applyToOpenWindows() {
 		for(Window w : Window.getWindows()) {
@@ -146,6 +181,8 @@ final class EditorColors {
 		for(Component k : c.getComponents()) {
 			if( k instanceof RSyntaxTextArea && !(k instanceof Preview) ) {
 				apply((RSyntaxTextArea) k);
+			} else if( k instanceof us.bringardner.fsh.ConsolePanel ) {
+				apply((us.bringardner.fsh.ConsolePanel) k);
 			} else if( k instanceof Container ) {
 				applyAll((Container) k);
 			}
