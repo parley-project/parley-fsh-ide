@@ -216,6 +216,7 @@ public class IdeWindow {
 		// the gradient look shared with parley-files-viewer, then the IDE's own editor and console styles
 		GradientLook.apply(scene);
 		scene.getStylesheets().add(IdeWindow.class.getResource("fsh-ide.css").toExternalForm());
+		scene.getStylesheets().add(FxFonts.stylesheet());
 		applySyntaxColors(scene, us.bringardner.swing.gradient.Theme.current());
 		applyEditorFont(scene, EditorFont.load(prefs));
 		scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, this::textSizeKeys);
@@ -1240,7 +1241,7 @@ public class IdeWindow {
 		}
 		scene.getRoot().getStyleClass().add(EditorFont.CSS_CLASS);
 		scene.getStylesheets().add("data:text/css;base64," + java.util.Base64.getEncoder().encodeToString(
-				("/* " + EditorFont.CSS_CLASS + " */\n" + font.css()).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+				("/* " + EditorFont.CSS_CLASS + " */\n" + font.css(FxFonts.monospaced())).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
 	}
 
 	private static boolean isEditorFontCss(String url) {

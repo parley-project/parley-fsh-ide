@@ -126,13 +126,27 @@ public final class EditorFont {
 
 	/**
 	 * A stylesheet giving the JavaFX IDE's script editor and console this font (for a root with
-	 * {@link #CSS_CLASS}); the line numbers are a little smaller, as they always were.
+	 * {@link #CSS_CLASS}); the line numbers are a little smaller, as they always were. The standard
+	 * font is JavaFX's logical monospaced font.
 	 */
 	public String css() {
-		String f = family == null ? "monospace" : "\"" + family.replace("\"", "") + "\", monospace";
+		return css(null);
+	}
+
+	/**
+	 * As {@link #css()}, with the family the standard font is on this computer.
+	 *
+	 * @param standardFamily the family of the standard monospaced font, or null for JavaFX's logical one
+	 */
+	public String css(String standardFamily) {
+		// one family: JavaFX's CSS takes no list of them (a list falls back to the System font)
+		String name = family != null ? family : standardFamily;
+		String f = name == null ? "monospace" : "\"" + name.replace("\"", "") + "\"";
 		String p = ".root." + CSS_CLASS;
-		return p + " .script-editor, " + p + " .console { -fx-font-family: " + f + "; -fx-font-size: " + size
-				+ "px; }\n" + p + " .script-editor .lineno { -fx-font-family: " + f + "; -fx-font-size: "
+		// .text too: RichTextFX's text doesn't take the font from the area
+		return p + " .script-editor, " + p + " .script-editor .text, " + p + " .console, " + p + " .console .text"
+				+ " { -fx-font-family: " + f + "; -fx-font-size: " + size
+				+ "px; }\n" + p + " .script-editor .lineno, " + p + " .script-editor .lineno .text { -fx-font-family: " + f + "; -fx-font-size: "
 				+ Math.max(MIN_SIZE, size - 2) + "px; }\n";
 	}
 

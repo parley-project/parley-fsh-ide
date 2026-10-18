@@ -86,9 +86,13 @@ public class TestEditorFont {
 	@Test
 	public void theJavaFxStylesheet() {
 		String css = EditorFont.of("Menlo", 16).css();
-		assertTrue(css.contains(".root.editor-font .script-editor, .root.editor-font .console { -fx-font-family: \"Menlo\", monospace; -fx-font-size: 16px; }"), css);
-		assertTrue(css.contains(".lineno { -fx-font-family: \"Menlo\", monospace; -fx-font-size: 14px; }"), css);
+		assertTrue(css.contains(".root.editor-font .script-editor, .root.editor-font .script-editor .text, .root.editor-font .console,"
+				+ " .root.editor-font .console .text { -fx-font-family: \"Menlo\"; -fx-font-size: 16px; }"), css);
+		assertTrue(css.contains(".lineno .text { -fx-font-family: \"Menlo\"; -fx-font-size: 14px; }"), css);
+		// the standard font, by the family it is on this computer
+		assertTrue(EditorFont.of(null, 15).css("DejaVu Sans Mono").contains("-fx-font-family: \"DejaVu Sans Mono\"; -fx-font-size: 15px;"));
+		assertTrue(EditorFont.of("Menlo", 15).css("DejaVu Sans Mono").contains("\"Menlo\""), "a chosen family stays");
 		assertTrue(EditorFont.of(null, 8).css().contains("-fx-font-family: monospace; -fx-font-size: 8px;"));
-		assertTrue(EditorFont.of(null, 8).css().contains(".lineno { -fx-font-family: monospace; -fx-font-size: 8px; }"));
+		assertTrue(EditorFont.of(null, 8).css().contains(".lineno .text { -fx-font-family: monospace; -fx-font-size: 8px; }"));
 	}
 }

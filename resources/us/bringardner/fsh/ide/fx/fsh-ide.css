@@ -1,6 +1,6 @@
-/* The JavaFX fsh-ide */
+/* The JavaFX fsh-ide (the editor's and console's fixed-width family is set in code, FxFonts:
+   JavaFX's CSS takes one family, not a list) */
 .script-editor {
-	-fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
 	-fx-font-size: 13px;
 	/* not a bold or italic font chosen in Settings for everything else */
 	-fx-font-weight: normal;
@@ -9,7 +9,6 @@
 .script-editor .lineno {
 	-fx-background-color: #f2f2f2;
 	-fx-text-fill: #9a9a9a;
-	-fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
 	-fx-font-size: 11px;
 }
 .script-editor .comment  { -fx-fill: #6a8a5a; -fx-font-style: italic; }
@@ -18,7 +17,6 @@
 .script-editor .keyword  { -fx-fill: #1f4fa8; -fx-font-weight: bold; }
 
 .console {
-	-fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
 	-fx-font-size: 12px;
 	-fx-font-weight: normal;
 	-fx-font-style: normal;

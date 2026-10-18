@@ -124,7 +124,13 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 - A new script is empty, not one blank line (`ScriptDocument.parse("")`).
 
 ### Fixed
-- `$LINENO`, `BASH_LINENO` and fsh's error messages were one line too high in scripts run by
+
+- The JavaFX IDE's editor and console are in a fixed-width font everywhere. fsh-ide.css listed
+  several families ("Menlo", "Consolas", ...), but JavaFX's CSS takes only one, so where Menlo
+  isn't installed (Windows, Linux) the console was in the proportional System font; the family is
+  now chosen in code from those the computer has. A font chosen with Editor Font... now reaches the
+  editor's text too (RichTextFX's text didn't take it from the editor), with the line numbers two
+  points smaller.- `$LINENO`, `BASH_LINENO` and fsh's error messages were one line too high in scripts run by
   `ScriptRun`: it put a `#!fsh` line in front of the code. The code now runs as it is.
 - `DebugVariables.set` of `$1`, `$2` ... in a function set the script's parameters (inserting the
   function's among them) and left the function's unchanged. It now sets the running function's

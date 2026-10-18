@@ -185,4 +185,62 @@ public class FxSettingsTest {
 			w.stage().close();
 		});
 	}
+
+	@Test
+	public void theEditorAndConsoleAreFixedWidth() throws Exception {
+		String family = Fx.call(FxFonts::monospaced);
+		// the same width for every letter
+		double[] w = Fx.call(()->{
+			javafx.scene.text.Text narrow = new javafx.scene.text.Text("iiiiii");
+			javafx.scene.text.Text wide = new javafx.scene.text.Text("WWWWWW");
+			narrow.setFont(javafx.scene.text.Font.font(family, 13));
+			wide.setFont(javafx.scene.text.Font.font(family, 13));
+			return new double[] {narrow.getLayoutBounds().getWidth(), wide.getLayoutBounds().getWidth()};
+		});
+		assertEquals(w[0], w[1], 0.5, family + " is fixed-width");
+
+		// the editor's text has it, not the System font a list of families falls back to
+		IdeWindowTest.MemoryPreferences prefs = new IdeWindowTest.MemoryPreferences();
+		IdeWindow win = Fx.call(()->new IdeWindow(new Stage(), prefs));
+		String used = Fx.call(()->{
+			win.editor().setText("echo hello");
+			win.stage().show();
+			win.stage().getScene().getRoot().applyCss();
+			win.stage().getScene().getRoot().layout();
+			for(javafx.scene.Node n : win.editor().getCodeArea().lookupAll(".text")) {
+				if( n instanceof javafx.scene.text.Text && ((javafx.scene.text.Text) n).getText().contains("echo") ) {
+					return ((javafx.scene.text.Text) n).getFont().getFamily();
+				}
+			}
+			return null;
+		});
+		assertEquals(family, used);
+
+		// and a font chosen with Editor Font... reaches the text too (RichTextFX's text doesn't take
+		// it from the area), with the line numbers two points smaller
+		Fx.run(()->win.chooseEditorFont(us.bringardner.fsh.ide.core.EditorFont.of(null, 20)));
+		Thread.sleep(300);
+		double[] sizes = Fx.call(()->{
+			win.stage().getScene().getRoot().applyCss();
+			double text = -1;
+			double line = -1;
+			for(javafx.scene.Node n : win.editor().getCodeArea().lookupAll(".text")) {
+				if( n instanceof javafx.scene.text.Text ) {
+					javafx.scene.text.Text t = (javafx.scene.text.Text) n;
+					if( t.getText().contains("echo") ) {
+						text = t.getFont().getSize();
+					} else if( t.getText().trim().equals("1") ) {
+						line = t.getFont().getSize();
+					}
+				}
+			}
+			return new double[] {text, line};
+		});
+		Fx.run(()->{
+			win.chooseEditorFont(us.bringardner.fsh.ide.core.EditorFont.defaults());
+			win.stage().close();
+		});
+		assertEquals(20, sizes[0], 0.01);
+		assertEquals(18, sizes[1], 0.01);
+	}
 }

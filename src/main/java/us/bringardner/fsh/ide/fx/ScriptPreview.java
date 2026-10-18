@@ -36,6 +36,7 @@ class ScriptPreview extends StackPane {
 		getStyleClass().add(CSS_CLASS);
 		// the dialogs it is in don't have the IDE's stylesheet
 		getStylesheets().add(ScriptPreview.class.getResource("fsh-ide.css").toExternalForm());
+		getStylesheets().add(FxFonts.stylesheet());
 		editor.setSpellChecking(false);
 		editor.setText(EditorThemeExtension.SAMPLE);
 		editor.getCodeArea().setEditable(false);
@@ -56,7 +57,7 @@ class ScriptPreview extends StackPane {
 		String rules = colors.css().replace(".root." + SyntaxColors.CSS_CLASS, p);
 		if( !font.isDefault() ) {
 			// the standard font is fsh-ide.css's, as in the IDE's windows
-			rules += font.css().replace(".root." + EditorFont.CSS_CLASS, p);
+			rules += font.css(FxFonts.monospaced()).replace(".root." + EditorFont.CSS_CLASS, p);
 		}
 		if( css != null ) {
 			getStylesheets().remove(css);
