@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE RSyntaxTheme SYSTEM "theme.dtd">
+
+<!--
+	The editor colors for the Swing fsh-ide in a dark theme (an RSyntaxTextArea theme): an ink
+	background, gold keywords, and enough other hues to tell tokens apart. Light themes use
+	RSyntaxTextArea's default colors. The JavaFX IDE's dark editor colors in fx/fsh-ide.css match.
+-->
+<RSyntaxTheme version="1.0">
+
+	<!-- No baseFont: the editor keeps the font it was given. -->
+
+	<!-- General editor colors -->
+	<background color="0E0D0B" />
+	<caret color="D0AA42" />
+	<selection useFG="false" bg="5A4818" roundedEdges="false" />
+	<currentLineHighlight color="1A1813" fade="false" />
+	<marginLine fg="2E2A20" />
+	<markAllHighlight color="4A3B14" />
+	<markOccurrencesHighlight color="3A3020" border="false" />
+	<matchedBracket fg="F5EFDD" bg="4A3B14" highlightBoth="true" animate="false" />
+	<hyperlinks fg="D0AA42" />
+	<secondaryLanguages>
+		<language index="1" bg="1A1A24" />
+		<language index="2" bg="1A221A" />
+		<language index="3" bg="241A1A" />
+	</secondaryLanguages>
+
+	<!-- Gutter -->
+	<gutterBackground color="0A0908" />
+	<gutterBorder color="2E2A20" />
+	<lineNumbers fg="6E6858" currentFG="D0AA42" />
+	<foldIndicator fg="876D29" armedFg="D0AA42" iconBg="15140F" iconArmedBg="24211A" />
+	<iconRowHeader activeLineRange="876D29" />
+
+	<!-- Tokens -->
+	<tokenStyles>
+		<style token="IDENTIFIER" fg="E8E2D0" />
+		<style token="RESERVED_WORD" fg="D0AA42" bold="true" />
+		<style token="RESERVED_WORD_2" fg="D0AA42" bold="true" />
+		<style token="ANNOTATION" fg="BA983D" />
+		<style token="COMMENT_DOCUMENTATION" fg="8A8370" italic="true" />
+		<style token="COMMENT_EOL" fg="7A7464" italic="true" />
+		<style token="COMMENT_MULTILINE" fg="7A7464" italic="true" />
+		<style token="COMMENT_KEYWORD" fg="A39B85" italic="true" />
+		<style token="COMMENT_MARKUP" fg="A39B85" italic="true" />
+		<style token="FUNCTION" fg="F0E6C8" />
+		<style token="DATA_TYPE" fg="BA983D" bold="true" />
+		<style token="LITERAL_BOOLEAN" fg="E3B36A" />
+		<style token="LITERAL_NUMBER_DECIMAL_INT" fg="E3B36A" />
+		<style token="LITERAL_NUMBER_FLOAT" fg="E3B36A" />
+		<style token="LITERAL_NUMBER_HEXADECIMAL" fg="E3B36A" />
+		<style token="LITERAL_STRING_DOUBLE_QUOTE" fg="D08A5A" />
+		<style token="LITERAL_CHAR" fg="D08A5A" />
+		<style token="LITERAL_BACKQUOTE" fg="C9A06E" />
+		<style token="MARKUP_TAG_DELIMITER" fg="A39B85" />
+		<style token="MARKUP_TAG_NAME" fg="D0AA42" bold="true" />
+		<style token="MARKUP_TAG_ATTRIBUTE" fg="8DB6C7" />
+		<style token="MARKUP_TAG_ATTRIBUTE_VALUE" fg="D08A5A" />
+		<style token="MARKUP_COMMENT" fg="7A7464" italic="true" />
+		<style token="MARKUP_DTD" fg="A39B85" />
+		<style token="MARKUP_PROCESSING_INSTRUCTION" fg="A39B85" />
+		<style token="MARKUP_CDATA" fg="E8E2D0" />
+		<style token="MARKUP_CDATA_DELIMITER" fg="A39B85" />
+		<style token="MARKUP_ENTITY_REFERENCE" fg="8DB6C7" />
+		<style token="OPERATOR" fg="C9C1AA" />
+		<style token="PREPROCESSOR" fg="A39B85" />
+		<style token="REGEX" fg="C9A06E" />
+		<style token="SEPARATOR" fg="C9C1AA" />
+		<style token="VARIABLE" fg="8DB6C7" />
+		<style token="WHITESPACE" fg="3A3426" />
+
+		<style token="ERROR_IDENTIFIER" fg="F5EFDD" bg="6B1F1F" />
+		<style token="ERROR_NUMBER_FORMAT" fg="F5EFDD" bg="6B1F1F" />
+		<style token="ERROR_STRING_DOUBLE" fg="F5EFDD" bg="6B1F1F" />
+		<style token="ERROR_CHAR" fg="F5EFDD" bg="6B1F1F" />
+	</tokenStyles>
+
+</RSyntaxTheme>

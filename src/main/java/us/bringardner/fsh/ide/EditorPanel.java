@@ -331,6 +331,8 @@ public class EditorPanel extends JPanel {
 		setLayout(new BorderLayout(0, 0));
 
 		scrollPane = new RTextScrollPane(editorPane);
+		// the editor's colors follow the theme (a dark theme gives a dark editor)
+		EditorColors.apply(editorPane);
 		scrollPane.setIconRowHeaderEnabled(true);
 		scrollPane.setLineNumbersEnabled(true);
 		scrollPane.setFoldIndicatorEnabled(true);

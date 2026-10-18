@@ -43,3 +43,37 @@
 	-fx-font-size: 10px;
 	-fx-cursor: hand;
 }
+
+/* ---- a dark theme (fx-widgets' GradientLook puts theme-dark on the root): the editor and the
+   console go dark too, in the colors of the Swing IDE's editor-dark.xml ---- */
+.theme-dark .script-editor,
+.theme-dark .console {
+	-fx-background-color: #0E0D0B;
+}
+.theme-dark .script-editor .text,
+.theme-dark .console .text {
+	-fx-fill: #E8E2D0;
+}
+.theme-dark .script-editor .caret,
+.theme-dark .console .caret {
+	-fx-stroke: #D0AA42;
+}
+.theme-dark .script-editor .selection,
+.theme-dark .console .selection {
+	-fx-fill: #5A4818;
+}
+.theme-dark .script-editor .lineno {
+	-fx-background-color: #0A0908;
+	-fx-text-fill: #6E6858;
+}
+.theme-dark .script-editor .comment  { -fx-fill: #7A7464; }
+.theme-dark .script-editor .string   { -fx-fill: #D08A5A; }
+.theme-dark .script-editor .variable { -fx-fill: #8DB6C7; }
+.theme-dark .script-editor .keyword  { -fx-fill: #D0AA42; }
+.theme-dark .console .error  { -fx-fill: #E06C5A; }
+.theme-dark .console .prompt { -fx-fill: #A39B85; }
+.theme-dark .script-editor .current-line { -fx-background-color: #33401C; }
+.theme-dark .script-editor .error-marker { -fx-background-color: #B23A2A; }
+.theme-dark .script-editor .misspelled { -rtfx-underline-color: #E06C5A; }
+.theme-dark .script-editor .fold-toggle { -fx-text-fill: #876D29; }
+.theme-dark .script-editor .fold-toggle:hover { -fx-text-fill: #D0AA42; }

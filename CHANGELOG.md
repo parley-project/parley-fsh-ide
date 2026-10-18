@@ -5,6 +5,10 @@
 First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
+- The look of parley-files-viewer (swing-widgets' and fx-widgets' GradientLook), with themes: Gold
+  (default), Dark, Light, Copper, Sage, Ocean, Slate, Plum, or one made from any color, chosen in
+  File > Preferences with the font. The editors follow the theme: a dark theme gives a dark editor
+  with matching syntax colors, in both IDEs. The JavaFX IDE uses the theme chosen in the Swing IDE.
 - A script's arguments and redirects are no longer written into the script. They're kept per
   user in `~/.fsh-ide/run-settings` (`RunSettingsStore`), by the script's full path (a remote
   script's URL, without any password). Saving a script writes only its code; if it has no

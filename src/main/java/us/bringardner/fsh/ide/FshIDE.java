@@ -205,7 +205,7 @@ public class FshIDE extends JFrame  {
 				editorPane.removeAllLineHighlights();
 				if( line >= 0 ) {
 					try {
-						editorPane.addLineHighlight(line, Color.green);
+						editorPane.addLineHighlight(line, EditorColors.debugLine());
 					} catch (BadLocationException e) {
 						showError(e, "Add hilight");
 					}
@@ -818,12 +818,12 @@ public class FshIDE extends JFrame  {
 
 		argumentsTextField = new JTextField();
 		scriptArgPanel.add(argumentsTextField);
-		argumentsTextField.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "Script Arguments", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+		argumentsTextField.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "Script Arguments", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		argumentsTextField.setColumns(30);
 
 		JPanel panel = new JPanel();
 		scriptArgPanel.add(panel);
-		panel.setBorder(new TitledBorder(null, "stdin", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+		panel.setBorder(new TitledBorder(null, "stdin", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		JButton btnNewButton = new JButton("");
 		btnNewButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_in.png")));
@@ -840,7 +840,7 @@ public class FshIDE extends JFrame  {
 
 		JPanel panel_1 = new JPanel();
 		scriptArgPanel.add(panel_1);
-		panel_1.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "stdout", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+		panel_1.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "stdout", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		JButton btnNewButton_1 = new JButton("");
 		btnNewButton_1.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_out.png")));
@@ -857,7 +857,7 @@ public class FshIDE extends JFrame  {
 
 		JPanel panel_1_1 = new JPanel();
 		scriptArgPanel.add(panel_1_1);
-		panel_1_1.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "stderr", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+		panel_1_1.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "stderr", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		JButton btnNewButton_1_1 = new JButton("");
 		btnNewButton_1_1.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_out.png")));
@@ -1089,12 +1089,15 @@ public class FshIDE extends JFrame  {
 	}
 
 	/**
-	 * The appearance settings (the font and colors, shared with the other Parley applications
-	 * through swing-widgets), saved in the IDE's preferences; the JavaFX IDE uses the colors too.
-	 * The editor keeps its own font.
+	 * The appearance settings (the theme and font, shared with the other Parley applications
+	 * through swing-widgets), saved in the IDE's preferences; the JavaFX IDE uses the theme too.
+	 * The editors keep their own font; their colors follow the theme (EditorColors).
 	 */
 	static void showAppearance(java.awt.Window owner) {
-		SettingsDialog.showDialog(owner, prefs);
+		if( SettingsDialog.showDialog(owner, prefs) ) {
+			// the editors' colors follow the new theme
+			EditorColors.applyToOpenWindows();
+		}
 	}
 
 	protected void actionHelp() {

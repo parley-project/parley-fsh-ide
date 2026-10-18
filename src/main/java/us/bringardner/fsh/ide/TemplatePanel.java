@@ -145,6 +145,7 @@ public class TemplatePanel extends JPanel {
 		codeEditorPane.setBorder(new TitledBorder(null, "Code", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		codeEditorPane.setToolTipText("Code");
 		scrollPane.setViewportView(codeEditorPane);
+		EditorColors.apply(codeEditorPane);
 		
 		
 	}

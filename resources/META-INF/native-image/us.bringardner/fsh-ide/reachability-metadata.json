@@ -4117,6 +4117,15 @@
     },
     {
       "bundle": "sun.awt.resources.awt"
+    },
+    {
+      "glob": "us/bringardner/fsh/ide/editor-dark.xml"
+    },
+    {
+      "glob": "org/fife/ui/rsyntaxtextarea/themes/default.xml"
+    },
+    {
+      "glob": "org/fife/ui/rsyntaxtextarea/themes/theme.dtd"
     }
   ]
 }
