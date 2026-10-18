@@ -32,8 +32,9 @@ import us.bringardner.fsh.ide.core.SyntaxColors;
 /**
  * The script editors' colors, which are part of the appearance theme (swing-widgets' Theme): the
  * syntax colors set on the theme designer's Script editor page ({@link EditorThemeExtension}), or
- * for a theme without its own, RSyntaxTextArea's light colors with a light theme and the Parley dark
- * ones (editor-dark.xml: ink background, gold keywords) with a dark one.
+ * for a theme without its own, colors that match it ({@link EditorThemeExtension#matching}). The
+ * parts with no color of their own there come from RSyntaxTextArea's light colors or the Parley dark
+ * ones (editor-dark.xml: ink background, gold keywords).
  */
 final class EditorColors {
 
@@ -69,8 +70,7 @@ final class EditorColors {
 
 	/** The colors of the theme in effect. */
 	static SyntaxColors current() {
-		us.bringardner.swing.gradient.Theme t = us.bringardner.swing.gradient.Theme.current();
-		return SyntaxColors.ofTheme(t.getExtras(), t.isDark());
+		return EditorThemeExtension.colorsOf(us.bringardner.swing.gradient.Theme.current());
 	}
 
 	/** The highlight for the line a debugged script is stopped on. */

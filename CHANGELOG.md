@@ -6,6 +6,13 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
 
+- The script editor matches the theme: a theme without editor colors of its own (the built-in ones,
+  say) gives the editor a light tint of the theme's light color as its background, the line
+  numbers, selection and caret in its accent, and the syntax colors darkened where they would be
+  hard to read (a dark theme: a shade darker than its fields). It was white whatever the theme.
+  "Match the theme" is first on the theme designer's Script editor page; it keeps no colors of its
+  own, so the editor follows the theme's colors as they change. A ready-made scheme or a color of
+  one's own still sets them for good. In both IDEs.
 - Bigger Text, Smaller Text and their keys change the window you're in, for this session only;
   View > Editor Font... is what changes the editor font for good, in every window. Reset Text Size
   goes back to the font chosen with Editor Font... (it was 13 points), in both IDEs.

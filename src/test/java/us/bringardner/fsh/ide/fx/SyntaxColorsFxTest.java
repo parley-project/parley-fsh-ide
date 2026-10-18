@@ -27,14 +27,21 @@ import us.bringardner.swing.gradient.Theme;
 public class SyntaxColorsFxTest {
 
 	@Test
-	public void aThemeWithoutColorsOfItsOwnAddsNothing() throws Exception {
+	public void aThemeWithoutColorsOfItsOwnGetsColorsThatMatchIt() throws Exception {
 		Scene scene = Fx.call(()->{
 			Scene s = new Scene(new StackPane());
-			IdeWindow.applySyntaxColors(s, Theme.DARK);
+			IdeWindow.applySyntaxColors(s, Theme.GOLD);
 			return s;
 		});
-		assertTrue(scene.getStylesheets().isEmpty());
-		assertFalse(scene.getRoot().getStyleClass().contains(SyntaxColors.CSS_CLASS));
+		assertTrue(scene.getRoot().getStyleClass().contains(SyntaxColors.CSS_CLASS));
+		assertEquals(1, scene.getStylesheets().size());
+		assertTrue(css(scene).endsWith(us.bringardner.fsh.ide.EditorThemeExtension.matching(Theme.GOLD).css()));
+	}
+
+	private static String css(Scene scene) {
+		String url = scene.getStylesheets().get(0);
+		return new String(java.util.Base64.getDecoder().decode(url.substring(url.indexOf(',') + 1)),
+				java.nio.charset.StandardCharsets.UTF_8);
 	}
 
 	@Test
@@ -55,12 +62,13 @@ public class SyntaxColorsFxTest {
 		assertTrue(new String(java.util.Base64.getDecoder().decode(url.substring(url.indexOf(',') + 1)),
 				java.nio.charset.StandardCharsets.UTF_8).endsWith(c.css()));
 
-		// another theme's colors replace them; a theme without its own takes them off
+		// another theme's colors replace them, and so do those of a theme without its own
 		Theme other = Theme.DARK.withExtras(extras);
 		Fx.run(()->IdeWindow.applySyntaxColors(scene, other));
 		assertEquals(1, scene.getStylesheets().size(), "replaced, not added");
-		Fx.run(()->IdeWindow.applySyntaxColors(scene, Theme.LIGHT));
-		assertTrue(scene.getStylesheets().isEmpty());
-		assertFalse(scene.getRoot().getStyleClass().contains(SyntaxColors.CSS_CLASS));
+		Fx.run(()->IdeWindow.applySyntaxColors(scene, Theme.named("Ocean")));
+		assertEquals(1, scene.getStylesheets().size(), "replaced, not added");
+		assertTrue(css(scene).endsWith(us.bringardner.fsh.ide.EditorThemeExtension.matching(Theme.named("Ocean")).css()));
+		assertEquals(1, scene.getRoot().getStyleClass().stream().filter(SyntaxColors.CSS_CLASS::equals).count());
 	}
 }

@@ -1149,17 +1149,13 @@ public class IdeWindow {
 	Stage stage() { return stage; }
 
 	/**
-	 * The theme's syntax colors on the script editor, when it has its own (set on the theme
-	 * designer's Script editor page); otherwise the editor keeps fsh-ide.css's light or dark colors.
-	 * The colors of the theme before are taken off first.
+	 * The theme's syntax colors on the script editor: its own (set on the theme designer's Script
+	 * editor page), or those that match it. The colors of the theme before are taken off first.
 	 */
 	static void applySyntaxColors(Scene scene, us.bringardner.swing.gradient.Theme theme) {
 		scene.getStylesheets().removeIf(s->s.startsWith("data:text/css;base64,") && isCss(s, SyntaxColors.CSS_CLASS));
 		scene.getRoot().getStyleClass().remove(SyntaxColors.CSS_CLASS);
-		if( !SyntaxColors.hasColors(theme.getExtras()) ) {
-			return;
-		}
-		SyntaxColors colors = SyntaxColors.ofTheme(theme.getExtras(), theme.isDark());
+		SyntaxColors colors = us.bringardner.fsh.ide.EditorThemeExtension.colorsOf(theme);
 		scene.getRoot().getStyleClass().add(SyntaxColors.CSS_CLASS);
 		scene.getStylesheets().add("data:text/css;base64," + java.util.Base64.getEncoder().encodeToString(
 				("/* " + SyntaxColors.CSS_CLASS + " */\n" + colors.css()).getBytes(java.nio.charset.StandardCharsets.UTF_8)));

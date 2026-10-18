@@ -46,8 +46,9 @@ import us.bringardner.swing.gradient.ThemeExtension;
  * The script editors' syntax colors as part of the appearance theme: the "Script editor" page of
  * the theme designer (Preferences &gt; New theme... or Edit theme...). A new theme starts with the
  * colors of the theme it is made from; a ready-made scheme can be loaded, and any color changed,
- * with a preview. A theme without colors of its own gets the light ones, or the Parley dark ones
- * for a dark theme ({@link SyntaxColors#defaults(boolean)}).
+ * with a preview. A theme without colors of its own gets colors that match it
+ * ({@link #matching(Theme)}): "Match the theme" on the page, which keeps none of its own, so the
+ * editor follows the theme's colors as they change.
  */
 public class EditorThemeExtension implements ThemeExtension {
 
@@ -63,7 +64,22 @@ public class EditorThemeExtension implements ThemeExtension {
 
 	@Override
 	public Map<String, String> defaults(Theme theme) {
-		return SyntaxColors.defaults(theme.isDark()).toValues();
+		return matching(theme).toValues();
+	}
+
+	/** The editor colors that match a theme ({@link SyntaxColors#matching}). */
+	public static SyntaxColors matching(Theme theme) {
+		return SyntaxColors.matching(rgb(theme.getStart()), rgb(theme.getAccent()), rgb(theme.getField()),
+				rgb(theme.getFieldText()), theme.isDark());
+	}
+
+	/** A theme's editor colors: its own, or those that match it. */
+	public static SyntaxColors colorsOf(Theme theme) {
+		return SyntaxColors.ofTheme(theme.getExtras(), matching(theme));
+	}
+
+	private static int rgb(Color c) {
+		return c.getRGB() & 0xFFFFFF;
 	}
 
 	@Override
@@ -93,6 +109,8 @@ public class EditorThemeExtension implements ThemeExtension {
 		private final JTextField[] hexes = new JTextField[swatches.length];
 		private final PreviewArea preview = new PreviewArea();
 		private SyntaxColors colors = SyntaxColors.LIGHT;
+		/** The theme being designed, for the colors that match it. */
+		private Theme theme = Theme.GOLD;
 		private Runnable listener;
 		private boolean updating;
 
@@ -104,14 +122,18 @@ public class EditorThemeExtension implements ThemeExtension {
 			JPanel top = new JPanel(new BorderLayout(8, 0));
 			top.setOpaque(false);
 			top.add(new JLabel("Load a scheme:"), BorderLayout.WEST);
+			// first: colors that follow the theme's
+			scheme.addItem(matching(theme));
 			for(SyntaxColors s : SyntaxColors.SCHEMES) {
 				scheme.addItem(s);
 			}
-			scheme.setToolTipText("Set every color from a ready-made scheme");
+			scheme.setToolTipText("Set every color from a ready-made scheme, or match the theme's colors");
 			scheme.addActionListener(e->{
 				if( !updating && scheme.getSelectedItem() instanceof SyntaxColors ) {
 					SyntaxColors s = (SyntaxColors) scheme.getSelectedItem();
-					if( !s.isCustom() ) {
+					if( s.isMatch() ) {
+						change(matching(theme));
+					} else if( !s.isCustom() ) {
 						change(s);
 					}
 				}
@@ -136,12 +158,27 @@ public class EditorThemeExtension implements ThemeExtension {
 
 		@Override
 		public void setValues(Map<String, String> values, Theme theme) {
-			show(SyntaxColors.fromValues(values, theme.isDark()));
+			this.theme = theme;
+			// a theme with no colors of its own matches its colors, and so will one made from it
+			show(SyntaxColors.hasColors(theme.getExtras()) ? SyntaxColors.fromValues(values, matching(theme))
+					: matching(theme));
 		}
 
 		@Override
 		public Map<String, String> getValues() {
-			return colors.toValues();
+			// none of its own when matching the theme, so the editor follows the theme's colors
+			return colors.isMatch() ? new java.util.TreeMap<>() : colors.toValues();
+		}
+
+		@Override
+		public void themeChanged(Theme theme) {
+			this.theme = theme;
+			if( colors.isMatch() ) {
+				SyntaxColors c = matching(theme);
+				if( !c.equals(colors) ) {
+					show(c);
+				}
+			}
 		}
 
 		@Override
@@ -169,12 +206,14 @@ public class EditorThemeExtension implements ThemeExtension {
 		private void show(SyntaxColors c) {
 			colors = c;
 			updating = true;
-			// the scheme box shows the scheme, or Custom for colors of one's own
+			// the scheme box shows the scheme, or Custom for colors of one's own; the first item
+			// is the colors that match the theme as it is now
 			for(int i = scheme.getItemCount() - 1; i >= 0; i--) {
-				if( scheme.getItemAt(i).isCustom() ) {
+				if( scheme.getItemAt(i).isCustom() || scheme.getItemAt(i).isMatch() ) {
 					scheme.removeItemAt(i);
 				}
 			}
+			scheme.insertItemAt(c.isMatch() ? c : matching(theme), 0);
 			if( c.isCustom() ) {
 				scheme.addItem(c);
 			}

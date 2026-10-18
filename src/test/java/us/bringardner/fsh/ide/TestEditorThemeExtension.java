@@ -79,10 +79,13 @@ public class TestEditorThemeExtension {
 	}
 
 	@Test
-	public void builtInThemesGetLightOrDarkColors() {
+	public void builtInThemesGetColorsThatMatchThem() {
 		assertEquals("Script editor", extension.getTitle());
-		assertEquals(SyntaxColors.LIGHT.toValues(), Theme.GOLD.values(extension));
-		assertEquals(SyntaxColors.PARLEY_DARK.toValues(), Theme.DARK.values(extension));
+		assertEquals(EditorThemeExtension.matching(Theme.GOLD).toValues(), Theme.GOLD.values(extension));
+		assertEquals(EditorThemeExtension.matching(Theme.DARK).toValues(), Theme.DARK.values(extension));
+		assertEquals("#FDF6E5", Theme.GOLD.values(extension).get("background"), "a light tint of gold");
+		assertTrue(EditorThemeExtension.colorsOf(Theme.DARK).isDark());
+		assertTrue(EditorThemeExtension.colorsOf(Theme.GOLD).isMatch());
 	}
 
 	@Test
@@ -92,10 +95,25 @@ public class TestEditorThemeExtension {
 			AtomicInteger changes = new AtomicInteger();
 			page.setChangeListener(changes::incrementAndGet);
 			page.setValues(Theme.DARK.values(extension), Theme.DARK);
-			assertSame(SyntaxColors.PARLEY_DARK, page.getColors());
+			assertEquals(EditorThemeExtension.matching(Theme.DARK), page.getColors(), "Dark has none of its own");
+			assertSame(page.getColors(), page.schemeBox().getSelectedItem());
+			assertEquals(0, page.schemeBox().getSelectedIndex(), "Match the theme comes first");
+			assertTrue(page.getValues().isEmpty(), "matching keeps none of its own");
 			assertEquals("#D0AA42", page.hexField(SyntaxColors.KEYWORDS).getText());
-			assertEquals(new Color(0x0E0D0B), page.getPreview().getBackground());
+			assertEquals(new Color(page.getColors().rgb(SyntaxColors.BACKGROUND)), page.getPreview().getBackground());
 			assertEquals(0, changes.get(), "showing isn't changing");
+
+			// matching follows the theme being designed, without being a change of its own
+			page.themeChanged(Theme.named("Ocean"));
+			assertEquals(EditorThemeExtension.matching(Theme.named("Ocean")), page.getColors());
+			assertEquals(new Color(page.getColors().rgb(SyntaxColors.BACKGROUND)), page.getPreview().getBackground());
+			assertEquals(0, changes.get());
+
+			// a theme's own colors are shown as they are
+			page.setValues(SyntaxColors.PARLEY_DARK.toValues(), Theme.DARK.withValues(extension, SyntaxColors.PARLEY_DARK.toValues()));
+			assertSame(SyntaxColors.PARLEY_DARK, page.getColors());
+			page.themeChanged(Theme.GOLD);
+			assertSame(SyntaxColors.PARLEY_DARK, page.getColors(), "a scheme doesn't follow the theme");
 
 			page.schemeBox().setSelectedItem(SyntaxColors.named("Monokai"));
 			assertSame(SyntaxColors.named("Monokai"), page.getColors());
@@ -119,7 +137,13 @@ public class TestEditorThemeExtension {
 
 			page.schemeBox().setSelectedItem(SyntaxColors.LIGHT);
 			assertFalse(page.getColors().isCustom());
-			assertEquals(SyntaxColors.SCHEMES.size(), page.schemeBox().getItemCount(), "no Custom entry now");
+			assertEquals(SyntaxColors.SCHEMES.size() + 1, page.schemeBox().getItemCount(), "no Custom entry now");
+
+			page.schemeBox().setSelectedIndex(0);
+			assertTrue(page.getColors().isMatch());
+			assertEquals(EditorThemeExtension.matching(Theme.GOLD), page.getColors(), "the theme it was last told of");
+			assertTrue(page.getValues().isEmpty());
+			assertEquals(5, changes.get());
 		});
 	}
 
@@ -150,7 +174,7 @@ public class TestEditorThemeExtension {
 				f.pack();
 				try {
 					EditorColors.apply(editor);
-					assertEquals(Color.white, editor.getBackground(), "Gold: the light colors");
+					assertEquals(new Color(0xFDF6E5), editor.getBackground(), "Gold: a light tint of gold");
 					assertEquals(EditorColors.DEBUG_LINE_LIGHT, EditorColors.debugLine());
 
 					Theme.setCurrent(night);
@@ -160,9 +184,10 @@ public class TestEditorThemeExtension {
 							editor.getSyntaxScheme().getStyle(TokenTypes.RESERVED_WORD).foreground);
 					assertEquals(EditorColors.DEBUG_LINE_DARK, EditorColors.debugLine());
 
-					Theme.setCurrent(Theme.LIGHT);
+					Theme.setCurrent(Theme.named("Ocean"));
 					EditorColors.applyToOpenWindows();
-					assertEquals(Color.white, editor.getBackground(), "back to a light theme: light colors");
+					assertEquals(new Color(EditorThemeExtension.matching(Theme.named("Ocean")).rgb(SyntaxColors.BACKGROUND)),
+							editor.getBackground(), "back to a light theme: its tint");
 				} finally {
 					f.dispose();
 				}

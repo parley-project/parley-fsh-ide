@@ -22,10 +22,11 @@ import java.util.Map;
  * The script editors' syntax colors: one color for each part of the editor ({@link #ROLES}), as
  * 0xRRGGBB. They are part of the appearance theme: the Swing IDE adds a "Script editor" page to the
  * theme designer, and a theme keeps them as {@code fsh-ide.editor.<key>} settings
- * ({@link #EXTENSION_ID}, {@link #KEYS}). A theme without them, such as a built-in one, gets
- * {@link #defaults(boolean)}: the light colors, or the Parley dark ones for a dark theme. A new
- * theme starts with those of the theme it is made from. The ready-made schemes ({@link #SCHEMES})
- * are starting points for the designer.
+ * ({@link #EXTENSION_ID}, {@link #KEYS}). A theme without them, such as a built-in one, gets colors
+ * that match it ({@link #matching}): a background tinted with its light color, and its accent for
+ * the line numbers, selection and caret, so they change with the theme. A new theme starts with
+ * those of the theme it is made from. The ready-made schemes ({@link #SCHEMES}) are starting
+ * points for the designer.
  * <p>
  * No UI toolkit here: the Swing IDE turns them into RSyntaxTextArea colors, the JavaFX IDE into a
  * stylesheet ({@link #css()}).
@@ -37,6 +38,9 @@ public final class SyntaxColors {
 
 	/** The name of colors that aren't one of the ready-made schemes. */
 	public static final String CUSTOM = "Custom";
+
+	/** The name of the colors made from a theme's ({@link #matching}). */
+	public static final String MATCH = "Match the theme";
 
 	/** What each color is for. */
 	public static final List<String> ROLES = Collections.unmodifiableList(Arrays.asList("Background", "Text",
@@ -87,9 +91,92 @@ public final class SyntaxColors {
 		return new SyntaxColors(name, parse(hexes.split(" ")));
 	}
 
-	/** The colors for a theme that has none of its own: light, or Parley dark for a dark theme. */
+	/**
+	 * The syntax colors the colors that match a theme start from: light, or Parley dark for a dark
+	 * theme. (A theme with no colors of its own gets {@link #matching} colors.)
+	 */
 	public static SyntaxColors defaults(boolean darkTheme) {
 		return darkTheme ? PARLEY_DARK : LIGHT;
+	}
+
+	/** How much of a light theme's light color is in the background. */
+	static final double TINT = 0.18;
+
+	/**
+	 * Colors that match a theme: the background a light tint of the theme's light color (a dark
+	 * theme: a shade darker than its fields), the line numbers' background twice as much, the
+	 * selection and the caret's line from its accent, and the text, line numbers and caret in its
+	 * colors. The syntax colors are {@link #defaults(boolean)}', darkened or lightened where they
+	 * would be hard to read on that background. Named {@link #MATCH}.
+	 *
+	 * @param start the theme's light color (the start of its gradient), 0xRRGGBB
+	 * @param accent its accent
+	 * @param field its text fields' background
+	 * @param fieldText their text
+	 * @param dark whether it is a dark theme
+	 */
+	public static SyntaxColors matching(int start, int accent, int field, int fieldText, boolean dark) {
+		int[] c = defaults(dark).rgb();
+		int bg;
+		int gutter;
+		if( dark ) {
+			bg = mix(field, 0x000000, 0.25);
+			gutter = mix(field, 0x000000, 0.45);
+			c[CURRENT_LINE] = mix(bg, accent, 0.08);
+		} else {
+			bg = mix(0xFFFFFF, start, TINT);
+			gutter = mix(0xFFFFFF, start, TINT * 2);
+			c[CURRENT_LINE] = mix(bg, accent, 0.12);
+		}
+		c[BACKGROUND] = bg;
+		c[GUTTER] = gutter;
+		c[SELECTION] = mix(bg, accent, 0.35);
+		c[TEXT] = readable(fieldText, bg, 7, dark);
+		c[LINE_NUMBERS] = readable(accent, gutter, 3, dark);
+		c[CARET] = readable(accent, bg, 4.5, dark);
+		for(int role : new int[] {KEYWORDS, COMMANDS, STRINGS, VARIABLES, NUMBERS, OPERATORS}) {
+			c[role] = readable(c[role], bg, 4.5, dark);
+		}
+		c[COMMENTS] = readable(c[COMMENTS], bg, 3.5, dark);
+		return new SyntaxColors(MATCH, c);
+	}
+
+	/** Between two colors (0xRRGGBB): t = 0 is a, 1 is b. */
+	static int mix(int a, int b, double t) {
+		int ret = 0;
+		for(int shift = 16; shift >= 0; shift -= 8) {
+			double v = (a >> shift & 0xFF) * (1 - t) + (b >> shift & 0xFF) * t;
+			ret |= (int) Math.round(v) << shift;
+		}
+		return ret;
+	}
+
+	/** The contrast between two colors (0xRRGGBB), 1 to 21, as WCAG has it. */
+	static double contrast(int a, int b) {
+		double x = luminance(a), y = luminance(b);
+		return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+	}
+
+	private static double luminance(int c) {
+		double ret = 0;
+		double[] weights = {0.2126, 0.7152, 0.0722};
+		for(int i = 0; i < 3; i++) {
+			double v = (c >> (16 - 8 * i) & 0xFF) / 255.0;
+			ret += weights[i] * (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+		}
+		return ret;
+	}
+
+	/** A color made darker (on a light background) or lighter (on a dark one) until it has this contrast. */
+	static int readable(int color, int background, double contrast, boolean darkBackground) {
+		int toward = darkBackground ? 0xFFFFFF : 0x000000;
+		for(int step = 0; step <= 50; step++) {
+			int c = mix(color, toward, step / 50.0);
+			if( contrast(c, background) >= contrast ) {
+				return c;
+			}
+		}
+		return toward;
 	}
 
 	/**
@@ -128,7 +215,18 @@ public final class SyntaxColors {
 	 * @param darkTheme whether the theme is dark, for the defaults
 	 */
 	public static SyntaxColors fromValues(Map<String, String> values, boolean darkTheme) {
-		int[] c = defaults(darkTheme).rgb();
+		return fromValues(values, defaults(darkTheme));
+	}
+
+	/**
+	 * The colors from a theme's settings ({@link #KEYS} to #RRGGBB); a color missing or not a color
+	 * is the default's.
+	 *
+	 * @param values the settings, keys without the prefix
+	 * @param defaults the colors for none of its own ({@link #matching}, say)
+	 */
+	public static SyntaxColors fromValues(Map<String, String> values, SyntaxColors defaults) {
+		int[] c = defaults.rgb();
 		boolean own = false;
 		for(int i = 0; i < c.length; i++) {
 			String v = values == null ? null : values.get(KEYS.get(i));
@@ -138,7 +236,7 @@ public final class SyntaxColors {
 			}
 		}
 		if( !own ) {
-			return defaults(darkTheme);
+			return defaults;
 		}
 		SyntaxColors ret = custom(c);
 		for(SyntaxColors s : SCHEMES) {
@@ -157,6 +255,16 @@ public final class SyntaxColors {
 	 */
 	public static SyntaxColors ofTheme(Map<String, String> extras, boolean darkTheme) {
 		return fromValues(own(extras), darkTheme);
+	}
+
+	/**
+	 * The colors of a theme, from all its settings ({@code Theme.getExtras()}, keys with prefixes).
+	 *
+	 * @param extras the theme's settings
+	 * @param defaults the colors for a theme with none of its own ({@link #matching}, say)
+	 */
+	public static SyntaxColors ofTheme(Map<String, String> extras, SyntaxColors defaults) {
+		return fromValues(own(extras), defaults);
 	}
 
 	/** True if a theme's settings ({@code Theme.getExtras()}) have syntax colors of their own. */
@@ -194,6 +302,11 @@ public final class SyntaxColors {
 
 	public boolean isCustom() {
 		return CUSTOM.equals(name);
+	}
+
+	/** True for colors made from a theme's ({@link #matching}). */
+	public boolean isMatch() {
+		return MATCH.equals(name);
 	}
 
 	/** One color, 0xRRGGBB. */

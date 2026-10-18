@@ -39,6 +39,34 @@ public class TestSyntaxColors {
 	}
 
 	@Test
+	public void colorsThatMatchAThemeAreTintedAndReadable() {
+		// Gold: start #F2CE71, accent #967B28
+		SyntaxColors gold = SyntaxColors.matching(0xF2CE71, 0x967B28, 0xFFFFFF, 0x000000, false);
+		assertTrue(gold.isMatch());
+		assertEquals(SyntaxColors.MATCH, gold.getName());
+		assertEquals("#FDF6E5", gold.hex(SyntaxColors.BACKGROUND));
+		assertFalse(gold.isDark());
+		for(int role : new int[] {SyntaxColors.TEXT, SyntaxColors.KEYWORDS, SyntaxColors.COMMANDS, SyntaxColors.STRINGS,
+			SyntaxColors.VARIABLES, SyntaxColors.NUMBERS, SyntaxColors.OPERATORS, SyntaxColors.CARET}) {
+			assertTrue(SyntaxColors.contrast(gold.rgb(role), gold.rgb(SyntaxColors.BACKGROUND)) >= 4.5,
+					SyntaxColors.ROLES.get(role));
+		}
+		assertEquals(SyntaxColors.LIGHT.rgb(SyntaxColors.KEYWORDS), gold.rgb(SyntaxColors.KEYWORDS), "readable as it was");
+
+		// a dark theme: a shade darker than its fields, light text
+		SyntaxColors dark = SyntaxColors.matching(0x3A3428, 0xD0AA42, 0x17150F, 0xE8E2D0, true);
+		assertTrue(dark.isDark());
+		assertEquals("#E8E2D0", dark.hex(SyntaxColors.TEXT));
+		assertTrue(SyntaxColors.contrast(dark.rgb(SyntaxColors.COMMENTS), dark.rgb(SyntaxColors.BACKGROUND)) >= 3.5);
+
+		// with none of its own, a theme gets the defaults given
+		assertSame(gold, SyntaxColors.ofTheme(Map.of("other-app.x", "1"), gold));
+		assertEquals("#123456", SyntaxColors.fromValues(Map.of("keywords", "#123456"), gold).hex(SyntaxColors.KEYWORDS));
+		assertEquals(gold.rgb(SyntaxColors.BACKGROUND),
+				SyntaxColors.fromValues(Map.of("keywords", "#123456"), gold).rgb(SyntaxColors.BACKGROUND));
+	}
+
+	@Test
 	public void theSchemesHaveEveryColor() {
 		assertEquals(8, SyntaxColors.SCHEMES.size());
 		assertEquals(SyntaxColors.ROLES.size(), SyntaxColors.KEYS.size());

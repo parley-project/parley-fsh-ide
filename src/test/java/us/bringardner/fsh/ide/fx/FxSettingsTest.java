@@ -15,6 +15,7 @@ package us.bringardner.fsh.ide.fx;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -80,8 +81,9 @@ public class FxSettingsTest {
 			assertNotNull(tabs);
 			assertEquals("Script editor", tabs.getTabs().get(1).getText());
 			EditorThemePage page = (EditorThemePage) tabs.getTabs().get(1).getContent();
-			// a dark theme without colors of its own: the Parley dark ones
-			assertEquals(SyntaxColors.PARLEY_DARK, page.getColors());
+			// a dark theme without colors of its own: colors that match it
+			assertEquals(us.bringardner.fsh.ide.EditorThemeExtension.matching(Theme.DARK), page.getColors());
+			assertTrue(page.getColors().isDark());
 			page.schemeBox().setValue(SyntaxColors.named("Monokai"));
 			d.setThemeName("Night shift");
 			assertTrue(d.save());
@@ -99,7 +101,16 @@ public class FxSettingsTest {
 			FxThemePage p = page;
 			assertEquals(page, p.getNode());
 			p.setValues(SyntaxColors.LIGHT.toValues(), Theme.GOLD);
+			assertTrue(page.getColors().isMatch(), "Gold has none of its own");
+			assertTrue(p.getValues().isEmpty(), "matching keeps none of its own");
+			p.themeChanged(Theme.named("Plum"));
+			assertEquals(us.bringardner.fsh.ide.EditorThemeExtension.matching(Theme.named("Plum")), page.getColors());
+			assertSame(page.getColors(), page.schemeBox().getValue());
+			Theme ownLight = Theme.GOLD.withValues(new us.bringardner.fsh.ide.EditorThemeExtension(), SyntaxColors.LIGHT.toValues());
+			p.setValues(SyntaxColors.LIGHT.toValues(), ownLight);
 			assertEquals(SyntaxColors.LIGHT, page.getColors());
+			p.themeChanged(Theme.named("Plum"));
+			assertEquals(SyntaxColors.LIGHT, page.getColors(), "a scheme doesn't follow the theme");
 			assertEquals(0, heard[0], "showing a theme's colors isn't a change");
 
 			page.hexField(SyntaxColors.KEYWORDS).setText("#123456");
@@ -178,12 +189,25 @@ public class FxSettingsTest {
 		Theme.setCurrent(Theme.GOLD.withExtras(extras));
 		Fx.run(IdeWindow::themeChanged);
 		assertTrue(Fx.call(()->w.stage().getScene().getRoot().getStyleClass().contains(SyntaxColors.CSS_CLASS)));
+		assertTrue(Fx.call(()->w.stage().getScene().getStylesheets().stream().anyMatch(u->decoded(u).endsWith(c.css()))));
+		// a theme without its own: colors that match it
 		Theme.setCurrent(Theme.GOLD);
 		Fx.run(IdeWindow::themeChanged);
-		assertFalse(Fx.call(()->w.stage().getScene().getRoot().getStyleClass().contains(SyntaxColors.CSS_CLASS)));
+		String match = us.bringardner.fsh.ide.EditorThemeExtension.matching(Theme.GOLD).css();
+		assertTrue(Fx.call(()->w.stage().getScene().getStylesheets().stream().anyMatch(u->decoded(u).endsWith(match))));
+		assertFalse(Fx.call(()->w.stage().getScene().getStylesheets().stream().anyMatch(u->decoded(u).endsWith(c.css()))));
 		Fx.run(()->{
 			w.stage().close();
 		});
+	}
+
+	/** A data: stylesheet's CSS, or "" for another kind. */
+	private static String decoded(String url) {
+		if( !url.startsWith("data:text/css;base64,") ) {
+			return "";
+		}
+		return new String(java.util.Base64.getDecoder().decode(url.substring(url.indexOf(',') + 1)),
+				java.nio.charset.StandardCharsets.UTF_8);
 	}
 
 	@Test

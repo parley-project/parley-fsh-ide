@@ -63,8 +63,7 @@ class EditorFontDialog {
 		if( owner != null ) {
 			stage.initOwner(owner);
 		}
-		Theme t = Theme.current();
-		colors = SyntaxColors.ofTheme(t.getExtras(), t.isDark());
+		colors = us.bringardner.fsh.ide.EditorThemeExtension.colorsOf(Theme.current());
 		build();
 		select(start);
 	}
