@@ -136,7 +136,7 @@ public class FshIDETextArea extends RSyntaxTextArea {
 	 * (all) still do.
 	 */
 	static void foldKeys(org.fife.ui.rsyntaxtextarea.RSyntaxTextArea editor) {
-		int keys = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | java.awt.event.InputEvent.ALT_DOWN_MASK;
+		int keys = TextSizeKeys.shortcutKey() | java.awt.event.InputEvent.ALT_DOWN_MASK;
 		int shift = java.awt.event.InputEvent.SHIFT_DOWN_MASK;
 		javax.swing.InputMap in = editor.getInputMap();
 		in.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_OPEN_BRACKET, keys),

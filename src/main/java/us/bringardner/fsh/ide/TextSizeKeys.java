@@ -59,9 +59,21 @@ final class TextSizeKeys implements KeyEventDispatcher {
 		return true;
 	}
 
+	/**
+	 * The platform's shortcut key: ⌘ on macOS, Ctrl elsewhere. Headless (a test building an editor
+	 * with no display) the toolkit can't say, so it is worked out from the platform.
+	 */
+	static int shortcutKey() {
+		if( java.awt.GraphicsEnvironment.isHeadless() ) {
+			return System.getProperty("os.name", "").toLowerCase().startsWith("mac")
+					? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
+		}
+		return Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+	}
+
 	/** What a key does, or null if it isn't one of these. */
 	static Runnable action(KeyEvent e) {
-		int shortcut = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+		int shortcut = shortcutKey();
 		int mods = e.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK
 				| InputEvent.META_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
 		// the shortcut key, with or without shift (⌘+ is shift and = on most keyboards)
