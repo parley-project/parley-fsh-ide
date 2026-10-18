@@ -38,6 +38,31 @@ public class TestTemplates {
 	}
 
 	@Test
+	public void eachBranchHasItsOwnField() {
+		// fields with the same name change together: the then and else commands mustn't
+		Template ifElse = Configuration.createDefault().getTemplates().stream()
+				.filter(t->"if-else".equals(t.getDescription())).findFirst().get();
+		TemplateText.Expansion e = TemplateText.expand(ifElse.getCode());
+		List<String> names = new ArrayList<>();
+		for(int[] f : e.fields) {
+			names.add(e.text.substring(f[0], f[1]));
+		}
+		assertEquals(List.of("condition", "echo \"true\"", "echo \"false\""), names);
+	}
+
+	@Test
+	public void theNewTemplatesAreThere() {
+		List<String> names = new ArrayList<>();
+		Configuration.createDefault().getTemplates().forEach(t->names.add(t.getName()));
+		for(String n : new String[] {"function", "read-lines", "read-command", "elif", "heredoc", "subst", "or-exit",
+				"if-not", "if-file", "if-dir", "if-empty", "if-set", "match", "strip-prefix", "strip-suffix", "replace",
+				"length", "substring", "array", "for-each", "map", "for-keys", "args", "getopts", "connect", "scratch",
+				"copy-across", "find-each"}) {
+			assertTrue(names.contains(n), n);
+		}
+	}
+
+	@Test
 	public void conditionsAreFieldsNotAlwaysTrueWords() {
 		for(Template t : Configuration.createDefault().getTemplates()) {
 			String text = TemplateText.expand(t.getCode()).text;

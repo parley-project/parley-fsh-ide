@@ -137,9 +137,9 @@ public class EditingTest {
 		Completion first = Fx.call(()->w.completion().candidates().get(0));
 		assertEquals("while", first.label);
 		Fx.run(()->w.completion().apply(first));
-		assertTrue(Fx.call(()->w.editor().getText()).startsWith("count=0\nwhile [ false ]\ndo\n"), Fx.call(()->w.editor().getText()));
+		assertTrue(Fx.call(()->w.editor().getText()).startsWith("count=0\nwhile [ condition ]\ndo\n"), Fx.call(()->w.editor().getText()));
 		// the first field is selected, to type over
-		assertEquals("false", selected(w));
+		assertEquals("condition", selected(w));
 		assertFalse(Fx.call(()->w.completion().isActive()));
 
 		Fx.run(()->{

@@ -280,16 +280,124 @@ public class Configuration {
 			new Template( "if", "if", 
 					"if [ ${condition} ]; then\n"
 					+ "  # code to be executed if the condition is true\n"
-					+ "  ${echo}\n"
+					+ "  ${echo \"true\"}\n"
 					+ "fi\n"),
 			new Template( "if-else", "if-else", 
 					"if [ ${condition} ]; then\n"
 					+ "  # code to be executed if the condition is true\n"
-					+ "  ${echo}\n"
+					+ "  ${echo \"true\"}\n"
 					+ "else\n"
 					+ "  # code to be executed if the condition is false\n"
-					+ "  ${echo}\n"
+					+ "  ${echo \"false\"}\n"
 					+ "fi\n"),
+			new Template( "elif", "if-elif-else", 
+					"if [ ${condition} ]; then\n"
+					+ "  ${echo \"first\"}\n"
+					+ "elif [ ${other condition} ]; then\n"
+					+ "  ${echo \"second\"}\n"
+					+ "else\n"
+					+ "  ${echo \"neither\"}\n"
+					+ "fi\n"),
+			new Template( "if-not", "if-not: when a command fails", 
+					"if ! ${command}; then\n"
+					+ "  ${echo \"failed\"}\n"
+					+ "fi\n"),
+			new Template( "if-file", "if-file: a file exists", 
+					"if [ -f \"$$${file}\" ]; then\n"
+					+ "  ${echo \"found\"}\n"
+					+ "fi\n"),
+			new Template( "if-dir", "if-dir: a directory exists", 
+					"if [ -d \"$$${dir}\" ]; then\n"
+					+ "  ${echo \"found\"}\n"
+					+ "fi\n"),
+			new Template( "if-empty", "if-empty: a variable is empty or unset", 
+					"if [ -z \"$$${var}\" ]; then\n"
+					+ "  ${echo \"empty\"}\n"
+					+ "fi\n"),
+			new Template( "if-set", "if-set: a variable isn't empty", 
+					"if [ -n \"$$${var}\" ]; then\n"
+					+ "  ${echo \"set\"}\n"
+					+ "fi\n"),
+			new Template( "match", "match: a regular expression, with the captured groups", 
+					"if [[ $$${var} =~ ${regex} ]]; then\n"
+					+ "  echo \"$${BASH_REMATCH[1]}\"\n"
+					+ "fi\n"),
+			new Template( "function", "function", 
+					"${name}() {\n"
+					+ "  local ${arg}=\"$$1\"\n"
+					+ "  ${cursor}\n"
+					+ "}\n"),
+			new Template( "read-lines", "read-lines: each line of a file", 
+					"while IFS= read -r ${line}\n"
+					+ "do\n"
+					+ "  echo \"$$${line}\"\n"
+					+ "done < ${file}\n"),
+			new Template( "read-command", "read-command: each line a command prints (variables set in the loop are kept)", 
+					"while IFS= read -r ${line}\n"
+					+ "do\n"
+					+ "  echo \"$$${line}\"\n"
+					+ "done < <(${command})\n"),
+			new Template( "heredoc", "heredoc: lines of text as a command's input", 
+					"cat <<EOF\n"
+					+ "${text}\n"
+					+ "EOF\n"),
+			new Template( "subst", "subst: a command's output $(command)", "$$(${command})"),
+			new Template( "or-exit", "or-exit: stop with a message if a command fails", 
+					"${command} || { echo \"${message}\" >&2; exit 1; }"),
+			new Template( "strip-prefix", "strip-prefix ${var#prefix}", "$${${var}#${prefix}}"),
+			new Template( "strip-suffix", "strip-suffix ${var%suffix}", "$${${var}%${suffix}}"),
+			new Template( "replace", "replace ${var//find/replace}: every match", "$${${var}//${find}/${replace}}"),
+			new Template( "length", "length ${#var}", "$${#${var}}"),
+			new Template( "substring", "substring ${var:offset:length}", "$${${var}:${offset}:${length}}"),
+			new Template( "array", "array: an indexed array", "${name}=(${a b c})"),
+			new Template( "for-each", "for-each: each element of an array", 
+					"for ${item} in \"$${${array}[@]}\"\n"
+					+ "do\n"
+					+ "  echo \"$$${item}\"\n"
+					+ "done\n"),
+			new Template( "map", "map: an associative array", 
+					"declare -A ${map}\n"
+					+ "${map}[${key}]=${value}\n"),
+			new Template( "for-keys", "for-keys: each key of an associative array", 
+					"for ${key} in \"$${!${map}[@]}\"\n"
+					+ "do\n"
+					+ "  echo \"$$${key}=$${${map}[$$${key}]}\"\n"
+					+ "done\n"),
+			new Template( "args", "args: a loop over the script's options", 
+					"while [ $$# -gt 0 ]\n"
+					+ "do\n"
+					+ "  case $$1 in\n"
+					+ "    -v|--verbose) ${verbose}=1;;\n"
+					+ "    -o|--output) ${output}=\"$$2\"; shift;;\n"
+					+ "    --) shift; break;;\n"
+					+ "    -*) echo \"unknown option: $$1\" >&2; exit 1;;\n"
+					+ "    *) break;;\n"
+					+ "  esac\n"
+					+ "  shift\n"
+					+ "done\n"),
+			new Template( "getopts", "getopts: the script's single-letter options", 
+					"while getopts \"${ab:}\" ${opt}\n"
+					+ "do\n"
+					+ "  case $$${opt} in\n"
+					+ "    a) ${echo \"a\"};;\n"
+					+ "    b) echo \"b=$$OPTARG\";;\n"
+					+ "    \\?) exit 1;;\n"
+					+ "  esac\n"
+					+ "done\n"
+					+ "shift $$((OPTIND - 1))\n"),
+			new Template( "connect", "connect: mount a file system, disconnected when the script ends", 
+					"connect ${sftp} host=${host} user=${user} password=@keychain:${service/account} /${mount}\n"
+					+ "trap 'disconnect /${mount}' EXIT\n"),
+			new Template( "scratch", "scratch: an in-memory file system, gone when the script ends", 
+					"connect memory /${scratch}\n"
+					+ "trap 'disconnect /${scratch}' EXIT\n"),
+			new Template( "copy-across", "copy-across: copy between mounted file systems", 
+					"cp -r /${from}/${path} /${to}/"),
+			new Template( "find-each", "find-each: each file find finds", 
+					"find /${mount}/${dir} -name '${pattern}' | while IFS= read -r ${file}\n"
+					+ "do\n"
+					+ "  echo \"$$${file}\"\n"
+					+ "done\n"),
 			new Template( "expression", "expression $((x % 2))", "$$(( ${cursor} ))"),
 			new Template( "parameterPlusword", "parameter:+word (If parameter is null or unset, nothing is substituted, otherwise the expansion of word is substituted. The value of parameter is not used.)", 
 					"$${${parameter}:+${word}}"),

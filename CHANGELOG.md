@@ -6,6 +6,11 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
 
+- More templates for autocompletion: function, read-lines, read-command, elif, heredoc, subst,
+  or-exit, if-not, if-file, if-dir, if-empty, if-set, match (`=~` with `BASH_REMATCH`), the string
+  operations strip-prefix, strip-suffix, replace, length and substring, array, for-each, map,
+  for-keys, args and getopts (option loops), and fsh's own connect and scratch (each disconnected
+  when the script ends), copy-across and find-each. if and if-else give each branch its own field.
 - The script editor matches the theme: a theme without editor colors of its own (the built-in ones,
   say) gives the editor a light tint of the theme's light color as its background, the line
   numbers, selection and caret in its accent, and the syntax colors darkened where they would be
