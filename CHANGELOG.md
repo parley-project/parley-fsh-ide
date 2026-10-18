@@ -23,6 +23,10 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   fixed-width family and a size, with a preview). The line numbers follow the size. Kept in the
   IDE's preferences (`EditorFont`, in the UI-free core) for both IDEs; until it is changed, the
   editors keep the 13-point monospaced font they have always had.
+- Folding has its own keys, the same in both IDEs, now that + and - are the text size: Fold
+  (Cmd-Alt-[) and Unfold (Cmd-Alt-]) at the caret, Fold All and Unfold All with Shift (Ctrl for
+  Cmd on Windows and Linux). In the Swing IDE they are in the View menu; in the JavaFX IDE, in
+  Edit, where Fold All and Unfold All were Cmd-Shift-- and Cmd-Shift-=.
 - A script's arguments and redirects are no longer written into the script. They're kept per
   user in `~/.fsh-ide/run-settings` (`RunSettingsStore`), by the script's full path (a remote
   script's URL, without any password). Saving a script writes only its code; if it has no

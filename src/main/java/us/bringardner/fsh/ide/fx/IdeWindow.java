@@ -288,8 +288,11 @@ public class IdeWindow {
 		MenuItem replace = item("Replace...", "Shortcut+Alt+F", ()->findBar.show(true));
 		MenuItem goTo = item("Go to Line...", "Shortcut+L", this::actionGoToLine);
 		MenuItem complete = item("Complete", "Ctrl+Space", completion::show);
-		MenuItem foldAll = item("Fold All", "Shortcut+Shift+MINUS", editor::foldAll);
-		MenuItem unfoldAll = item("Unfold All", "Shortcut+Shift+EQUALS", editor::unfoldAll);
+		// folding on [ and ], with Alt (Option): + and - are the text size (View)
+		MenuItem fold = item("Fold", "Shortcut+Alt+OPEN_BRACKET", editor::foldAtCaret);
+		MenuItem unfold = item("Unfold", "Shortcut+Alt+CLOSE_BRACKET", editor::unfoldAtCaret);
+		MenuItem foldAll = item("Fold All", "Shortcut+Alt+Shift+OPEN_BRACKET", editor::foldAll);
+		MenuItem unfoldAll = item("Unfold All", "Shortcut+Alt+Shift+CLOSE_BRACKET", editor::unfoldAll);
 		CheckMenuItem spelling = new CheckMenuItem("Check Spelling");
 		spelling.setSelected(prefs == null || prefs.getBoolean(PREF_SPELLING, true));
 		editor.setSpellChecking(spelling.isSelected());
@@ -300,7 +303,7 @@ public class IdeWindow {
 			}
 		});
 		Menu edit = new Menu("Edit", null, undo, redo, new SeparatorMenuItem(), find, findNext, findPrevious,
-				replace, new SeparatorMenuItem(), goTo, complete, new SeparatorMenuItem(), foldAll, unfoldAll,
+				replace, new SeparatorMenuItem(), goTo, complete, new SeparatorMenuItem(), fold, unfold, foldAll, unfoldAll,
 				new SeparatorMenuItem(), spelling);
 
 		MenuItem about = item("About fsh-ide", null, ()->AboutStage.open(stage));

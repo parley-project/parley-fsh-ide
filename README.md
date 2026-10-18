@@ -73,6 +73,9 @@ Text and Smaller Text (⌘+ and ⌘−, Ctrl on Windows and Linux) change its si
 goes back to 13 points, and View > Editor Font... chooses a fixed-width font. Both IDEs keep it in
 Java preferences (the JavaFX IDE has the size keys; the font is chosen in the Swing IDE).
 
+Folding is on the bracket keys, the same in both IDEs: ⌥⌘[ folds the block the caret is in and
+⌥⌘] unfolds it; with Shift, all blocks (Ctrl and Alt on Windows and Linux).
+
 ## Arguments and redirects
 
 A script's arguments and its stdin, stdout and stderr files are not written into the script:

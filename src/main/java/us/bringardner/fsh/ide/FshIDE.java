@@ -1117,9 +1117,37 @@ public class FshIDE extends JFrame  {
 		view.add(actual);
 		view.addSeparator();
 		view.add(font);
+		view.addSeparator();
+		int fold = shortcut | java.awt.event.InputEvent.ALT_DOWN_MASK;
+		int all = fold | java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+		view.add(foldItem("Fold", org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaCollapseFoldAction,
+				java.awt.event.KeyEvent.VK_OPEN_BRACKET, fold));
+		view.add(foldItem("Unfold", org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaExpandFoldAction,
+				java.awt.event.KeyEvent.VK_CLOSE_BRACKET, fold));
+		view.add(foldItem("Fold All", org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaCollapseAllFoldsAction,
+				java.awt.event.KeyEvent.VK_OPEN_BRACKET, all));
+		view.add(foldItem("Unfold All", org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaExpandAllFoldsAction,
+				java.awt.event.KeyEvent.VK_CLOSE_BRACKET, all));
 		// the keys themselves work wherever the menu bar is (see TextSizeKeys)
 		TextSizeKeys.install();
 		return view;
+	}
+
+	/**
+	 * A View menu item for one of the editor's fold actions. The menu shows the key; the editor's own
+	 * key binding (FshIDETextArea.foldKeys) acts on it, so it works with the screen menu bar too.
+	 */
+	private JMenuItem foldItem(String text, String action, int key, int modifiers) {
+		JMenuItem item = new JMenuItem(text);
+		item.setAccelerator(javax.swing.KeyStroke.getKeyStroke(key, modifiers));
+		item.addActionListener(e->{
+			FshIDETextArea editor = editorPane.getTextArea();
+			javax.swing.Action a = editor.getActionMap().get(action);
+			if( a != null ) {
+				a.actionPerformed(new ActionEvent(editor, ActionEvent.ACTION_PERFORMED, action));
+			}
+		});
+		return item;
 	}
 
 	static void actionBiggerText() {

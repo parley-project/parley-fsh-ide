@@ -137,6 +137,26 @@ public class TestEditorFonts {
 		assertTrue(TextSizeKeys.action(key(c, cmd, java.awt.event.KeyEvent.VK_S, 's')) == null, "another key");
 	}
 
+	@Test
+	public void foldingIsOnTheBracketKeys() {
+		org.fife.ui.rsyntaxtextarea.RSyntaxTextArea editor = new org.fife.ui.rsyntaxtextarea.RSyntaxTextArea();
+		FshIDETextArea.foldKeys(editor);
+		int keys = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | java.awt.event.InputEvent.ALT_DOWN_MASK;
+		int shift = java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+		javax.swing.InputMap in = editor.getInputMap();
+		assertEquals(org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaCollapseFoldAction,
+				in.get(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_OPEN_BRACKET, keys)));
+		assertEquals(org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaExpandFoldAction,
+				in.get(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_CLOSE_BRACKET, keys)));
+		assertEquals(org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaCollapseAllFoldsAction,
+				in.get(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_OPEN_BRACKET, keys | shift)));
+		assertEquals(org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaExpandAllFoldsAction,
+				in.get(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_CLOSE_BRACKET, keys | shift)));
+		// and the text size keys don't take them
+		assertTrue(TextSizeKeys.action(new java.awt.event.KeyEvent(editor, java.awt.event.KeyEvent.KEY_PRESSED, 0L, keys,
+				java.awt.event.KeyEvent.VK_OPEN_BRACKET, '[')) == null);
+	}
+
 	private static java.awt.event.KeyEvent key(java.awt.Component c, int mods, int code, char ch) {
 		return new java.awt.event.KeyEvent(c, java.awt.event.KeyEvent.KEY_PRESSED, 0L, mods, code, ch);
 	}

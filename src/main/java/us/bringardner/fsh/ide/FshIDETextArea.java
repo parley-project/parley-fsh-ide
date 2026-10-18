@@ -68,6 +68,7 @@ public class FshIDETextArea extends RSyntaxTextArea {
 	private void initMe() {
 		 setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_UNIX_SHELL);
 	     setCodeFoldingEnabled(true);
+		foldKeys(this);
 	       
 		setLineWrap(true);
 		setTabSize(4);
@@ -126,5 +127,25 @@ public class FshIDETextArea extends RSyntaxTextArea {
 		} catch(BadLocationException e) {
 		}
 		return ret;
+	}
+
+	/**
+	 * Folding on [ and ] with the shortcut key and Alt (Option), as in the JavaFX IDE: fold and unfold
+	 * at the caret, and with Shift all of them. The keypad's + and - are the text size (View menu),
+	 * so RSyntaxTextArea's own keypad keys for the caret's fold no longer reach it; its keypad / and *
+	 * (all) still do.
+	 */
+	static void foldKeys(org.fife.ui.rsyntaxtextarea.RSyntaxTextArea editor) {
+		int keys = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | java.awt.event.InputEvent.ALT_DOWN_MASK;
+		int shift = java.awt.event.InputEvent.SHIFT_DOWN_MASK;
+		javax.swing.InputMap in = editor.getInputMap();
+		in.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_OPEN_BRACKET, keys),
+				org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaCollapseFoldAction);
+		in.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_CLOSE_BRACKET, keys),
+				org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaExpandFoldAction);
+		in.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_OPEN_BRACKET, keys | shift),
+				org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaCollapseAllFoldsAction);
+		in.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_CLOSE_BRACKET, keys | shift),
+				org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit.rstaExpandAllFoldsAction);
 	}
 }

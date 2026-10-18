@@ -78,6 +78,37 @@ public class FoldingSpellingTest {
 	}
 
 	@Test
+	public void foldsWhereTheCaretIs() throws Exception {
+		IdeWindow w = Fx.call(()->{
+			IdeWindow win = new IdeWindow(new Stage(), new IdeWindowTest.MemoryPreferences());
+			win.setCode(SCRIPT, null);
+			return win;
+		});
+		ScriptEditor e = w.editor();
+		// the caret on "echo one": the innermost block, the if, folds
+		Fx.run(()->e.getCodeArea().moveTo(4, 0));
+		Fx.run(e::foldAtCaret);
+		assertTrue(Fx.call(()->e.isFolded(2)));
+		assertFalse(Fx.call(()->e.isFolded(0)));
+		// again, from the if's line: the next one out, the for
+		Fx.run(()->e.getCodeArea().moveTo(2, 0));
+		Fx.run(e::foldAtCaret);
+		assertTrue(Fx.call(()->e.isFolded(0)));
+		// unfold on the for's line, then the if inside it
+		Fx.run(()->e.getCodeArea().moveTo(0, 0));
+		Fx.run(e::unfoldAtCaret);
+		assertFalse(Fx.call(()->e.isFolded(0)));
+		Fx.run(()->e.getCodeArea().moveTo(2, 0));
+		Fx.run(e::unfoldAtCaret);
+		assertFalse(Fx.call(()->e.isFolded(2)));
+		// outside any block nothing happens
+		Fx.run(()->e.getCodeArea().moveTo(7, 0));
+		Fx.run(e::foldAtCaret);
+		Fx.run(e::unfoldAtCaret);
+		assertFalse(Fx.call(()->collapsed(e, 1) || collapsed(e, 3)));
+	}
+
+	@Test
 	public void thePausedLineIsShownEvenWhenFolded() throws Exception {
 		ScriptEditor e = Fx.call(()->{
 			ScriptEditor ed = new ScriptEditor();

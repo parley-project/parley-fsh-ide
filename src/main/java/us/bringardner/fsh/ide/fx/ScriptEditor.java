@@ -432,6 +432,38 @@ public class ScriptEditor extends StackPane {
 		}
 	}
 
+	/** Folds the innermost unfolded block the caret is in (or that starts on its line). */
+	public void foldAtCaret() {
+		int line = getCaretLine();
+		FoldRegions.Region best = null;
+		for(FoldRegions.Region r : folds) {
+			if( r.start <= line && line <= r.end && !isFolded(r.start) && (best == null || r.start > best.start) ) {
+				best = r;
+			}
+		}
+		if( best != null ) {
+			fold(best.start);
+		}
+	}
+
+	/** Unfolds the folded block on the caret's line, or the innermost folded one the caret is in. */
+	public void unfoldAtCaret() {
+		int line = getCaretLine();
+		if( isFolded(line) ) {
+			unfold(line);
+			return;
+		}
+		FoldRegions.Region best = null;
+		for(FoldRegions.Region r : folds) {
+			if( r.start <= line && line <= r.end && isFolded(r.start) && (best == null || r.start > best.start) ) {
+				best = r;
+			}
+		}
+		if( best != null ) {
+			unfold(best.start);
+		}
+	}
+
 	/** Folds every block, the inner ones first. */
 	public void foldAll() {
 		List<FoldRegions.Region> list = new ArrayList<>(folds);
