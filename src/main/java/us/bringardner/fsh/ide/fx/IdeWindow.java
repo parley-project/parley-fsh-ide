@@ -12,6 +12,7 @@
  */
 package us.bringardner.fsh.ide.fx;
 
+import us.bringardner.fsh.ide.core.EditorFont;
 import us.bringardner.fsh.ide.core.SyntaxColors;
 import us.bringardner.fx.gradient.GradientLook;
 import java.io.IOException;
@@ -211,6 +212,7 @@ public class IdeWindow {
 		GradientLook.apply(scene);
 		scene.getStylesheets().add(IdeWindow.class.getResource("fsh-ide.css").toExternalForm());
 		applySyntaxColors(scene, us.bringardner.swing.gradient.Theme.current());
+		applyEditorFont(scene, EditorFont.load(prefs));
 		stage.setScene(scene);
 		restoreBounds();
 		stage.setOnCloseRequest(e->{
@@ -303,7 +305,13 @@ public class IdeWindow {
 		MenuItem about = item("About fsh-ide", null, ()->AboutStage.open(stage));
 		Menu help = new Menu("Help", null, about);
 
-		MenuBar bar = new MenuBar(file, edit, run, help);
+		// View: the editor's and console's text bigger or smaller, kept for both IDEs
+		MenuItem bigger = item("Bigger Text", "Shortcut+EQUALS", ()->changeEditorFont(EditorFont::bigger));
+		MenuItem smaller = item("Smaller Text", "Shortcut+MINUS", ()->changeEditorFont(EditorFont::smaller));
+		MenuItem actual = item("Actual Size", "Shortcut+DIGIT0", ()->changeEditorFont(EditorFont::actualSize));
+		Menu view = new Menu("View", null, bigger, smaller, actual);
+
+		MenuBar bar = new MenuBar(file, edit, view, run, help);
 		bar.setUseSystemMenuBar(true);
 		return bar;
 	}
@@ -1103,5 +1111,59 @@ public class IdeWindow {
 		scene.getRoot().getStyleClass().add(SyntaxColors.CSS_CLASS);
 		scene.getStylesheets().add("data:text/css;base64,"
 				+ java.util.Base64.getEncoder().encodeToString(colors.css().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+	}
+
+	/**
+	 * The editor font (kept in the IDE's preferences, set here or in the Swing IDE) on the script
+	 * editor and console. The standard font adds nothing: fsh-ide.css has it.
+	 */
+	static void applyEditorFont(Scene scene, EditorFont font) {
+		scene.getStylesheets().removeIf(s->s.startsWith("data:text/css;base64,") && isEditorFontCss(s));
+		scene.getRoot().getStyleClass().remove(EditorFont.CSS_CLASS);
+		if( font.isDefault() ) {
+			return;
+		}
+		scene.getRoot().getStyleClass().add(EditorFont.CSS_CLASS);
+		scene.getStylesheets().add("data:text/css;base64," + java.util.Base64.getEncoder().encodeToString(
+				("/* " + EditorFont.CSS_CLASS + " */\n" + font.css()).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+	}
+
+	private static boolean isEditorFontCss(String url) {
+		String css = new String(java.util.Base64.getDecoder().decode(url.substring(url.indexOf(',') + 1)),
+				java.nio.charset.StandardCharsets.UTF_8);
+		return css.startsWith("/* " + EditorFont.CSS_CLASS + " */");
+	}
+
+	/** Changes the editor font, keeps it, and puts it on every open IDE window. */
+	private void changeEditorFont(java.util.function.UnaryOperator<EditorFont> change) {
+		EditorFont font = change.apply(EditorFont.load(prefs));
+		if( prefs != null ) {
+			font.save(prefs);
+		}
+		applyEditorFont(stage.getScene(), font);
+		// and the other open IDE windows
+		for(javafx.stage.Window w : javafx.stage.Window.getWindows()) {
+			if( w != stage && w.getScene() != null && w.getScene().getRoot().lookup(".script-editor") != null ) {
+				applyEditorFont(w.getScene(), font);
+			}
+		}
+	}
+
+	/** The editor font now on this window, for tests. */
+	EditorFont editorFont() {
+		return EditorFont.load(prefs);
+	}
+
+	/** Bigger Text, Smaller Text and Actual Size, for tests. */
+	void biggerText() {
+		changeEditorFont(EditorFont::bigger);
+	}
+
+	void smallerText() {
+		changeEditorFont(EditorFont::smaller);
+	}
+
+	void actualSize() {
+		changeEditorFont(EditorFont::actualSize);
 	}
 }

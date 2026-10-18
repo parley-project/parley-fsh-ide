@@ -294,6 +294,8 @@ public class FshIDE extends JFrame  {
 		// the script editor's syntax colors are part of the theme, with a page in the theme designer
 		ThemeExtensions.register(new EditorThemeExtension());
 		GradientLook.install(prefs);
+		// the editors' and console's font, apart from the appearance font
+		EditorFonts.load(prefs);
 		EventQueue.invokeLater(()->openWindow());
 	}
 
@@ -744,6 +746,8 @@ public class FshIDE extends JFrame  {
 		});
 		fileMenu.add(mntmNewMenuItem_6);
 
+		menuBar.add(viewMenu());
+
 		JMenu mnNewMenu = new JMenu("Debug");
 		menuBar.add(mnNewMenu);
 
@@ -915,7 +919,8 @@ public class FshIDE extends JFrame  {
 
 		contentPane.add(centerSplitPane, BorderLayout.CENTER);
 		JScrollPane stdViewScrollPane = new JScrollPane();
-		outputTextArea = new ConsolePanel();		
+		outputTextArea = new ConsolePanel();
+		EditorFonts.apply(outputTextArea);		
 		stdViewScrollPane.setViewportView(outputTextArea);
 
 
@@ -1086,6 +1091,55 @@ public class FshIDE extends JFrame  {
 
 	}
 
+
+	/**
+	 * View: the editors' and console's text bigger or smaller (also with ⌘+ / ⌘−, or Ctrl), back to
+	 * the standard size, or another fixed-width font.
+	 */
+	private JMenu viewMenu() {
+		JMenu view = new JMenu("View");
+		int shortcut = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+		JMenuItem bigger = new JMenuItem("Bigger Text");
+		bigger.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_EQUALS, shortcut));
+		bigger.addActionListener(e->actionBiggerText());
+		JMenuItem smaller = new JMenuItem("Smaller Text");
+		smaller.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_MINUS, shortcut));
+		smaller.addActionListener(e->actionSmallerText());
+		JMenuItem actual = new JMenuItem("Actual Size");
+		actual.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_0, shortcut));
+		actual.addActionListener(e->actionActualSize());
+		JMenuItem font = new JMenuItem("Editor Font...");
+		font.addActionListener(e->EditorFontDialog.showDialog(this, prefs));
+		view.add(bigger);
+		view.add(smaller);
+		view.add(actual);
+		view.addSeparator();
+		view.add(font);
+		// ⌘+ (shift and =, or the keypad's +) makes the text bigger too
+		javax.swing.JRootPane root = getRootPane();
+		for(int key : new int[] {java.awt.event.KeyEvent.VK_PLUS, java.awt.event.KeyEvent.VK_ADD}) {
+			root.registerKeyboardAction(e->actionBiggerText(), javax.swing.KeyStroke.getKeyStroke(key, shortcut),
+					javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
+		}
+		root.registerKeyboardAction(e->actionBiggerText(), javax.swing.KeyStroke.getKeyStroke(
+				java.awt.event.KeyEvent.VK_EQUALS, shortcut | java.awt.event.InputEvent.SHIFT_DOWN_MASK),
+				javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
+		root.registerKeyboardAction(e->actionSmallerText(), javax.swing.KeyStroke.getKeyStroke(
+				java.awt.event.KeyEvent.VK_SUBTRACT, shortcut), javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
+		return view;
+	}
+
+	static void actionBiggerText() {
+		EditorFonts.choose(EditorFonts.current().bigger(), prefs);
+	}
+
+	static void actionSmallerText() {
+		EditorFonts.choose(EditorFonts.current().smaller(), prefs);
+	}
+
+	static void actionActualSize() {
+		EditorFonts.choose(EditorFonts.current().actualSize(), prefs);
+	}
 
 	protected void actionPreferences() {
 		showAppearance(this);

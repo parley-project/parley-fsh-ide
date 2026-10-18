@@ -83,6 +83,8 @@ final class EditorColors {
 	 * pane, so the line numbers and fold icons in the gutter get them too.
 	 */
 	static void apply(RSyntaxTextArea editor) {
+		// the editor font first: the colors keep the font the editor has
+		EditorFonts.apply(editor);
 		apply(editor, current());
 	}
 

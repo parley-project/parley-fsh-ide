@@ -95,6 +95,30 @@ public class IdeWindowTest {
 	}
 
 	@Test
+	public void theViewMenuChangesTheEditorFont() throws Exception {
+		TestWindow w = window();
+		assertEquals(us.bringardner.fsh.ide.core.EditorFont.defaults(), Fx.call(w::editorFont));
+		assertFalse(Fx.call(()->w.stage().getScene().getRoot().getStyleClass()
+				.contains(us.bringardner.fsh.ide.core.EditorFont.CSS_CLASS)), "the standard font adds nothing");
+		Fx.run(w::biggerText);
+		Fx.run(w::biggerText);
+		assertEquals(15, Fx.call(w::editorFont).getSize());
+		assertEquals(15, prefs.getInt(us.bringardner.fsh.ide.core.EditorFont.PREF_SIZE, -1), "kept");
+		assertTrue(Fx.call(()->w.stage().getScene().getRoot().getStyleClass()
+				.contains(us.bringardner.fsh.ide.core.EditorFont.CSS_CLASS)));
+		int sheets = Fx.call(()->w.stage().getScene().getStylesheets().size());
+		Fx.run(w::smallerText);
+		assertEquals(14, Fx.call(w::editorFont).getSize());
+		assertEquals(sheets, (int) Fx.call(()->w.stage().getScene().getStylesheets().size()), "replaced, not added");
+		Fx.run(w::actualSize);
+		assertEquals(us.bringardner.fsh.ide.core.EditorFont.defaults(), Fx.call(w::editorFont));
+		assertFalse(Fx.call(()->w.stage().getScene().getRoot().getStyleClass()
+				.contains(us.bringardner.fsh.ide.core.EditorFont.CSS_CLASS)));
+		assertEquals(sheets - 1, (int) Fx.call(()->w.stage().getScene().getStylesheets().size()));
+		Fx.run(()->w.stage().close());
+	}
+
+	@Test
 	public void scriptSettingsAndChanges() throws Exception {
 		TestWindow w = window();
 		Fx.run(()->w.setCode("#BjlIdeScriptArgs=a b\necho $1\n", null));
