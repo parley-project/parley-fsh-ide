@@ -1,8 +1,8 @@
 # Changelog
 
-## 1.0.0 (unreleased)
+## 1.1.0 (unreleased)
 
-First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
+Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1.0.
 
 ### Changed
 
@@ -61,6 +61,27 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   (Cmd-Alt-[) and Unfold (Cmd-Alt-]) at the caret, Fold All and Unfold All with Shift (Ctrl for
   Cmd on Windows and Linux). In the Swing IDE they are in the View menu; in the JavaFX IDE, in
   Edit, where Fold All and Unfold All were Cmd-Shift-- and Cmd-Shift-=.
+
+### Fixed
+
+- The built-in templates insert code that runs. if and if-else had branches with only a comment (a
+  syntax error); while and until tested `[ false ]` and `[ true ]`, which are always true (so while
+  never ended), and now have a condition field; the for, select and case templates echoed the
+  variable's name rather than its value (`echo i`), and now echo `$i`, linked to the loop variable's
+  field. The do-statement template, not valid on its own, is gone. Unchanged copies of the old
+  templates in a saved configuration are replaced; edited ones are kept.
+- The JavaFX IDE's editor and console are in a fixed-width font everywhere. fsh-ide.css listed
+  several families ("Menlo", "Consolas", ...), but JavaFX's CSS takes only one, so where Menlo
+  isn't installed (Windows, Linux) the console was in the proportional System font; the family is
+  now chosen in code from those the computer has. A font chosen with Editor Font... now reaches the
+  editor's text too (RichTextFX's text didn't take it from the editor), with the line numbers two
+  points smaller.
+
+## 1.0.0 (2026-10-21)
+
+First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
+
+### Changed
 - A script's arguments and redirects are no longer written into the script. They're kept per
   user in `~/.fsh-ide/run-settings` (`RunSettingsStore`), by the script's full path (a remote
   script's URL, without any password). Saving a script writes only its code; if it has no
@@ -144,19 +165,7 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 - A new script is empty, not one blank line (`ScriptDocument.parse("")`).
 
 ### Fixed
-
-- The built-in templates insert code that runs. if and if-else had branches with only a comment (a
-  syntax error); while and until tested `[ false ]` and `[ true ]`, which are always true (so while
-  never ended), and now have a condition field; the for, select and case templates echoed the
-  variable's name rather than its value (`echo i`), and now echo `$i`, linked to the loop variable's
-  field. The do-statement template, not valid on its own, is gone. Unchanged copies of the old
-  templates in a saved configuration are replaced; edited ones are kept.
-- The JavaFX IDE's editor and console are in a fixed-width font everywhere. fsh-ide.css listed
-  several families ("Menlo", "Consolas", ...), but JavaFX's CSS takes only one, so where Menlo
-  isn't installed (Windows, Linux) the console was in the proportional System font; the family is
-  now chosen in code from those the computer has. A font chosen with Editor Font... now reaches the
-  editor's text too (RichTextFX's text didn't take it from the editor), with the line numbers two
-  points smaller.- `$LINENO`, `BASH_LINENO` and fsh's error messages were one line too high in scripts run by
+- `$LINENO`, `BASH_LINENO` and fsh's error messages were one line too high in scripts run by
   `ScriptRun`: it put a `#!fsh` line in front of the code. The code now runs as it is.
 - `DebugVariables.set` of `$1`, `$2` ... in a function set the script's parameters (inserting the
   function's among them) and left the function's unchanged. It now sets the running function's
