@@ -10,7 +10,7 @@
 	<name>fsh-ide - editor and debugger for shell scripts</name>
 	<description>Edits, runs and debugs bash/POSIX-style scripts, using fsh (the FileSource Shell)
 		as the interpreter. Formerly us.bringardner:bjl_shell_ide (BjlShellIde).</description>
-	<url>https://github.com/tony-bringardner/fsh-ide</url>
+	<url>https://github.com/parley-project/parley-fsh-ide</url>
 	<inceptionYear>2004</inceptionYear>
 
 	<licenses>
@@ -28,9 +28,9 @@
 		</developer>
 	</developers>
 	<scm>
-		<connection>scm:git:https://github.com/tony-bringardner/fsh-ide.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/tony-bringardner/fsh-ide.git</developerConnection>
-		<url>https://github.com/tony-bringardner/fsh-ide/tree/master</url>
+		<connection>scm:git:https://github.com/parley-project/parley-fsh-ide.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/parley-project/parley-fsh-ide.git</developerConnection>
+		<url>https://github.com/parley-project/parley-fsh-ide/tree/master</url>
 	</scm>
 
 	<properties>
@@ -244,8 +244,8 @@
 	<distributionManagement>
 		<repository>
 			<id>github</id>
-			<name>tony-bringardner</name>
-			<url>https://maven.pkg.github.com/tony-bringardner/fsh-ide</url>
+			<name>parley-project</name>
+			<url>https://maven.pkg.github.com/parley-project/parley-fsh-ide</url>
 		</repository>
 	</distributionManagement>
 
