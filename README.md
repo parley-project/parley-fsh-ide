@@ -1,17 +1,17 @@
 # fsh-ide
 
 An editor and debugger for shell scripts. It uses
-[fsh](https://github.com/tony-bringardner/fsh), the FileSource Shell, as the
+[fsh](https://github.com/parley-project/parley-fsh), the FileSource Shell, as the
 interpreter. fsh aims to be close to bash/POSIX, so the IDE works for those scripts
 too. Scripts can be opened from and saved to any
-[parley-files](https://github.com/tony-bringardner/parley-files) file system.
+[parley-files](https://github.com/parley-project/parley-files) file system.
 
-<img src="https://raw.githubusercontent.com/tony-bringardner/parley-brand/master/src/main/resources/us/bringardner/parley/brand/parley-icon-terminal-128.png" alt="The fsh-ide icon: the Parley tower with a terminal badge" width="96" align="right">
+<img src="https://raw.githubusercontent.com/parley-project/parley-brand/master/src/main/resources/us/bringardner/parley/brand/parley-icon-terminal-128.png" alt="The fsh-ide icon: the Parley tower with a terminal badge" width="96" align="right">
 
-**An example of what [Parley](https://github.com/tony-bringardner/parley-parent#what-parley-can-help-you-build)
+**An example of what [Parley](https://github.com/parley-project/parley-parent#what-parley-can-help-you-build)
 can help you build.** fsh-ide is an application, not part of the Parley library: it uses Parley
 the same way your own application would. It wears the Parley brand from
-[parley-brand](https://github.com/tony-bringardner/parley-brand), with a terminal badge.
+[parley-brand](https://github.com/parley-project/parley-brand), with a terminal badge.
 
 Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
