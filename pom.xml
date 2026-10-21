@@ -6,7 +6,7 @@
 	<!-- fsh-ide: edit, run and debug shell scripts, using fsh as the interpreter -->
 	<groupId>us.bringardner</groupId>
 	<artifactId>fsh-ide</artifactId>
-	<version>1.1.0-SNAPSHOT</version>
+	<version>2.0.0-SNAPSHOT</version>
 	<name>fsh-ide - editor and debugger for shell scripts</name>
 	<description>Edits, runs and debugs bash/POSIX-style scripts, using fsh (the FileSource Shell)
 		as the interpreter. Formerly us.bringardner:bjl_shell_ide (BjlShellIde).</description>
@@ -36,8 +36,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>11</maven.compiler.release>
-		<fsh.version>1.1.0-SNAPSHOT</fsh.version>
-		<parley.version>1.0.0</parley.version>
+		<fsh.version>2.0.0-SNAPSHOT</fsh.version>
+		<parley.version>2.0.0-SNAPSHOT</parley.version>
 	</properties>
 
 	<profiles>
@@ -295,7 +295,7 @@
 			<groupId>us.bringardner.parley</groupId>
 			<artifactId>parley-files-swing</artifactId>
 			<!-- 1.1.0: its dialogs follow the gradient look -->
-			<version>1.1.0-SNAPSHOT</version>
+			<version>2.0.0-SNAPSHOT</version>
 		</dependency>
 
 		<!-- The editor -->
@@ -348,7 +348,7 @@
 			<groupId>us.bringardner.parley</groupId>
 			<artifactId>parley-files-fx</artifactId>
 			<!-- 1.1.0: its dialogs follow the gradient look -->
-			<version>1.1.0-SNAPSHOT</version>
+			<version>2.0.0-SNAPSHOT</version>
 		</dependency>
 		<!-- The syntax-tree view lays out its tree with org.abego.treelayout -->
 		<dependency>
