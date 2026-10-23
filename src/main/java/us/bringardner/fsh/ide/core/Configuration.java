@@ -423,16 +423,16 @@ public class Configuration {
 					+ "  esac\n"
 					+ "done\n"
 					+ "shift $$((OPTIND - 1))\n"),
-			new Template( "connect", "connect: mount a file system, disconnected when the script ends", 
-					"connect ${sftp} host=${host} user=${user} password=@keychain:${service/account} /${mount}\n"
-					+ "trap 'disconnect /${mount}' EXIT\n"),
+			new Template( "connect", "connect: connect a file system, disconnected when the script ends", 
+					"connect ${sftp} host=${host} user=${user} password=@keychain:${service/account} /${path}\n"
+					+ "trap 'disconnect /${path}' EXIT\n"),
 			new Template( "scratch", "scratch: an in-memory file system, gone when the script ends", 
 					"connect memory /${scratch}\n"
 					+ "trap 'disconnect /${scratch}' EXIT\n"),
-			new Template( "copy-across", "copy-across: copy between mounted file systems", 
+			new Template( "copy-across", "copy-across: copy between connected file systems", 
 					"cp -r /${from}/${path} /${to}/"),
 			new Template( "find-each", "find-each: each file find finds", 
-					"find /${mount}/${dir} -name '${pattern}' | while IFS= read -r ${file}\n"
+					"find /${path}/${dir} -name '${pattern}' | while IFS= read -r ${file}\n"
 					+ "do\n"
 					+ "  echo \"$$${file}\"\n"
 					+ "done\n"),
