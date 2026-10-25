@@ -38,6 +38,14 @@ public class FshIdeFx {
 	 * IDE does. Best effort: where that isn't supported it does nothing.
 	 */
 	static void setDockIcon() {
+		// Every window opened from now on (dialogs, alerts) gets the app icon, not the Java cup
+		javafx.stage.Window.getWindows().addListener((javafx.collections.ListChangeListener<javafx.stage.Window>) c -> {
+			while( c.next() ) {
+				if( c.wasAdded() ) {
+					c.getAddedSubList().forEach(FxBrand::apply);
+				}
+			}
+		});
 		try {
 			if( java.awt.Taskbar.isTaskbarSupported()
 					&& java.awt.Taskbar.getTaskbar().isSupported(java.awt.Taskbar.Feature.ICON_IMAGE) ) {
