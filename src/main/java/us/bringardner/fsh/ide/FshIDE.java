@@ -345,6 +345,9 @@ public class FshIDE extends JFrame  {
 
 	private static void openWindow() {
 
+		// Dialogs (new terminal, open remote, new folder...) get the app icon too, not the Java cup
+		ParleyBrand.installDefaultWindowIcons("terminal");
+
 		// The Parley app icon with the terminal badge, in every size; the OS picks the one it needs
 		List<java.awt.Image> imageList = ParleyBrand.appIcons("terminal");
 
