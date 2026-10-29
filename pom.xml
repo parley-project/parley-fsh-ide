@@ -210,6 +210,38 @@
 					</archive>
 				</configuration>
 			</plugin>
+			<!-- META-INF/parley/launcher.list in the jar: how parley-launcher runs it, and every jar it
+			     needs with its SHA-256 (parley-launcher add NAME COORDINATES [MAIN]) -->
+			<plugin>
+				<groupId>us.bringardner.parley</groupId>
+				<artifactId>parley-launcher-maven-plugin</artifactId>
+				<version>${parley.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>list</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>us.bringardner.fsh.ide.FshIDE</mainClass>
+					<!-- (the JavaFX IDE is in the same jar: parley-launcher add fsh-ide-fx COORDINATES us.bringardner.fsh.ide.fx.FshIdeFx) -->
+					<options>
+						<!-- (fsh's options, as fsh's installers give it: it runs fsh scripts) -->
+						<option>-Xss16m</option>
+						<option>-XX:+UseSerialGC</option>
+						<option>-Xmn16m</option>
+						<option>-XX:MinHeapFreeRatio=10</option>
+						<option>-XX:MaxHeapFreeRatio=20</option>
+						<option>-XX:-MaxFDLimit</option>
+						<option>-Djava.library.path={native}</option>
+						<option>17+:--enable-native-access=ALL-UNNAMED</option>
+						<option>macos:-Xdock:name={app}</option>
+					</options>
+					<!-- (fsh's keyboard library and fshexec, from fsh's native jar) -->
+					<nativeFrom>us.bringardner:fsh</nativeFrom>
+				</configuration>
+			</plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>
