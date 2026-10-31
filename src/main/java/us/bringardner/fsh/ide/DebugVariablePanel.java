@@ -186,6 +186,15 @@ public class DebugVariablePanel extends JPanel  {
 		VariableTable() {
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 			table.setAutoCreateRowSorter(true);
+			// the Value column can be very wide: its heading at the left, where it can be seen
+			TableCellRenderer headings = table.getTableHeader().getDefaultRenderer();
+			table.getTableHeader().setDefaultRenderer((t, value, isSelected, hasFocus, row, column)->{
+				Component c = headings.getTableCellRendererComponent(t, value, isSelected, hasFocus, row, column);
+				if( c instanceof javax.swing.JLabel ) {
+					((javax.swing.JLabel) c).setHorizontalAlignment(t.convertColumnIndexToModel(column) == 2 ? javax.swing.SwingConstants.LEADING : javax.swing.SwingConstants.CENTER);
+				}
+				return c;
+			});
 			table.getColumn("Value").setCellRenderer(new DefaultTableCellRenderer() {
 				private static final long serialVersionUID = 1L;
 
