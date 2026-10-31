@@ -87,6 +87,34 @@ public final class DebugVariables {
 		return ret;
 	}
 
+	// variables fsh sets itself while a script runs, that a new shell doesn't have yet
+	private static final java.util.Set<String> SET_BY_FSH = java.util.Set.of("OLDPWD", "PIPESTATUS", "BASH_REMATCH",
+			// the ones ShellContext.getVariables() adds while they have a value
+			"SHELLOPTS", "BASHOPTS", "BASH_ALIASES", "BASH_CMDS", "BASH_ARGC", "BASH_ARGV", "BASH_LINENO", "BASH_SOURCE", "DIRSTACK", "FUNCNAME");
+
+	/**
+	 * True for a variable fsh defines (the shell's own, such as IFS, PS1, OPTIND or BASH_LINENO, the
+	 * ones inherited from the environment, and $0), whatever its value; false for the script's own,
+	 * including its loop variables and its positional parameters $1, $2 ...
+	 */
+	public static boolean isFshDefined(String name) {
+		if( name.startsWith("$")) {
+			return name.equals("$0");
+		}
+		return shellDefaults().containsKey(name) || System.getenv(name) != null || SET_BY_FSH.contains(name);
+	}
+
+	/** The variables, by name, that the script defined (or fsh did, if fshDefined is true). */
+	public static List<Variable> list(Map<String,Object> variables, boolean all, boolean fshDefined) {
+		List<Variable> ret = new ArrayList<>();
+		for(Variable v : list(variables, all)) {
+			if( isFshDefined(v.getName()) == fshDefined ) {
+				ret.add(v);
+			}
+		}
+		return ret;
+	}
+
 	/** Simple class name of a variable's value (a Type column), or "" for null. */
 	public static String typeName(Object value) {
 		return value == null ? "" : value.getClass().getSimpleName();

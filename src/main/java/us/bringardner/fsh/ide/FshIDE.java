@@ -803,6 +803,11 @@ public class FshIDE extends JFrame  {
 
 		debugVariablePanel  = new DebugVariablePanel();
 		debugVariablePanel.setContext(editorPane, null);
+		// a clicked variable shows (name = value) in the text area below
+		debugVariablePanel.setOnShowVariable(text->{
+			logBatcher.flush();
+			appendLog(text);
+		});
 		editorPane.addBreapointListner(()->{			
 			debugVariablePanel.refreshBreakpoints();
 		});

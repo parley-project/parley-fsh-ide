@@ -94,4 +94,23 @@ public class TestDebugVariables {
 		assertEquals(List.of("$1", "IFS", "count"), shown);
 		assertEquals(5, DebugVariables.list(vars, true).size());
 	}
+
+	@Test
+	public void userAndFshDefinedAreSeparate() {
+		String envName = System.getenv().keySet().iterator().next();
+		Map<String,Object> vars = new java.util.HashMap<>();
+		vars.put("count", 3);                  // the script's own
+		vars.put("i", "a");                    // a loop variable
+		vars.put("IFS", ",");                  // the shell's own, even when the script changed it
+		vars.put("OPTIND", "1");
+		vars.put("OLDPWD", "/tmp");
+		vars.put(envName, System.getenv(envName));
+		vars.put("$0", "script.sh");
+		vars.put("$1", "x");
+		List<String> user = DebugVariables.list(vars, true, false).stream().map(Variable::getName).collect(Collectors.toList());
+		List<String> fsh = DebugVariables.list(vars, true, true).stream().map(Variable::getName).collect(Collectors.toList());
+		assertEquals(List.of("$1", "count", "i"), user);
+		assertEquals(5, fsh.size());
+		assertEquals(true, fsh.containsAll(List.of("$0", "IFS", "OPTIND", "OLDPWD", envName)));
+	}
 }
