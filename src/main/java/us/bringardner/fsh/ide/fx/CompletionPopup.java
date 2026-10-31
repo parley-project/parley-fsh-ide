@@ -49,23 +49,30 @@ public class CompletionPopup {
 	public CompletionPopup(ScriptEditor editor, Supplier<Collection<Template>> templates) {
 		this.editor = editor;
 		this.templates = templates;
-		list.setPrefSize(320, 180);
+		list.setPrefSize(440, 180);
 		list.setCellFactory(l->new ListCell<>() {
 			@Override
 			protected void updateItem(Completion c, boolean empty) {
 				super.updateItem(c, empty);
-				setText(empty || c == null ? null : c.label+(c.template ? "" : "   (variable)"));
+				setText(empty || c == null ? null : text(c));
 			}
 		});
 		list.getSelectionModel().selectedItemProperty().addListener((o, was, is)->
 			description.setText(is == null ? "" : is.description));
+		// a click on one inserts it
 		list.setOnMouseClicked(e->{
-			if( e.getClickCount() == 2 && list.getSelectionModel().getSelectedItem() != null ) {
-				apply(list.getSelectionModel().getSelectedItem());
+			Completion c = list.getSelectionModel().getSelectedItem();
+			if( e.getButton() == javafx.scene.input.MouseButton.PRIMARY && c != null ) {
+				apply(c);
 			}
 		});
+		// JavaFX gives the editor window's keys to the list's window first, where the list took
+		// Enter (so it never inserted): Up, Down, Enter, Tab and Escape are handled here (key());
+		// the rest go on to the editor, where typing narrows the list. (The editor has them too, for
+		// when the list's window isn't between: one that one of them handles is consumed.)
+		popup.addEventFilter(KeyEvent.KEY_PRESSED, keys);
 		description.setWrapText(true);
-		description.setMaxWidth(320);
+		description.setMaxWidth(440);
 		VBox box = new VBox(list, description);
 		box.getStyleClass().add("completion-popup");
 		box.setStyle("-fx-background-color: white; -fx-border-color: #b0b0b0; -fx-padding: 2;");
@@ -76,13 +83,31 @@ public class CompletionPopup {
 			if( active ) {
 				refresh();
 			}
+		});		// Ctrl+Space in the editor itself: on macOS, Edit > Complete's Ctrl+Space is in the system
+		// menu bar, which doesn't pass it on, so the menu's shortcut alone never showed the list
+		editor.getCodeArea().addEventFilter(KeyEvent.KEY_PRESSED, e->{
+			if( e.getCode() == javafx.scene.input.KeyCode.SPACE && e.isControlDown() && !e.isAltDown() && !e.isMetaDown()) {
+				e.consume();
+				show();
+			}
 		});
+	}
+
+	/** A completion as the list shows it: a template's name and, if it says more, its description. */
+	static String text(Completion c) {
+		if( !c.template ) {
+			return c.label+"   (variable)";
+		}
+		boolean more = c.description != null && !c.description.isBlank() && !c.description.equals(c.label);
+		return more ? c.label+" \u2014 "+c.description : c.label;
 	}
 
 	/** Shows what can finish the word before the caret (nothing happens if there's nothing). */
 	public void show() {
-		active = true;
-		editor.getCodeArea().addEventFilter(KeyEvent.KEY_PRESSED, keys);
+		if( !active ) {
+			active = true;
+			editor.getCodeArea().addEventFilter(KeyEvent.KEY_PRESSED, keys);
+		}
 		refresh();
 	}
 
@@ -161,5 +186,10 @@ public class CompletionPopup {
 
 	boolean isActive() {
 		return active;
+	}
+
+	// for tests
+	boolean isShowing() {
+		return popup.isShowing();
 	}
 }

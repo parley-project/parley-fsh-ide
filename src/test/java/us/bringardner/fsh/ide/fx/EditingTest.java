@@ -167,6 +167,73 @@ public class EditingTest {
 	}
 
 	@Test
+	public void ctrlSpaceInTheEditorShowsTheList() throws Exception {
+		TestWindow w = window("");
+		Fx.run(()->{
+			w.editor().getCodeArea().appendText("fo");
+			w.editor().getCodeArea().moveTo(2);
+		});
+		KeyEvent ctrlSpace = new KeyEvent(KeyEvent.KEY_PRESSED, " ", " ", KeyCode.SPACE, false, true, false, false);
+		Fx.run(()->javafx.event.Event.fireEvent(w.editor().getCodeArea(), ctrlSpace));
+		assertTrue(Fx.call(()->w.completion().isActive()));
+		assertTrue(ctrlSpace.isConsumed() || Fx.call(()->w.editor().getText()).equals("fo"));
+		// (a second Ctrl+Space doesn't add the list's keys twice: one Escape closes it)
+		Fx.run(()->javafx.event.Event.fireEvent(w.editor().getCodeArea(), ctrlSpace.copyFor(w.editor().getCodeArea(), w.editor().getCodeArea())));
+		KeyEvent esc = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ESCAPE, false, false, false, false);
+		Fx.run(()->javafx.event.Event.fireEvent(w.editor().getCodeArea(), esc));
+		assertFalse(Fx.call(()->w.completion().isActive()));
+		assertEquals("fo", Fx.call(()->w.editor().getText()));
+	}
+
+	@Test
+	public void theShownListTakesEnterAndAClick() throws Exception {
+		TestWindow w = window("");
+		Fx.run(()->{
+			w.stage().setWidth(800);
+			w.stage().setHeight(500);
+			w.stage().show();
+			w.editor().getCodeArea().appendText("fo");
+			w.editor().getCodeArea().moveTo(2);
+			w.completion().show();
+		});
+		// the list's window shows, and the window's keys go to it first
+		Fx.waitFor(()->w.completion().isShowing());
+		Completion second = Fx.call(()->w.completion().list.getItems().get(1));
+		KeyEvent down = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN, false, false, false, false);
+		KeyEvent enter = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.ENTER, false, false, false, false);
+		Fx.run(()->javafx.event.Event.fireEvent(w.editor().getCodeArea(), down));
+		Fx.run(()->javafx.event.Event.fireEvent(w.editor().getCodeArea(), enter));
+		// Enter inserted the second (it didn't stop in the list)
+		assertFalse(Fx.call(()->w.completion().isActive()));
+		assertEquals(us.bringardner.fsh.ide.core.TemplateText.expand(second.code).text, Fx.call(()->w.editor().getText()));
+
+		// a single click on one inserts it
+		Fx.run(()->{
+			w.editor().setText("fo");
+			w.editor().getCodeArea().moveTo(2);
+			w.completion().show();
+		});
+		Fx.waitFor(()->w.completion().isShowing());
+		Completion first = Fx.call(()->w.completion().list.getItems().get(0));
+		Fx.run(()->javafx.event.Event.fireEvent(w.completion().list, new javafx.scene.input.MouseEvent(
+				javafx.scene.input.MouseEvent.MOUSE_CLICKED, 5, 5, 5, 5, javafx.scene.input.MouseButton.PRIMARY, 1,
+				false, false, false, false, true, false, false, true, false, false, null)));
+		assertFalse(Fx.call(()->w.completion().isActive()));
+		assertEquals(us.bringardner.fsh.ide.core.TemplateText.expand(first.code).text, Fx.call(()->w.editor().getText()));
+		Fx.run(()->w.stage().hide());
+	}
+
+	@Test
+	public void templatesWithTheSameNameShowTheirDescriptions() throws Exception {
+		java.util.List<us.bringardner.fsh.ide.core.Template> templates = java.util.List.of(
+				new us.bringardner.fsh.ide.core.Template("for", "for-array", "for x in ${a}; do ${cursor}; done"),
+				new us.bringardner.fsh.ide.core.Template("if", "", "if ${c}; then ${cursor}; fi"));
+		java.util.List<String> shown = Fx.call(()->us.bringardner.fsh.ide.core.Completions.matching("", templates, "count=1\n")
+				.stream().map(CompletionPopup::text).collect(Collectors.toList()));
+		assertEquals(java.util.List.of("for \u2014 for-array", "if", "count   (variable)"), shown);
+	}
+
+	@Test
 	public void syntaxTree() throws Exception {
 		TestWindow w = window("for i in 1 2\ndo\n  echo $i\ndone\nls | wc -l\n");
 		Fx.run(w::checkSyntax);
