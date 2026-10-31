@@ -19,8 +19,9 @@ Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 - Syntax-aware editor with templates, auto-completion and spell checking
 - Run a script or just the selected lines, with output in an embedded console
-- Breakpoints (optionally conditional), step into/over/return, and a variables
-  view where values can be edited while paused
+- Breakpoints (optionally conditional), variable watchpoints (stop when the script reads a
+  variable, writes it, or both), step into/over/return, and a variables view where values can
+  be edited while paused
 - Parse-tree views of the script
 
 ## Two front ends
@@ -31,7 +32,8 @@ Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   variables (Ctrl+Space), open/save on any file system through parley-files-fx's chooser, recent
   files (shared with the Swing IDE), script arguments and redirects, Run/Stop, a console that
   takes typed input, debugging (breakpoints with conditions and hit counts that follow their
-  line, stepping, the paused line marked, variables editable while paused, the statement log)
+  line, watchpoints on variables, stepping, the paused line marked, variables editable while
+  paused, the statement log)
   the script's syntax tree, folding of if/for/while/case/{} blocks, and spell checking of
   comments and quoted text (suggestions on right-click; your own words go in
   `~/.fsh-ide/words.txt`).
@@ -104,7 +106,8 @@ client and has no UI; it can also talk to an adapter that is a program (`exec`) 
 on a socket (`connect`).
 
 Through the adapter the script has no standard input, its streams can't be redirected, and the
-log of every statement run isn't kept; breakpoint conditions, hit counts, steps and editing
+log of every statement run isn't kept, and watchpoints don't stop the script (the Loupe
+protocol has no watchpoints yet); breakpoint conditions, hit counts, steps and editing
 variables work as before.
 
 ## License

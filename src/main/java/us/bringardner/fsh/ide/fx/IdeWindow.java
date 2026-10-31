@@ -140,15 +140,27 @@ public class IdeWindow {
 	private volatile LoupeSession loupe;
 	private volatile boolean loupePaused;
 	private final CheckMenuItem useAdapter = new CheckMenuItem("Debug Through the Loupe Adapter");
+	// why the script is stopping, when a watchpoint stopped it (script's thread)
+	private volatile String watchpointStop;
 	private final DebugSession debugSession = new DebugSession(line->editor.getBreakpoint(line), new DebugSession.Listener() {
 		@Override
+		public void watchpointHit(us.bringardner.fsh.ide.core.Watchpoint wp, String name, boolean write, Object value) {
+			String hit = DebugSession.describeHit(name, write, value);
+			watchpointStop = hit;
+			log.add("Watchpoint: "+hit+"\n");
+		}
+
+		@Override
 		public void paused(int line, ShellContext ctx, Map<String, Object> variables) {
+			// (set on this thread just before, by watchpointHit, when a watchpoint stopped it)
+			String hit = watchpointStop;
+			watchpointStop = null;
 			Platform.runLater(()->{
 				log.flush();
 				pausedContext = ctx;
 				editor.setCurrentLine(line);
 				debugPanel.setVariables(variables, true);
-				status.setText("Paused at line "+(line+1));
+				status.setText("Paused at line "+(line+1)+(hit == null ? "" : ": watchpoint, "+hit));
 				updateControls();
 			});
 		}
@@ -262,6 +274,7 @@ public class IdeWindow {
 		debugPanel.setOnBreakpointChanged(bp->editor.breakpointChanged());
 		debugPanel.setOnEditBreakpoint(this::editBreakpoint);
 		debugPanel.setOnEditVariable(this::editVariable);
+		debugPanel.setWatchpoints(debugSession.getWatchpoints());
 		debugPanel.setOnGoToLine(line->{
 			editor.goToLine(line);
 			editor.getCodeArea().requestFocus();

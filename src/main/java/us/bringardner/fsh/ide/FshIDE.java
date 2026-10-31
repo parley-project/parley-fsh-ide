@@ -246,6 +246,11 @@ public class FshIDE extends JFrame  {
 		public void terminateRequested() {
 			actionDebug(true);
 		}
+
+		@Override
+		public void watchpointHit(us.bringardner.fsh.ide.core.Watchpoint wp, String name, boolean write, Object value) {
+			logBatcher.add("Watchpoint: "+DebugSession.describeHit(name, write, value)+"\n");
+		}
 	};
 
 	private final DebugSession debugSession = new DebugSession(line->editorPane.getBreakpoint(line), debugListener);
@@ -832,6 +837,7 @@ public class FshIDE extends JFrame  {
 
 		debugVariablePanel  = new DebugVariablePanel();
 		debugVariablePanel.setContext(editorPane, null);
+		debugVariablePanel.setWatchpoints(debugSession.getWatchpoints());
 		// a clicked variable shows (name = value) in the text area below
 		debugVariablePanel.setOnShowVariable(text->{
 			logBatcher.flush();

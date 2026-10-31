@@ -14,6 +14,7 @@ package us.bringardner.fsh.ide;
 
 import us.bringardner.fsh.ide.core.Breakpoint;
 import us.bringardner.fsh.ide.core.DebugVariables;
+import us.bringardner.fsh.ide.core.Watchpoint;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -222,6 +223,32 @@ public class DebugVariablePanel extends JPanel  {
 						editVariable(table, v);
 					}
 				}
+
+				@Override
+				public void mousePressed(MouseEvent e) {
+					showMenu(e);
+				}
+
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					showMenu(e);
+				}
+
+				// right-click: watch the variable
+				private void showMenu(MouseEvent e) {
+					int viewRow = table.rowAtPoint(e.getPoint());
+					if( !e.isPopupTrigger() || viewRow < 0 ) {
+						return;
+					}
+					table.setRowSelectionInterval(viewRow, viewRow);
+					Variable v = rows.get(table.convertRowIndexToModel(viewRow));
+					javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
+					javax.swing.JMenuItem watch = new javax.swing.JMenuItem("Watch "+v.getName()+"...");
+					watch.setEnabled(Watchpoint.isValidName(v.getName()));
+					watch.addActionListener(a->addWatchpoint(v.getName()));
+					menu.add(watch);
+					menu.show(table, e.getX(), e.getY());
+				}
 			});
 		}
 
@@ -315,6 +342,68 @@ public class DebugVariablePanel extends JPanel  {
 	private EditorPanel editorPane;
 	private FshTreeViewPanel treeView;
 
+	// the debugger's watchpoints (the DebugSession's list: the script reads it as it runs)
+	private List<Watchpoint> watchpoints = new java.util.concurrent.CopyOnWriteArrayList<>();
+	private final String [] watchpointsColumnNames = {"Enabled","Variable","Read","Write"};
+	private final AbstractTableModel watchpointsTableModel = new AbstractTableModel() {
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public String getColumnName(int col) {
+			return watchpointsColumnNames[col];
+		}
+
+		@Override
+		public int getColumnCount() {
+			return watchpointsColumnNames.length;
+		}
+
+		@Override
+		public int getRowCount() {
+			return watchpoints.size();
+		}
+
+		@Override
+		public Object getValueAt(int row, int col) {
+			Watchpoint wp = watchpoints.get(row);
+			switch (col) {
+			case 0: return wp.isEnabled();
+			case 1: return wp.getVariable();
+			case 2: return wp.isRead();
+			case 3: return wp.isWrite();
+			default:
+				throw new IllegalArgumentException("Unexpected value: " + col);
+			}
+		}
+
+		@Override
+		public Class<?> getColumnClass(int col) {
+			return col == 1 ? String.class : Boolean.class;
+		}
+
+		@Override
+		public boolean isCellEditable(int row, int col) {
+			return col != 1;
+		}
+
+		@Override
+		public void setValueAt(Object value, int row, int col) {
+			if( !(value instanceof Boolean) || row >= watchpoints.size()) {
+				return;
+			}
+			Watchpoint wp = watchpoints.get(row);
+			boolean b = (Boolean) value;
+			switch (col) {
+			case 0: wp.setEnabled(b); break;
+			case 2: wp.setRead(b); break;
+			case 3: wp.setWrite(b); break;
+			default:
+			}
+			fireTableRowsUpdated(row, row);
+		}
+	};
+	private final JTable watchpointsTable = new JTable(watchpointsTableModel);
+
 	/**
 	 * Create the panel.
 	 */
@@ -374,10 +463,148 @@ public class DebugVariablePanel extends JPanel  {
 		});
 		panel_1.add(btnNewButton_1);
 
+		// watchpoints: stop when the script reads or writes a variable
+		JPanel watchPanel = new JPanel(new BorderLayout(0, 0));
+		JPanel watchButtons = new JPanel();
+		JButton addWatch = new JButton("Add...");
+		addWatch.setToolTipText("Watch a variable: stop when the script reads it, writes it, or both");
+		addWatch.addActionListener(e->addWatchpoint(""));
+		watchButtons.add(addWatch);
+		JButton removeWatch = new JButton("Remove");
+		removeWatch.addActionListener(e->removeSelectedWatchpoints());
+		watchButtons.add(removeWatch);
+		watchPanel.add(watchButtons, BorderLayout.NORTH);
+		watchpointsTable.getColumnModel().getColumn(0).setMaxWidth(70);
+		watchpointsTable.getColumnModel().getColumn(2).setMaxWidth(60);
+		watchpointsTable.getColumnModel().getColumn(3).setMaxWidth(60);
+		watchpointsTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int row = watchpointsTable.rowAtPoint(e.getPoint());
+				if( e.getClickCount() == 2 && row >= 0 && watchpointsTable.columnAtPoint(e.getPoint()) == 1 ) {
+					editWatchpoint(watchpoints.get(row));
+				}
+			}
+		});
+		watchPanel.add(new JScrollPane(watchpointsTable), BorderLayout.CENTER);
+		tabbedPane.addTab("Watchpoints", null, watchPanel, "Stop when the script reads or writes a variable");
+
 		JScrollPane treeScrollPane = new JScrollPane();
 		tabbedPane.addTab("AS Tree", null, treeScrollPane, null);
 		treeView = new FshTreeViewPanel();
 		treeScrollPane.setViewportView(treeView);
+	}
+
+	/**
+	 * The watchpoints this shows and changes: the debug session's list, so changes are seen by a
+	 * script that is running.
+	 */
+	public void setWatchpoints(List<Watchpoint> list) {
+		watchpoints = list;
+		watchpointsTableModel.fireTableDataChanged();
+	}
+
+	/**
+	 * Asks for a variable to watch (name filled in) and how; adds the watchpoint, or changes the
+	 * one there is for that variable.
+	 */
+	void addWatchpoint(String name) {
+		Watchpoint existing = null;
+		for(Watchpoint wp : watchpoints) {
+			if( wp.getVariable().equals(Watchpoint.normalize(name))) {
+				existing = wp;
+			}
+		}
+		if( existing != null ) {
+			editWatchpoint(existing);
+			return;
+		}
+		Watchpoint wp = askWatchpoint(this, name, false, true);
+		if( wp == null ) {
+			return;
+		}
+		for(Watchpoint other : watchpoints) {
+			if( other.getVariable().equals(wp.getVariable())) {
+				other.setRead(wp.isRead());
+				other.setWrite(wp.isWrite());
+				other.setEnabled(true);
+				watchpointsTableModel.fireTableDataChanged();
+				return;
+			}
+		}
+		watchpoints.add(wp);
+		watchpointsTableModel.fireTableDataChanged();
+	}
+
+	private void editWatchpoint(Watchpoint wp) {
+		Watchpoint changed = askWatchpoint(this, wp.getVariable(), wp.isRead(), wp.isWrite());
+		if( changed == null ) {
+			return;
+		}
+		wp.setVariable(changed.getVariable());
+		wp.setRead(changed.isRead());
+		wp.setWrite(changed.isWrite());
+		watchpointsTableModel.fireTableDataChanged();
+	}
+
+	private void removeSelectedWatchpoints() {
+		int [] rows = watchpointsTable.getSelectedRows();
+		List<Watchpoint> remove = new ArrayList<>();
+		for(int r : rows) {
+			remove.add(watchpoints.get(watchpointsTable.convertRowIndexToModel(r)));
+		}
+		watchpoints.removeAll(remove);
+		watchpointsTableModel.fireTableDataChanged();
+	}
+
+	/**
+	 * The watchpoint dialog: the variable's name and Read / Write. Null unless OK is pressed
+	 * (closing it any other way cancels).
+	 */
+	static Watchpoint askWatchpoint(Component parent, String name, boolean read, boolean write) {
+		javax.swing.JTextField nameField = new javax.swing.JTextField(name, 20);
+		JCheckBox readBox = new JCheckBox("Read", read);
+		JCheckBox writeBox = new JCheckBox("Write", write);
+		JPanel panel = new JPanel(new java.awt.GridBagLayout());
+		java.awt.GridBagConstraints c = new java.awt.GridBagConstraints();
+		c.anchor = java.awt.GridBagConstraints.WEST;
+		c.insets = new java.awt.Insets(2, 2, 2, 6);
+		panel.add(new javax.swing.JLabel("Variable:"), c);
+		c.gridx = 1;
+		c.fill = java.awt.GridBagConstraints.HORIZONTAL;
+		panel.add(nameField, c);
+		c.gridx = 0;
+		c.gridy = 1;
+		c.fill = java.awt.GridBagConstraints.NONE;
+		panel.add(new javax.swing.JLabel("Stop on:"), c);
+		JPanel boxes = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+		boxes.add(readBox);
+		boxes.add(writeBox);
+		c.gridx = 1;
+		panel.add(boxes, c);
+		while( true ) {
+			int ret = javax.swing.JOptionPane.showConfirmDialog(parent, panel, "Watchpoint",
+					javax.swing.JOptionPane.OK_CANCEL_OPTION, javax.swing.JOptionPane.PLAIN_MESSAGE);
+			if( ret != javax.swing.JOptionPane.OK_OPTION ) {
+				return null;
+			}
+			String error = watchpointError(nameField.getText(), readBox.isSelected(), writeBox.isSelected());
+			if( error == null ) {
+				return new Watchpoint(nameField.getText(), readBox.isSelected(), writeBox.isSelected());
+			}
+			javax.swing.JOptionPane.showMessageDialog(parent, error, "Watchpoint", javax.swing.JOptionPane.WARNING_MESSAGE);
+		}
+	}
+
+	/** What's wrong with a watchpoint's settings, or null if they're fine. */
+	static String watchpointError(String name, boolean read, boolean write) {
+		if( !Watchpoint.isValidName(name)) {
+			return "Enter a variable's name (letters, digits and _, not starting with a digit).";
+		}
+		if( !read && !write ) {
+			return "Choose Read, Write or both.";
+		}
+		return null;
 	}
 
 	/** Called with "name = value" when a variable is clicked. */
@@ -454,4 +681,5 @@ public class DebugVariablePanel extends JPanel  {
 	// for tests
 	JTable userTable() { return userVariables.table; }
 	JTable fshTable() { return fshVariables.table; }
+	JTable watchpointsTable() { return watchpointsTable; }
 }
