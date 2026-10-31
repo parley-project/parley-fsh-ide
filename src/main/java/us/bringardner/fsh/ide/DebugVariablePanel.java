@@ -79,13 +79,7 @@ public class DebugVariablePanel extends JPanel  {
 	 * The value a dialog's text sets: true or false for a Boolean variable, otherwise the text.
 	 */
 	static Object parseValue(Object oldValue, String text) {
-		if( oldValue instanceof Boolean ) {
-			String t = text.trim();
-			if( t.equalsIgnoreCase("true") || t.equalsIgnoreCase("false")) {
-				return Boolean.valueOf(t);
-			}
-		}
-		return text;
+		return DebugVariables.parseValue(oldValue, text);
 	}
 
 	/**

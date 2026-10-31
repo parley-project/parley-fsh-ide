@@ -50,6 +50,16 @@ public class DebuggingTest {
 		protected BreakpointDialog.Result editBreakpointDialog(Breakpoint bp) {
 			return dialogResult;
 		}
+
+		// what the variable editor gives (null for Cancel), and whether it was opened editable
+		String variableText;
+		Boolean variableEditable;
+
+		@Override
+		protected java.util.Optional<String> editVariableDialog(Variable v, boolean editable) {
+			variableEditable = editable;
+			return java.util.Optional.ofNullable(variableText);
+		}
 	}
 
 	private static TestWindow window(String code) throws Exception {
@@ -210,5 +220,74 @@ public class DebuggingTest {
 		assertTrue(bp.isConditional());
 		assertEquals("[ $x = y ]", bp.getCondition());
 		assertEquals(3, bp.getHitCount());
+	}
+
+	private static java.util.List<String> names(java.util.List<Variable> list) {
+		java.util.List<String> ret = new ArrayList<>();
+		for(Variable v : list) {
+			ret.add(v.getName());
+		}
+		return ret;
+	}
+
+	@Test
+	public void theScriptsOwnAndFshsAreOnTheirOwnTabs() throws Exception {
+		TestWindow w = window("x=1\nfor i in a b; do\n  echo $i\ndone\n");
+		Fx.run(()->{
+			w.editor().addBreakpoint(2);
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+		java.util.List<String> user = Fx.call(()->names(w.debugPanel().userVariables()));
+		java.util.List<String> fsh = Fx.call(()->names(w.debugPanel().fshVariables()));
+		assertTrue(user.contains("x"), user.toString());
+		assertTrue(user.contains("i"), user.toString());
+		assertFalse(user.contains("IFS"), user.toString());
+		assertTrue(fsh.contains("IFS"), fsh.toString());
+		assertFalse(fsh.contains("x"), fsh.toString());
+
+		// one filter for both tabs
+		Fx.run(()->w.debugPanel().filterField().setText("ifs"));
+		assertTrue(Fx.call(()->names(w.debugPanel().fshVariables())).contains("IFS"));
+		assertFalse(Fx.call(()->names(w.debugPanel().fshVariables())).contains("PS1"));
+		assertEquals(java.util.List.of(), Fx.call(()->names(w.debugPanel().userVariables())));
+		Fx.run(()->w.debugPanel().filterField().setText(""));
+
+		// the breakpoint is in the loop: it stops again for b
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->w.isPaused() && w.debugPanel().variables().stream().anyMatch(v->v.getName().equals("i") && "b".equals(String.valueOf(v.getValue()))));
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->!w.isRunning());
+	}
+
+	@Test
+	public void aVariableIsChangedInItsEditor() throws Exception {
+		TestWindow w = window("name=world\necho hello $name\n");
+		Fx.run(()->{
+			w.editor().addBreakpoint(1);
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+		w.variableText = null;
+		Fx.run(()->w.editVariable(new Variable("name", "world")));
+		assertEquals(Boolean.TRUE, w.variableEditable);
+		assertEquals("world", String.valueOf(variable(w, "name")));
+		w.variableText = "line 1\nline 2";
+		Fx.run(()->w.editVariable(new Variable("name", "world")));
+		assertEquals("line 1\nline 2", String.valueOf(variable(w, "name")));
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->!w.isRunning());
+		assertEquals("hello line 1 line 2\n", console(w));
+		// after the run the value can only be read
+		w.variableText = "ignored";
+		Fx.run(()->w.editVariable(new Variable("name", "x")));
+		assertEquals(Boolean.FALSE, w.variableEditable);
+	}
+
+	@Test
+	public void aClickedVariableShowsAsNameEqualsValue() throws Exception {
+		// (on the JavaFX thread: DebugPanel is a Control, which needs JavaFX started)
+		assertEquals("count = 3", Fx.call(()->DebugPanel.describe(new Variable("count", 3))));
+		assertEquals("empty = ", Fx.call(()->DebugPanel.describe(new Variable("empty", null))));
 	}
 }

@@ -237,7 +237,7 @@ public class IdeWindow {
 		editor.setOnBreakpointMenu((bp, e)->editBreakpoint(bp));
 		debugPanel.setOnBreakpointChanged(bp->editor.breakpointChanged());
 		debugPanel.setOnEditBreakpoint(this::editBreakpoint);
-		debugPanel.setOnSetVariable(this::setVariable);
+		debugPanel.setOnEditVariable(this::editVariable);
 		debugPanel.setOnGoToLine(line->{
 			editor.goToLine(line);
 			editor.getCodeArea().requestFocus();
@@ -1019,6 +1019,21 @@ public class IdeWindow {
 		return BreakpointDialog.edit(stage, bp);
 	}
 
+	/** Opens a variable's value in an editor and, while the script is paused, sets what is typed. */
+	void editVariable(Variable v) {
+		boolean editable = debugPanel.variablesEditable();
+		editVariableDialog(v, editable).ifPresent(text->{
+			if( editable ) {
+				setVariable(v, text);
+			}
+		});
+	}
+
+	/** Shows a variable's value in a multi-line editor; tests override it. */
+	protected java.util.Optional<String> editVariableDialog(Variable v, boolean editable) {
+		return VariableDialog.edit(stage, v, editable);
+	}
+
 	/** Sets a variable of the paused script to what was typed. */
 	void setVariable(Variable v, String value) {
 		LoupeSession l = loupe;
@@ -1041,7 +1056,7 @@ public class IdeWindow {
 			return;
 		}
 		try {
-			DebugVariables.set(ctx, v.getName(), value);
+			DebugVariables.set(ctx, v.getName(), DebugVariables.parseValue(v.getValue(), value));
 		} catch (RuntimeException e) {
 			report("Can't set "+v.getName(), e);
 		}

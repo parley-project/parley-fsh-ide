@@ -115,6 +115,17 @@ public final class DebugVariables {
 		return ret;
 	}
 
+	/** The value an editor's text sets: true or false for a Boolean variable, otherwise the text. */
+	public static Object parseValue(Object oldValue, String text) {
+		if( oldValue instanceof Boolean ) {
+			String t = text.trim();
+			if( t.equalsIgnoreCase("true") || t.equalsIgnoreCase("false")) {
+				return Boolean.valueOf(t);
+			}
+		}
+		return text;
+	}
+
 	/** Simple class name of a variable's value (a Type column), or "" for null. */
 	public static String typeName(Object value) {
 		return value == null ? "" : value.getClass().getSimpleName();
