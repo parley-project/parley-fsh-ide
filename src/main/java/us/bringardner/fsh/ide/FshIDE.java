@@ -868,6 +868,9 @@ public class FshIDE extends JFrame  {
 		});
 		boundsTimer.setRepeats(false);
 
+		// close() decides: it closes the window, or (if the user says no) leaves it open. (A
+		// JFrame hides itself by default, so No left the program running with no window.)
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
