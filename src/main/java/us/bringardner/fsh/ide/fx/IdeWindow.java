@@ -719,9 +719,29 @@ public class IdeWindow {
 
 	// ---- running
 
-	/** Runs the script (or just the selected code, if that's chosen and there is some). */
+	/**
+	 * Runs the script (or just the selected code, if that's chosen and there is some). While a
+	 * debugged script is paused: lets it run to its end without stopping at breakpoints.
+	 */
 	void run() {
-		start(false);
+		if( isPaused()) {
+			runToEnd();
+		} else {
+			start(false);
+		}
+	}
+
+	/** Lets the paused script finish without stopping at any more breakpoints. */
+	void runToEnd() {
+		LoupeSession l = loupe;
+		if( l == null ) {
+			if( pausedContext != null ) {
+				debugSession.runToEnd();
+			}
+		} else if( loupePaused ) {
+			// the adapter is sent no breakpoints, so it doesn't stop again
+			adapterContinues(l, java.util.List.of(), ()->l.resume());
+		}
 	}
 
 	/** Runs the script, stopping at breakpoints, with the debug panel shown. */
@@ -824,7 +844,11 @@ public class IdeWindow {
 
 	/** Sends the editor's breakpoints, then the request that lets the script go on. */
 	private void adapterContinues(LoupeSession l, java.util.function.Supplier<java.util.concurrent.CompletableFuture<Void>> request) {
-		java.util.List<Breakpoint> bps = new java.util.ArrayList<>(editor.getBreakpoints().values());
+		adapterContinues(l, new java.util.ArrayList<>(editor.getBreakpoints().values()), request);
+	}
+
+	/** Sends these breakpoints, then the request that lets the script go on. */
+	private void adapterContinues(LoupeSession l, java.util.List<Breakpoint> bps, java.util.function.Supplier<java.util.concurrent.CompletableFuture<Void>> request) {
 		loupePaused = false;
 		editor.setCurrentLine(-1);
 		debugPanel.freezeVariables();
@@ -943,8 +967,10 @@ public class IdeWindow {
 	private void updateControls() {
 		boolean running = currentRun != null || loupe != null;
 		boolean paused = running && (pausedContext != null || loupePaused);
-		runButton.setDisable(running);
-		runItem.setDisable(running);
+		// while paused, Run lets the script run to its end without stopping at breakpoints
+		runButton.setDisable(running && !paused);
+		runItem.setDisable(running && !paused);
+		runButton.setTooltip(paused ? new Tooltip("Run to the end, without stopping at breakpoints") : null);
 		debugButton.setDisable(running);
 		debugItem.setDisable(running);
 		stopButton.setDisable(!running);
@@ -965,6 +991,11 @@ public class IdeWindow {
 		for(TextField f : new TextField[] {arguments, stdIn, stdOut, stdErr}) {
 			f.setDisable(running);
 		}
+	}
+
+	// for tests
+	boolean runButtonDisabled() {
+		return runButton.isDisabled();
 	}
 
 	/** Stopped at a breakpoint or step. */

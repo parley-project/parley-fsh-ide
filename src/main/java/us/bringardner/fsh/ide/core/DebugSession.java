@@ -75,9 +75,22 @@ public class DebugSession extends DebugContext {
 		this.listener = listener;
 	}
 
+	// Run to End was chosen: no more stopping at breakpoints this run (Suspend still stops)
+	private volatile boolean ignoreBreakpoints;
+
 	/** True to stop at breakpoints and steps and log statements; false to just run. */
 	public void setActive(boolean active) {
 		this.active = active;
+		ignoreBreakpoints = false;
+	}
+
+	/**
+	 * Lets a paused script run to its end without stopping at any more breakpoints; its
+	 * statements are still logged and Suspend still stops it.
+	 */
+	public void runToEnd() {
+		ignoreBreakpoints = true;
+		resume();
 	}
 
 	public boolean isActive() {
@@ -124,7 +137,7 @@ public class DebugSession extends DebugContext {
 
 	@Override
 	public synchronized boolean isBreakpoint(Point linePt,ShellContext ctx) {
-		if( !active || evaluating ) {
+		if( !active || evaluating || ignoreBreakpoints ) {
 			return false;
 		}
 		int line = editorLine(linePt.x);

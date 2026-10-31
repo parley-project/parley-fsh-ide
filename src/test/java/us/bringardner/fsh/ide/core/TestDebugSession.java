@@ -147,4 +147,26 @@ public class TestDebugSession {
 		assertTrue(run.join(5000));
 		assertTrue(listener.statements.size() < 3, ""+listener.statements);
 	}
+
+	@Test
+	public void runToEndDoesntStopAgain() throws Exception {
+		breakpoint(1);
+		start("for i in a b c; do\n  x=$i\ndone\n");
+		assertEquals(1, nextPause().line());
+		session.runToEnd();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+		// still logged
+		assertEquals(3, listener.statements.stream().filter(st->st.startsWith("1: ")).count());
+	}
+
+	@Test
+	public void aNewRunStopsAtBreakpointsAgain() throws Exception {
+		session.runToEnd();
+		breakpoint(0);
+		start("x=1\n");
+		assertEquals(0, nextPause().line());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
 }

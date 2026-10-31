@@ -290,4 +290,25 @@ public class DebuggingTest {
 		assertEquals("count = 3", Fx.call(()->DebugPanel.describe(new Variable("count", 3))));
 		assertEquals("empty = ", Fx.call(()->DebugPanel.describe(new Variable("empty", null))));
 	}
+
+	@Test
+	public void runWhilePausedRunsToTheEnd() throws Exception {
+		TestWindow w = window("for i in a b c; do\n  echo $i\ndone\necho end\n");
+		Fx.run(()->{
+			w.editor().addBreakpoint(1);
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+		// Run is on while paused (Debug isn't)
+		assertFalse(Fx.call(()->w.runButtonDisabled()));
+		Fx.run(()->w.run());
+		Fx.waitFor(()->!w.isRunning());
+		assertEquals("a\nb\nc\nend\n", console(w));
+		assertFalse(Fx.call(()->w.isPaused()));
+		// the next debug run stops at the breakpoint again
+		Fx.run(()->w.debug());
+		Fx.waitFor(w::isPaused);
+		Fx.run(()->w.run());
+		Fx.waitFor(()->!w.isRunning());
+	}
 }
