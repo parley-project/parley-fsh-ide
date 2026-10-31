@@ -36,9 +36,14 @@ public class DebuggingTest {
 			super(new Stage(), new IdeWindowTest.MemoryPreferences());
 		}
 
+		// the answer to confirm(), and the questions asked
+		boolean answer = true;
+		final List<String> questions = new java.util.concurrent.CopyOnWriteArrayList<>();
+
 		@Override
 		protected boolean confirm(String question) {
-			return true;
+			questions.add(question);
+			return answer;
 		}
 
 		@Override
@@ -309,6 +314,27 @@ public class DebuggingTest {
 		Fx.run(()->w.debug());
 		Fx.waitFor(w::isPaused);
 		Fx.run(()->w.run());
+		Fx.waitFor(()->!w.isRunning());
+	}
+
+	@Test
+	public void closingAsksOnlyWhenAScriptIsRunning() throws Exception {
+		TestWindow w = window("x=1\necho a\n");
+		// nothing to lose: no question
+		assertTrue(Fx.call(()->w.close()));
+		assertEquals(List.of(), w.questions);
+
+		Fx.run(()->{
+			w.editor().addBreakpoint(1);
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+		w.answer = false;
+		assertFalse(Fx.call(()->w.close()));
+		assertEquals(List.of("A script is still running. Stop it and close?"), w.questions);
+		assertTrue(Fx.call(()->w.isRunning()));
+		w.answer = true;
+		assertTrue(Fx.call(()->w.close()));
 		Fx.waitFor(()->!w.isRunning());
 	}
 }

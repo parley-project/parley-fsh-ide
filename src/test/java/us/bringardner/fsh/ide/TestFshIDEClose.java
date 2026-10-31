@@ -36,4 +36,26 @@ public class TestFshIDEClose {
 			}
 		});
 	}
+
+	@Test
+	public void nothingToLoseAsksNothing() throws Exception {
+		Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "needs a screen");
+		java.util.List<String> questions = new java.util.ArrayList<>();
+		SwingUtilities.invokeAndWait(()->{
+			FshIDE w = new FshIDE() {
+				private static final long serialVersionUID = 1L;
+				@Override
+				protected boolean confirm(String question) {
+					questions.add(question);
+					return false;
+				}
+			};
+			try {
+				assertEquals(true, w.okToStopScript());
+			} finally {
+				w.dispose();
+			}
+		});
+		assertEquals(java.util.List.of(), questions);
+	}
 }

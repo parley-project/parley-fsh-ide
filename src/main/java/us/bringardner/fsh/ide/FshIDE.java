@@ -108,31 +108,15 @@ public class FshIDE extends JFrame  {
 		ideWindows.add(p);
 	}
 
+	/**
+	 * Closes a window, asking first only if something would be lost: unsaved changes, or a script
+	 * still running (which is stopped). The application exits with its last window.
+	 */
 	private synchronized static void close(FshIDE p) {
-		boolean approved = false;
-		if( p.hasChanged()) {
-			if( p.showConfirmDialog() != JOptionPane.OK_OPTION) {
-				return;
-			} else {
-				approved = true;
-			}
+		if( !p.okToDiscard() || !p.okToStopScript()) {
+			return;
 		}
-
-		if(!approved && ideWindows.size() == 1) {
-			Object[] options = { "Exit Application", "No, Don't exit" };
-
-			int ret = JOptionPane.showOptionDialog(p, "Closing this window will cause the application to exit.\nClose anyway?", "Warning",
-					JOptionPane.OK_CANCEL_OPTION, 
-					JOptionPane.QUESTION_MESSAGE, 
-					null, // do not use a custom Icon
-					options, // the titles of buttons
-					options[0]); // default button title
-
-			if( ret != JOptionPane.OK_OPTION) {
-				return;
-			}
-		}
-
+		p.stopScript();
 
 		ideWindows.remove(p);
 		if( p.boundsTimer.isRunning()) {
@@ -147,6 +131,29 @@ public class FshIDE extends JFrame  {
 
 	}
 
+	/** True if no script is running (or paused) here, or the user agrees to stop it. */
+	boolean okToStopScript() {
+		return runState == IdeRunstate.Idel || confirm("A script is still running. Stop it and close?");
+	}
+
+	/** Stops the script running or being debugged here, if there is one. */
+	private void stopScript() {
+		if( runState != IdeRunstate.Idel ) {
+			actionStop();
+		}
+	}
+
+	/** Asks a yes/no question; tests override it. */
+	protected boolean confirm(String question) {
+		Object[] options = { "Stop and Close", "Cancel" };
+		int ret = JOptionPane.showOptionDialog(this, question, "Warning",
+				JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null,
+				options,
+				options[1]);
+		return ret == 0;
+	}
 
 	private int showConfirmDialog() {
 		Object[] options = { "Discard and continue", "Don't continue" };
@@ -1058,16 +1065,17 @@ public class FshIDE extends JFrame  {
 	}
 
 	/**
-	 * Quit (Exit): closes every IDE window, each asking about unsaved changes; false if one stays
-	 * open.
+	 * Quit (Exit): closes every IDE window, each asking about unsaved changes and a running
+	 * script; false if one stays open.
 	 */
 	static boolean okToQuit() {
 		for(FshIDE w : new ArrayList<>(ideWindows)) {
-			if( !w.okToDiscard() ) {
+			if( !w.okToDiscard() || !w.okToStopScript()) {
 				return false;
 			}
 		}
 		for(FshIDE w : new ArrayList<>(ideWindows)) {
+			w.stopScript();
 			ideWindows.remove(w);
 			if( w.boundsTimer.isRunning() ) {
 				w.saveBounds();

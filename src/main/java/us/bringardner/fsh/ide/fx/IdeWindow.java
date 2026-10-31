@@ -332,7 +332,7 @@ public class IdeWindow {
 	/** The IDE windows open now, for Quit. */
 	private static final java.util.List<IdeWindow> OPEN = new java.util.ArrayList<>();
 
-	/** Quit (Exit): closes every IDE window, each asking about unsaved changes; false if one stays open. */
+	/** Quit (Exit): closes every IDE window, each asking about unsaved changes and a running script; false if one stays open. */
 	static boolean okToQuit() {
 		for(IdeWindow w : new java.util.ArrayList<>(OPEN)) {
 			if( !w.close() ) {
@@ -1150,9 +1150,15 @@ public class IdeWindow {
 		}
 	}
 
-	/** Asks about unsaved changes, stops a running script, and remembers where the window was. */
+	/**
+	 * Asks about unsaved changes and a running (or paused) script, stops the script, and remembers
+	 * where the window was; false if the user says no.
+	 */
 	boolean close() {
 		if( !okToDiscard()) {
+			return false;
+		}
+		if( isRunning() && !confirm("A script is still running. Stop it and close?")) {
 			return false;
 		}
 		stop();
