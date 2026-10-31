@@ -17,6 +17,7 @@ import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.swing.gradient.ThemeExtensions;
 import us.bringardner.swing.menu.StandardMenus;
 import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.ide.core.ScriptOutline;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.CompileError;
 import us.bringardner.fsh.ide.core.DebugSession;
@@ -442,6 +443,12 @@ public class FshIDE extends JFrame  {
 	private ConsolePanel outputTextArea;
 
 	private JSplitPane centerSplitPane;
+	// the script's functions and variables, beside the editor (View > Show Outline)
+	private final OutlinePanel outlinePanel = new OutlinePanel();
+	private JSplitPane outlineSplitPane;
+	// the outline's width when it was hidden, for when it shows again
+	private int outlineWidth = 200;
+	static final String PREF_SHOW_OUTLINE = "ShowOutline";
 
 	private void buildRecentMenu() {
 		openRecentMenu.removeAll();
@@ -573,6 +580,7 @@ public class FshIDE extends JFrame  {
 		int check = ++syntaxCheckCount;
 		if( code.isBlank()) {
 			editorPane.clearErrorMarkers();
+			outlinePanel.setOutline(null);
 			return;
 		}
 		SYNTAX_CHECKER.execute(()->{
@@ -596,6 +604,10 @@ public class FshIDE extends JFrame  {
 				pendingTree = tree;
 				pendingTreeErrors = buf.toString();
 				showSyntaxTree();
+				// a script that doesn't parse keeps the outline it had
+				if( errors.isEmpty()) {
+					outlinePanel.setOutline(ScriptOutline.of(tree));
+				}
 			});
 		});
 	}
@@ -801,7 +813,17 @@ public class FshIDE extends JFrame  {
 		editSplitPane.setLeftComponent(editorPane);
 		editSplitPane.setRightComponent(stdViewScrollPane);
 
-		centerSplitPane.setLeftComponent(editSplitPane);
+		// the outline at the left of the editor and console
+		outlineSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, outlinePanel, editSplitPane);
+		outlineSplitPane.setResizeWeight(0);
+		outlineSplitPane.setContinuousLayout(true);
+		outlineSplitPane.setDividerLocation(200);
+		outlinePanel.setVisible(prefs.getBoolean(PREF_SHOW_OUTLINE, true));
+		outlinePanel.setOnGoToLine(line->{
+			editorPane.setCeretPosotionFromLine(line-1);
+			editorPane.getTextArea().requestFocusInWindow();
+		});
+		centerSplitPane.setLeftComponent(outlineSplitPane);
 		centerSplitPane.setRightComponent(debugSplitPane);
 
 		original = ScriptDocument.parse("");
@@ -1110,6 +1132,20 @@ public class FshIDE extends JFrame  {
 		view.add(reset);
 		view.addSeparator();
 		view.add(font);
+		view.addSeparator();
+		JCheckBoxMenuItem showOutline = new JCheckBoxMenuItem("Show Outline", prefs.getBoolean(PREF_SHOW_OUTLINE, true));
+		showOutline.addActionListener(e->{
+			boolean b = showOutline.isSelected();
+			prefs.putBoolean(PREF_SHOW_OUTLINE, b);
+			if( !b ) {
+				outlineWidth = outlineSplitPane.getDividerLocation();
+			}
+			outlinePanel.setVisible(b);
+			if( b ) {
+				outlineSplitPane.setDividerLocation(Math.max(80, outlineWidth));
+			}
+		});
+		view.add(showOutline);
 		view.addSeparator();
 		int fold = shortcut | java.awt.event.InputEvent.ALT_DOWN_MASK;
 		int all = fold | java.awt.event.InputEvent.SHIFT_DOWN_MASK;

@@ -79,6 +79,7 @@ public class IdeWindow {
 	static final String PREF_RECENT_LIST = "RecentList";
 	static final String PREF_BOUNDS = "FxBounds";
 	static final String PREF_SPELLING = "FxSpelling";
+	static final String PREF_SHOW_OUTLINE = "FxShowOutline";
 
 	static final ExecutorService BACKGROUND = Executors.newCachedThreadPool(r->{
 		Thread t = new Thread(r, "fsh-ide-fx");
@@ -112,6 +113,10 @@ public class IdeWindow {
 	private final MenuItem stepIntoItem = new MenuItem("Step Into");
 	private final MenuItem suspendItem = new MenuItem("Suspend");
 	private final CheckMenuItem showDebugPanel = new CheckMenuItem("Show Debug View");
+	// the script's functions and variables, beside the editor (View > Show Outline)
+	private final OutlineView outline = new OutlineView();
+	private final CheckMenuItem showOutline = new CheckMenuItem("Show Outline");
+	private final SplitPane editArea = new SplitPane();
 	private final FindBar findBar = new FindBar(editor);
 	private final CompletionPopup completion = new CompletionPopup(editor, ()->Configuration.getInstance().getTemplates());
 	private final DebugPanel debugPanel = new DebugPanel();
@@ -199,7 +204,26 @@ public class IdeWindow {
 		SplitPane split = new SplitPane(editorPane, console);
 		split.setOrientation(Orientation.VERTICAL);
 		split.setDividerPositions(0.65);
-		mainSplit.getItems().add(split);
+		// the outline at the left of the editor and console
+		editArea.getItems().add(split);
+		SplitPane.setResizableWithParent(outline, false);
+		outline.setOnGoToLine(line->{
+			editor.goToLine(line);
+			editor.getCodeArea().requestFocus();
+		});
+		showOutline.selectedProperty().addListener((o, was, is)->{
+			if( is && !editArea.getItems().contains(outline)) {
+				editArea.getItems().add(0, outline);
+				editArea.setDividerPositions(0.2);
+			} else if( !is ) {
+				editArea.getItems().remove(outline);
+			}
+			if( prefs != null ) {
+				prefs.putBoolean(PREF_SHOW_OUTLINE, is);
+			}
+		});
+		showOutline.setSelected(prefs == null || prefs.getBoolean(PREF_SHOW_OUTLINE, true));
+		mainSplit.getItems().add(editArea);
 		root.setCenter(mainSplit);
 		showDebugPanel.selectedProperty().addListener((o, was, is)->{
 			if( is && !mainSplit.getItems().contains(debugPanel)) {
@@ -297,6 +321,7 @@ public class IdeWindow {
 				item("Smaller Text", "Shortcut+MINUS", this::smallerText),
 				item("Reset Text Size", "Shortcut+DIGIT0", this::resetSize),
 				item("Editor Font...", null, this::actionEditorFont), new SeparatorMenuItem(),
+				showOutline, new SeparatorMenuItem(),
 				// folding on [ and ], with Alt (Option): + and - are the text size
 				item("Fold", "Shortcut+Alt+OPEN_BRACKET", editor::foldAtCaret),
 				item("Unfold", "Shortcut+Alt+CLOSE_BRACKET", editor::unfoldAtCaret),
@@ -1110,6 +1135,10 @@ public class IdeWindow {
 				if( check == syntaxCheckCount ) {
 					editor.setErrors(errors);
 					debugPanel.setSyntax(tree, errors);
+					// a script that doesn't parse keeps the outline it had
+					if( errors.isEmpty()) {
+						outline.setOutline(us.bringardner.fsh.ide.core.ScriptOutline.of(tree));
+					}
 				}
 			});
 		});
@@ -1125,6 +1154,18 @@ public class IdeWindow {
 
 	DebugPanel debugPanel() {
 		return debugPanel;
+	}
+
+	OutlineView outline() {
+		return outline;
+	}
+
+	CheckMenuItem showOutlineItem() {
+		return showOutline;
+	}
+
+	boolean outlineShown() {
+		return editArea.getItems().contains(outline);
 	}
 
 	FindBar findBar() {
