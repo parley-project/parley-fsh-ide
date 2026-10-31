@@ -29,7 +29,7 @@ import us.bringardner.fsh.ide.core.ScriptOutline;
 
 /**
  * The script's outline beside the editor: its functions (with the variables each sets) and its
- * variables. A click on one (or Enter) goes to its line.
+ * variables. A click on one (or Enter) goes to its line; a variable's right-click menu watches it.
  */
 public class OutlineView extends BorderPane {
 
@@ -42,6 +42,7 @@ public class OutlineView extends BorderPane {
 	private final Set<String> collapsed = new HashSet<>();
 	private boolean rebuilding;
 	private IntConsumer onGoToLine = line->{};
+	private java.util.function.Consumer<String> onWatchVariable = name->{};
 	private ScriptOutline outline = ScriptOutline.of(null);
 
 	public OutlineView() {
@@ -50,9 +51,28 @@ public class OutlineView extends BorderPane {
 		setTop(title);
 		tree.setShowRoot(false);
 		tree.setCellFactory(t->new TreeCell<>() {
+			// right-click on a variable: watch it
+			private final javafx.scene.control.MenuItem watch = new javafx.scene.control.MenuItem();
+			private final javafx.scene.control.ContextMenu menu = new javafx.scene.control.ContextMenu(watch);
+			{
+				watch.setOnAction(e->{
+					String name = variableName(getItem());
+					if( name != null ) {
+						onWatchVariable.accept(name);
+					}
+				});
+			}
+
 			@Override
 			protected void updateItem(Object o, boolean empty) {
 				super.updateItem(o, empty);
+				String name = empty ? null : variableName(o);
+				if( name != null ) {
+					watch.setText("Watch "+name+"...");
+					setContextMenu(menu);
+				} else {
+					setContextMenu(null);
+				}
 				if( empty || o == null ) {
 					setText(null);
 				} else if( o instanceof ScriptOutline.Item ) {
@@ -97,6 +117,27 @@ public class OutlineView extends BorderPane {
 	/** Called with a (1-based) line chosen in the outline. */
 	public void setOnGoToLine(IntConsumer handler) {
 		onGoToLine = handler == null ? line->{} : handler;
+	}
+
+	/** Called with a variable's name when Watch is chosen on its right-click menu. */
+	public void setOnWatchVariable(java.util.function.Consumer<String> handler) {
+		onWatchVariable = handler == null ? name->{} : handler;
+	}
+
+	/** A variable's name, or null for a function or a group. */
+	static String variableName(Object o) {
+		if( o instanceof ScriptOutline.Item && !((ScriptOutline.Item) o).isFunction()) {
+			return ((ScriptOutline.Item) o).getName();
+		}
+		return null;
+	}
+
+	/** Chooses Watch on the item's right-click menu (for tests). */
+	void watch(Object o) {
+		String name = variableName(o);
+		if( name != null ) {
+			onWatchVariable.accept(name);
+		}
 	}
 
 	private void goToSelected() {

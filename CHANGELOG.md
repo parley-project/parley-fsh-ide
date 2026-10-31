@@ -8,7 +8,8 @@
   writes it (sets or unsets it), or either, and marks the line doing it, as a breakpoint does.
   The Watchpoints tab, beside Breakpoints, lists them, each with check boxes for On, Read and
   Write; Add... asks for the variable and Read and/or Write (double-click one to change it), and
-  a variable's right-click menu in the variables tabs has Watch name.... A write stops once the
+  a variable's right-click menu in the outline (before or while debugging) and in the variables
+  tabs has Watch name.... A write stops once the
   value is set, so the variables view shows the new one, and the log (and in the JavaFX IDE the
   status line) says which watchpoint stopped it: `count written (value: 5)`, `count read`.
   An array's watchpoint stops for its elements too (`a[2]=x` writes `a`). Running to the end

@@ -90,6 +90,7 @@ public class DebugPanel extends TabPane {
 	private List<Watchpoint> watchpoints = new java.util.concurrent.CopyOnWriteArrayList<>();
 	private final ObservableList<Watchpoint> watchpointRows = FXCollections.observableArrayList();
 	private final TableView<Watchpoint> watchpointTable = new TableView<>(watchpointRows);
+	private Tab watches;
 	private WatchpointAsker askWatchpoint = (variable, read, write)->
 		WatchpointDialog.ask(getScene() == null ? null : getScene().getWindow(), variable, read, write);
 
@@ -169,7 +170,7 @@ public class DebugPanel extends TabPane {
 		Tab fsh = new Tab("fsh Variables", fshVariables.pane);
 		fsh.setTooltip(new javafx.scene.control.Tooltip("The shell's own variables, the environment's, and $0"));
 		Tab bps = new Tab("Breakpoints", breakpointTable);
-		Tab watches = new Tab("Watchpoints", watchPane);
+		watches = new Tab("Watchpoints", watchPane);
 		watches.setTooltip(new javafx.scene.control.Tooltip("Stop when the script reads or writes a variable"));
 		Tab logTab = new Tab("Log", log);
 		Tab syntaxTab = new Tab("Syntax", syntax);
@@ -209,6 +210,8 @@ public class DebugPanel extends TabPane {
 	 * variable that's already watched, changes its watchpoint.
 	 */
 	void addWatchpoint(String name) {
+		// (the tab shows, so what's added is seen)
+		getSelectionModel().select(watches);
 		for(Watchpoint wp : watchpoints) {
 			if( wp.getVariable().equals(Watchpoint.normalize(name))) {
 				editWatchpoint(wp);

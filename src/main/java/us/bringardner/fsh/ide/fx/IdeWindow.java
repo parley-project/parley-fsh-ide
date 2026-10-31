@@ -219,6 +219,12 @@ public class IdeWindow {
 		// the outline at the left of the editor and console
 		editArea.getItems().add(split);
 		SplitPane.setResizableWithParent(outline, false);
+		// a variable's right-click menu in the outline: watch it (before or while debugging)
+		outline.setOnWatchVariable(name->{
+			// the debug view shows, with its Watchpoints tab
+			showDebugPanel.setSelected(true);
+			debugPanel.addWatchpoint(name);
+		});
 		outline.setOnGoToLine(line->{
 			editor.goToLine(line);
 			editor.getCodeArea().requestFocus();

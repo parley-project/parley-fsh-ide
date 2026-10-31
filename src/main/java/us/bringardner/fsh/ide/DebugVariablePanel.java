@@ -341,6 +341,8 @@ public class DebugVariablePanel extends JPanel  {
 
 	private EditorPanel editorPane;
 	private FshTreeViewPanel treeView;
+	private JTabbedPane tabbedPane;
+	private JPanel watchPanel;
 
 	// the debugger's watchpoints (the DebugSession's list: the script reads it as it runs)
 	private List<Watchpoint> watchpoints = new java.util.concurrent.CopyOnWriteArrayList<>();
@@ -410,7 +412,7 @@ public class DebugVariablePanel extends JPanel  {
 	public DebugVariablePanel() {
 		setLayout(new BorderLayout(0, 0));
 
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		add(tabbedPane, BorderLayout.CENTER);
 
@@ -464,7 +466,7 @@ public class DebugVariablePanel extends JPanel  {
 		panel_1.add(btnNewButton_1);
 
 		// watchpoints: stop when the script reads or writes a variable
-		JPanel watchPanel = new JPanel(new BorderLayout(0, 0));
+		watchPanel = new JPanel(new BorderLayout(0, 0));
 		JPanel watchButtons = new JPanel();
 		JButton addWatch = new JButton("Add...");
 		addWatch.setToolTipText("Watch a variable: stop when the script reads it, writes it, or both");
@@ -509,6 +511,8 @@ public class DebugVariablePanel extends JPanel  {
 	 * one there is for that variable.
 	 */
 	void addWatchpoint(String name) {
+		// (the tab shows, so what's added is seen)
+		tabbedPane.setSelectedComponent(watchPanel);
 		Watchpoint existing = null;
 		for(Watchpoint wp : watchpoints) {
 			if( wp.getVariable().equals(Watchpoint.normalize(name))) {

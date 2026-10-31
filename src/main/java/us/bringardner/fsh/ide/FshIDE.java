@@ -824,6 +824,15 @@ public class FshIDE extends JFrame  {
 		outlineSplitPane.setContinuousLayout(true);
 		outlineSplitPane.setDividerLocation(200);
 		outlinePanel.setVisible(prefs.getBoolean(PREF_SHOW_OUTLINE, true));
+		// a variable's right-click menu in the outline: watch it (before or while debugging)
+		outlinePanel.setOnWatchVariable(name->{
+			// the debug view shows, with its Watchpoints tab
+			if( !showDebugViewCheckBox.isSelected()) {
+				showDebugViewCheckBox.setSelected(true);
+				actionShowDebugView();
+			}
+			debugVariablePanel.addWatchpoint(name);
+		});
 		outlinePanel.setOnGoToLine(line->{
 			editorPane.setCeretPosotionFromLine(line-1);
 			editorPane.getTextArea().requestFocusInWindow();

@@ -395,4 +395,34 @@ public class DebuggingTest {
 		assertEquals("Enter a variable's name.", WatchpointDialog.error("1x", true, true));
 		assertEquals("Choose Read, Write or both.", WatchpointDialog.error("x", false, false));
 	}
+
+	@Test
+	public void aVariableIsWatchedFromTheOutlineBeforeDebugging() throws Exception {
+		TestWindow w = window("total=0\nfor i in 1 2; do\n  total=$(( total + i ))\ndone\necho $total\n");
+		Fx.run(()->{
+			w.debugPanel().setWatchpointAsker((name, read, write)->java.util.Optional.of(new us.bringardner.fsh.ide.core.Watchpoint(name, read, write)));
+			w.checkSyntax();
+		});
+		Fx.waitFor(()->!w.outline().outline().getVariables().isEmpty());
+		Fx.run(()->{
+			for(us.bringardner.fsh.ide.core.ScriptOutline.Item v : w.outline().outline().getVariables()) {
+				if( v.getName().equals("total")) {
+					w.outline().watch(v);
+				}
+			}
+		});
+		assertEquals(1, w.debugSession().getWatchpoints().size());
+		assertEquals("total", w.debugSession().getWatchpoints().get(0).getVariable());
+		// functions aren't variables
+		assertNull(OutlineView.variableName(null));
+
+		Fx.run(w::debug);
+		Fx.waitFor(w::isPaused);
+		assertEquals(0, Fx.call(()->w.editor().getCurrentLine()));
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->w.isPaused() && w.editor().getCurrentLine() == 2);
+		Fx.run(()->w.debugSession().runToEnd());
+		Fx.waitFor(()->!w.isRunning());
+		assertEquals("3\n", console(w));
+	}
 }
