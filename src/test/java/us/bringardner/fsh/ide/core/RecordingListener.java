@@ -48,10 +48,12 @@ class RecordingListener implements DebugSession.Listener {
 	final List<String> statements = new CopyOnWriteArrayList<>();
 	final List<Exception> conditionErrors = new CopyOnWriteArrayList<>();
 	volatile int resumes;
+	volatile ShellContext lastContext;
 	volatile int terminates;
 
 	@Override
 	public void paused(int line, ShellContext ctx, Map<String, Object> variables) {
+		lastContext = ctx;
 		pauses.add(new Pause(line, variables));
 	}
 
@@ -73,5 +75,12 @@ class RecordingListener implements DebugSession.Listener {
 	@Override
 	public void terminateRequested() {
 		terminates++;
+	}
+
+	final List<String> watchpointHits = new CopyOnWriteArrayList<>();
+
+	@Override
+	public void watchpointHit(Watchpoint wp, String name, boolean write, Object value) {
+		watchpointHits.add(DebugSession.describeHit(name, write, value));
 	}
 }

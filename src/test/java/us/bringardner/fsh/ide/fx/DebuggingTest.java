@@ -337,4 +337,92 @@ public class DebuggingTest {
 		assertTrue(Fx.call(()->w.close()));
 		Fx.waitFor(()->!w.isRunning());
 	}
+
+	@Test
+	public void aWatchpointStopsWhereTheVariableIsWritten() throws Exception {
+		TestWindow w = window("x=1\necho a\ncount=5\necho $count\n");
+		Fx.run(()->{
+			w.debugPanel().setWatchpointAsker((name, read, write)->java.util.Optional.of(new us.bringardner.fsh.ide.core.Watchpoint("count", false, true)));
+			w.debugPanel().addWatchpoint("");
+			w.debug();
+		});
+		assertEquals(1, Fx.call(()->w.debugPanel().watchpointRows().size()));
+		assertEquals(1, w.debugSession().getWatchpoints().size());
+		Fx.waitFor(w::isPaused);
+		assertEquals(2, Fx.call(()->w.editor().getCurrentLine()));
+		assertEquals("5", String.valueOf(variable(w, "count")));
+		assertEquals("Paused at line 3: watchpoint, count written (value: 5)", Fx.call(w::statusText));
+		assertTrue(Fx.call(()->w.debugPanel().logText()).contains("Watchpoint: count written (value: 5)\n"));
+
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->!w.isRunning());
+		assertEquals("a\n5\n", console(w));
+	}
+
+	@Test
+	public void aReadWatchpointAndRemovingIt() throws Exception {
+		TestWindow w = window("v=1\ny=2\necho $v\necho $v\n");
+		Fx.run(()->{
+			w.debugPanel().setWatchpointAsker((name, read, write)->java.util.Optional.of(new us.bringardner.fsh.ide.core.Watchpoint(name, true, false)));
+			// as the variables' right-click menu does
+			w.debugPanel().addWatchpoint("v");
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+		assertEquals(2, Fx.call(()->w.editor().getCurrentLine()));
+		assertEquals("Paused at line 3: watchpoint, v read", Fx.call(w::statusText));
+		Fx.run(()->w.debugPanel().removeWatchpoints(new ArrayList<>(w.debugPanel().watchpointRows())));
+		assertTrue(w.debugSession().getWatchpoints().isEmpty());
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->!w.isRunning());
+		assertEquals("1\n1\n", console(w));
+	}
+
+	@Test
+	public void aCanceledWatchpointDialogAddsNothing() throws Exception {
+		TestWindow w = window("x=1\n");
+		Fx.run(()->{
+			w.debugPanel().setWatchpointAsker((name, read, write)->java.util.Optional.empty());
+			w.debugPanel().addWatchpoint("x");
+		});
+		assertTrue(w.debugSession().getWatchpoints().isEmpty());
+	}
+
+	@Test
+	public void theWatchpointDialogNeedsANameAndReadOrWrite() {
+		assertEquals(null, WatchpointDialog.error("count", true, false));
+		assertEquals("Enter a variable's name.", WatchpointDialog.error("", true, true));
+		assertEquals("Enter a variable's name.", WatchpointDialog.error("1x", true, true));
+		assertEquals("Choose Read, Write or both.", WatchpointDialog.error("x", false, false));
+	}
+
+	@Test
+	public void aVariableIsWatchedFromTheOutlineBeforeDebugging() throws Exception {
+		TestWindow w = window("total=0\nfor i in 1 2; do\n  total=$(( total + i ))\ndone\necho $total\n");
+		Fx.run(()->{
+			w.debugPanel().setWatchpointAsker((name, read, write)->java.util.Optional.of(new us.bringardner.fsh.ide.core.Watchpoint(name, read, write)));
+			w.checkSyntax();
+		});
+		Fx.waitFor(()->!w.outline().outline().getVariables().isEmpty());
+		Fx.run(()->{
+			for(us.bringardner.fsh.ide.core.ScriptOutline.Item v : w.outline().outline().getVariables()) {
+				if( v.getName().equals("total")) {
+					w.outline().watch(v);
+				}
+			}
+		});
+		assertEquals(1, w.debugSession().getWatchpoints().size());
+		assertEquals("total", w.debugSession().getWatchpoints().get(0).getVariable());
+		// functions aren't variables
+		assertNull(OutlineView.variableName(null));
+
+		Fx.run(w::debug);
+		Fx.waitFor(w::isPaused);
+		assertEquals(0, Fx.call(()->w.editor().getCurrentLine()));
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->w.isPaused() && w.editor().getCurrentLine() == 2);
+		Fx.run(()->w.debugSession().runToEnd());
+		Fx.waitFor(()->!w.isRunning());
+		assertEquals("3\n", console(w));
+	}
 }

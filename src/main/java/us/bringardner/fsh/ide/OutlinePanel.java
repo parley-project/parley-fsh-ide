@@ -40,7 +40,7 @@ import us.bringardner.fsh.ide.core.ScriptOutline;
 
 /**
  * The script's outline beside the editor: its functions (with the variables each sets) and its
- * variables. A click on one (or Enter) goes to its line.
+ * variables. A click on one (or Enter) goes to its line; a variable's right-click menu watches it.
  */
 public class OutlinePanel extends JPanel {
 
@@ -56,6 +56,7 @@ public class OutlinePanel extends JPanel {
 	private final Set<String> collapsed = new HashSet<>();
 	private boolean rebuilding;
 	private IntConsumer onGoToLine = line->{};
+	private java.util.function.Consumer<String> onWatchVariable = name->{};
 	private ScriptOutline outline = ScriptOutline.of(null);
 	private final DefaultTreeCellRenderer renderer;
 	private final JScrollPane scroll;
@@ -106,9 +107,34 @@ public class OutlinePanel extends JPanel {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				TreePath path = tree.getPathForLocation(e.getX(), e.getY());
-				if( path != null ) {
+				if( path != null && !e.isPopupTrigger() && javax.swing.SwingUtilities.isLeftMouseButton(e)) {
 					goTo(path);
 				}
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				showMenu(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				showMenu(e);
+			}
+
+			// right-click on a variable: watch it
+			private void showMenu(MouseEvent e) {
+				TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+				String name = path == null ? null : variableName(path);
+				if( !e.isPopupTrigger() || name == null ) {
+					return;
+				}
+				tree.setSelectionPath(path);
+				javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
+				javax.swing.JMenuItem watch = new javax.swing.JMenuItem("Watch "+name+"...");
+				watch.addActionListener(a->onWatchVariable.accept(name));
+				menu.add(watch);
+				menu.show(tree, e.getX(), e.getY());
 			}
 		});
 		tree.addKeyListener(new KeyAdapter() {
@@ -129,6 +155,20 @@ public class OutlinePanel extends JPanel {
 	/** Called with a (1-based) line chosen in the outline. */
 	public void setOnGoToLine(IntConsumer handler) {
 		onGoToLine = handler == null ? line->{} : handler;
+	}
+
+	/** Called with a variable's name when Watch is chosen on its right-click menu. */
+	public void setOnWatchVariable(java.util.function.Consumer<String> handler) {
+		onWatchVariable = handler == null ? name->{} : handler;
+	}
+
+	/** The variable's name at path, or null for a function or a group. */
+	static String variableName(TreePath path) {
+		Object o = ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
+		if( o instanceof ScriptOutline.Item && !((ScriptOutline.Item) o).isFunction()) {
+			return ((ScriptOutline.Item) o).getName();
+		}
+		return null;
 	}
 
 	private void goTo(TreePath path) {

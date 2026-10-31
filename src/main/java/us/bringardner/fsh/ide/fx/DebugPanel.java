@@ -40,10 +40,12 @@ import us.bringardner.fsh.ide.core.CompileError;
 import us.bringardner.fsh.ide.core.DebugVariables;
 import us.bringardner.fsh.ide.core.SyntaxNode;
 import us.bringardner.fsh.ide.core.Variable;
+import us.bringardner.fsh.ide.core.Watchpoint;
 
 /**
  * The debugger's views: the paused script's variables, the script's own and fsh's on their own
- * tabs (values can be changed while it's paused), the breakpoints, and the log of statements run.
+ * tabs (values can be changed while it's paused), the breakpoints, the variable watchpoints, and the
+ * log of statements run.
  */
 public class DebugPanel extends TabPane {
 
@@ -78,6 +80,19 @@ public class DebugPanel extends TabPane {
 	private Consumer<Variable> onEditVariable = v->{};
 	private Consumer<Breakpoint> onBreakpointChanged = b->{};
 	private Consumer<Breakpoint> onEditBreakpoint = b->{};
+
+	/** Asks for a watchpoint: the variable (filled in) and Read / Write. Empty if canceled. */
+	interface WatchpointAsker {
+		java.util.Optional<Watchpoint> ask(String variable, boolean read, boolean write);
+	}
+
+	// the debug session's watchpoints (the script reads the list as it runs); the table shows them
+	private List<Watchpoint> watchpoints = new java.util.concurrent.CopyOnWriteArrayList<>();
+	private final ObservableList<Watchpoint> watchpointRows = FXCollections.observableArrayList();
+	private final TableView<Watchpoint> watchpointTable = new TableView<>(watchpointRows);
+	private Tab watches;
+	private WatchpointAsker askWatchpoint = (variable, read, write)->
+		WatchpointDialog.ask(getScene() == null ? null : getScene().getWindow(), variable, read, write);
 
 	public DebugPanel() {
 		// breakpoints
@@ -115,6 +130,37 @@ public class DebugPanel extends TabPane {
 			return row;
 		});
 
+		// watchpoints
+		watchpointTable.getColumns().add(checkColumn("On", Watchpoint::isEnabled, Watchpoint::setEnabled, 36));
+		TableColumn<Watchpoint,String> variable = new TableColumn<>("Variable");
+		variable.setCellValueFactory(c->new ReadOnlyStringWrapper(c.getValue().getVariable()));
+		variable.setPrefWidth(140);
+		watchpointTable.getColumns().add(variable);
+		watchpointTable.getColumns().add(checkColumn("Read", Watchpoint::isRead, Watchpoint::setRead, 50));
+		watchpointTable.getColumns().add(checkColumn("Write", Watchpoint::isWrite, Watchpoint::setWrite, 50));
+		watchpointTable.setEditable(true);
+		watchpointTable.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
+		watchpointTable.setColumnResizePolicy(flexLastColumn());
+		watchpointTable.setPlaceholder(new Label("Add a variable to stop when the script reads or writes it."));
+		watchpointTable.setRowFactory(t->{
+			TableRow<Watchpoint> row = new TableRow<>();
+			row.setOnMouseClicked(e->{
+				if( e.getClickCount() == 2 && !row.isEmpty()) {
+					editWatchpoint(row.getItem());
+				}
+			});
+			return row;
+		});
+		javafx.scene.control.Button addWatch = new javafx.scene.control.Button("Add...");
+		addWatch.setTooltip(new javafx.scene.control.Tooltip("Watch a variable: stop when the script reads it, writes it, or both"));
+		addWatch.setOnAction(e->addWatchpoint(""));
+		javafx.scene.control.Button removeWatch = new javafx.scene.control.Button("Remove");
+		removeWatch.disableProperty().bind(javafx.beans.binding.Bindings.isEmpty(watchpointTable.getSelectionModel().getSelectedItems()));
+		removeWatch.setOnAction(e->removeWatchpoints(new ArrayList<>(watchpointTable.getSelectionModel().getSelectedItems())));
+		HBox watchButtons = new HBox(8, addWatch, removeWatch);
+		watchButtons.setPadding(new Insets(4));
+		BorderPane watchPane = new BorderPane(watchpointTable, watchButtons, null, null, null);
+
 		log.setEditable(false);
 		log.getStyleClass().add("debug-log");
 
@@ -124,12 +170,82 @@ public class DebugPanel extends TabPane {
 		Tab fsh = new Tab("fsh Variables", fshVariables.pane);
 		fsh.setTooltip(new javafx.scene.control.Tooltip("The shell's own variables, the environment's, and $0"));
 		Tab bps = new Tab("Breakpoints", breakpointTable);
+		watches = new Tab("Watchpoints", watchPane);
+		watches.setTooltip(new javafx.scene.control.Tooltip("Stop when the script reads or writes a variable"));
 		Tab logTab = new Tab("Log", log);
 		Tab syntaxTab = new Tab("Syntax", syntax);
-		for(Tab t : new Tab[] {user, fsh, bps, logTab, syntaxTab}) {
+		for(Tab t : new Tab[] {user, fsh, bps, watches, logTab, syntaxTab}) {
 			t.setClosable(false);
 		}
-		getTabs().addAll(user, fsh, bps, logTab, syntaxTab);
+		getTabs().addAll(user, fsh, bps, watches, logTab, syntaxTab);
+	}
+
+	/** A column of check boxes for one of a watchpoint's switches. */
+	private static TableColumn<Watchpoint,Boolean> checkColumn(String title, java.util.function.Predicate<Watchpoint> get,
+			java.util.function.BiConsumer<Watchpoint,Boolean> set, double width) {
+		TableColumn<Watchpoint,Boolean> ret = new TableColumn<>(title);
+		ret.setCellValueFactory(c->{
+			Watchpoint wp = c.getValue();
+			SimpleBooleanProperty p = new SimpleBooleanProperty(get.test(wp));
+			p.addListener((o, was, is)->set.accept(wp, is));
+			return p;
+		});
+		ret.setCellFactory(CheckBoxTableCell.forTableColumn(ret));
+		ret.setEditable(true);
+		ret.setPrefWidth(width);
+		return ret;
+	}
+
+	/**
+	 * The watchpoints this shows and changes: the debug session's list, so changes are seen by
+	 * a script that is running.
+	 */
+	public void setWatchpoints(List<Watchpoint> list) {
+		watchpoints = list;
+		watchpointRows.setAll(list);
+	}
+
+	/**
+	 * Asks for a variable to watch (name filled in) and how, and adds the watchpoint; for a
+	 * variable that's already watched, changes its watchpoint.
+	 */
+	void addWatchpoint(String name) {
+		// (the tab shows, so what's added is seen)
+		getSelectionModel().select(watches);
+		for(Watchpoint wp : watchpoints) {
+			if( wp.getVariable().equals(Watchpoint.normalize(name))) {
+				editWatchpoint(wp);
+				return;
+			}
+		}
+		askWatchpoint.ask(name, false, true).ifPresent(wp->{
+			for(Watchpoint other : watchpoints) {
+				if( other.getVariable().equals(wp.getVariable())) {
+					other.setRead(wp.isRead());
+					other.setWrite(wp.isWrite());
+					other.setEnabled(true);
+					watchpointRows.setAll(watchpoints);
+					watchpointTable.refresh();
+					return;
+				}
+			}
+			watchpoints.add(wp);
+			watchpointRows.setAll(watchpoints);
+		});
+	}
+
+	private void editWatchpoint(Watchpoint wp) {
+		askWatchpoint.ask(wp.getVariable(), wp.isRead(), wp.isWrite()).ifPresent(changed->{
+			wp.setVariable(changed.getVariable());
+			wp.setRead(changed.isRead());
+			wp.setWrite(changed.isWrite());
+			watchpointTable.refresh();
+		});
+	}
+
+	void removeWatchpoints(List<Watchpoint> list) {
+		watchpoints.removeAll(list);
+		watchpointRows.setAll(watchpoints);
 	}
 
 	/** How a breakpoint stops: its condition, hit count, or always (with its code). */
@@ -227,6 +343,19 @@ public class DebugPanel extends TabPane {
 			table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 			table.setRowFactory(t->{
 				TableRow<Variable> row = new TableRow<>();
+				// right-click: watch the variable
+				javafx.scene.control.MenuItem watch = new javafx.scene.control.MenuItem();
+				watch.setOnAction(e->addWatchpoint(row.getItem().getName()));
+				javafx.scene.control.ContextMenu menu = new javafx.scene.control.ContextMenu(watch);
+				row.itemProperty().addListener((o, was, is)->{
+					if( is == null ) {
+						row.setContextMenu(null);
+					} else {
+						watch.setText("Watch "+is.getName()+"...");
+						watch.setDisable(!Watchpoint.isValidName(is.getName()));
+						row.setContextMenu(menu);
+					}
+				});
 				row.setOnMouseClicked(e->{
 					if( row.isEmpty()) {
 						return;
@@ -323,6 +452,8 @@ public class DebugPanel extends TabPane {
 	ObservableList<Variable> userVariables() { return userVariables.rows; }
 	ObservableList<Variable> fshVariables() { return fshVariables.rows; }
 	ObservableList<Breakpoint> breakpoints() { return breakpoints; }
+	ObservableList<Watchpoint> watchpointRows() { return watchpointRows; }
+	void setWatchpointAsker(WatchpointAsker asker) { askWatchpoint = asker; }
 	String logText() { return log.getText(); }
 	public boolean variablesEditable() { return variablesEditable; }
 	TextField filterField() { return userVariables.filter; }

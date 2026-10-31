@@ -169,4 +169,129 @@ public class TestDebugSession {
 		session.resume();
 		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
 	}
+
+	private Watchpoint watch(String name, boolean read, boolean write) {
+		Watchpoint wp = new Watchpoint(name, read, write);
+		session.getWatchpoints().add(wp);
+		return wp;
+	}
+
+	@Test
+	public void aWriteWatchpointStopsOnTheLineThatSetsIt() throws Exception {
+		watch("x", false, true);
+		start("y=1\necho $y\nx=5\necho $x\nx=6\n");
+		RecordingListener.Pause p = nextPause();
+		assertEquals(2, p.line());
+		// stopped after the change: the new value shows
+		assertEquals("5", ""+p.variables().get("x"));
+		assertEquals(List.of("x written (value: 5)"), listener.watchpointHits);
+		session.resume();
+		assertEquals(4, nextPause().line());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		// the read on line 3 doesn't stop a write watchpoint
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void aReadWatchpointStopsOnTheLineThatReadsIt() throws Exception {
+		watch("x", true, false);
+		start("x=5\ny=2\necho \"$x\"\n");
+		RecordingListener.Pause p = nextPause();
+		assertEquals(2, p.line());
+		assertEquals(List.of("x read"), listener.watchpointHits);
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void readAndWriteBothStop() throws Exception {
+		watch("$n", true, true);
+		start("n=1\n(( n = n + 1 ))\nunset n\n");
+		assertEquals(0, nextPause().line());
+		session.resume();
+		// the arithmetic reads it, and writes it
+		assertEquals(1, nextPause().line());
+		session.resume();
+		assertEquals(1, nextPause().line());
+		session.resume();
+		assertEquals(2, nextPause().line());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertEquals(List.of("n written (value: 1)", "n read", "n written (value: 2)", "n unset"), listener.watchpointHits);
+	}
+
+	@Test
+	public void anArraysElementIsAWriteOfTheArray() throws Exception {
+		watch("a", false, true);
+		start("b=1\na[2]=x\n");
+		assertEquals(1, nextPause().line());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void insideAFunctionAndALoop() throws Exception {
+		watch("total", false, true);
+		start("add() {\n  total=$(( total + $1 ))\n}\nfor i in 1 2; do\n  add $i\ndone\n");
+		assertEquals(1, nextPause().line());
+		session.resume();
+		assertEquals(1, nextPause().line());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertEquals(List.of("total written (value: 1)", "total written (value: 3)"), listener.watchpointHits);
+	}
+
+	@Test
+	public void disabledOrOtherVariablesDontStop() throws Exception {
+		watch("x", true, true).setEnabled(false);
+		watch("xy", true, true);
+		start("x=1\necho $x\n");
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertTrue(listener.pauses.isEmpty());
+	}
+
+	@Test
+	public void runToEndIgnoresWatchpoints() throws Exception {
+		watch("x", false, true);
+		start("x=1\nx=2\nx=3\n");
+		assertEquals(0, nextPause().line());
+		session.runToEnd();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void stepsFromAWatchpoint() throws Exception {
+		watch("x", false, true);
+		start("x=1\ny=2\nz=3\n");
+		assertEquals(0, nextPause().line());
+		session.stepOver();
+		assertEquals(1, nextPause().line());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void theDebuggersOwnLooksAndChangesDontStop() throws Exception {
+		watch("x", true, true);
+		breakpoint(1);
+		start("y=0\ny=1\n");
+		assertEquals(1, nextPause().line());
+		// as the variables view does while the script is paused
+		DebugVariables.set(listener.lastContext, "x", "9");
+		assertEquals("9", ""+listener.lastContext.getVariable("x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertTrue(listener.watchpointHits.isEmpty());
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void describesAHit() {
+		assertEquals("x read", DebugSession.describeHit("x", false, "1"));
+		assertEquals("x unset", DebugSession.describeHit("x", true, null));
+		assertEquals("x written (value: a⏎b)", DebugSession.describeHit("x", true, "a\nb"));
+	}
 }

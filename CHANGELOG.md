@@ -2,6 +2,22 @@
 
 ## 1.1.0 (unreleased)
 
+### Added
+
+- Watchpoints on variables, in both IDEs: the debugger stops when the script reads a variable,
+  writes it (sets or unsets it), or either, and marks the line doing it, as a breakpoint does.
+  The Watchpoints tab, beside Breakpoints, lists them, each with check boxes for On, Read and
+  Write; Add... asks for the variable and Read and/or Write (double-click one to change it), and
+  a variable's right-click menu in the outline (before or while debugging) and in the variables
+  tabs has Watch name.... A write stops once the
+  value is set, so the variables view shows the new one, and the log (and in the JavaFX IDE the
+  status line) says which watchpoint stopped it: `count written (value: 5)`, `count read`.
+  An array's watchpoint stops for its elements too (`a[2]=x` writes `a`). Running to the end
+  (Run while paused) passes them by, as it does breakpoints, and the debugger's own looks at the variables
+  (and changes made in the variables view) don't set them off. Needs fsh's variable hooks
+  (`DebugContext.variableRead`/`variableWritten`); debugging through the Loupe adapter doesn't
+  stop at them yet.
+
 Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1.0.
 
 ### Changed

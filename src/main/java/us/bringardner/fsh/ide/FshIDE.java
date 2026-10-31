@@ -246,6 +246,11 @@ public class FshIDE extends JFrame  {
 		public void terminateRequested() {
 			actionDebug(true);
 		}
+
+		@Override
+		public void watchpointHit(us.bringardner.fsh.ide.core.Watchpoint wp, String name, boolean write, Object value) {
+			logBatcher.add("Watchpoint: "+DebugSession.describeHit(name, write, value)+"\n");
+		}
 	};
 
 	private final DebugSession debugSession = new DebugSession(line->editorPane.getBreakpoint(line), debugListener);
@@ -819,6 +824,15 @@ public class FshIDE extends JFrame  {
 		outlineSplitPane.setContinuousLayout(true);
 		outlineSplitPane.setDividerLocation(200);
 		outlinePanel.setVisible(prefs.getBoolean(PREF_SHOW_OUTLINE, true));
+		// a variable's right-click menu in the outline: watch it (before or while debugging)
+		outlinePanel.setOnWatchVariable(name->{
+			// the debug view shows, with its Watchpoints tab
+			if( !showDebugViewCheckBox.isSelected()) {
+				showDebugViewCheckBox.setSelected(true);
+				actionShowDebugView();
+			}
+			debugVariablePanel.addWatchpoint(name);
+		});
 		outlinePanel.setOnGoToLine(line->{
 			editorPane.setCeretPosotionFromLine(line-1);
 			editorPane.getTextArea().requestFocusInWindow();
@@ -832,6 +846,7 @@ public class FshIDE extends JFrame  {
 
 		debugVariablePanel  = new DebugVariablePanel();
 		debugVariablePanel.setContext(editorPane, null);
+		debugVariablePanel.setWatchpoints(debugSession.getWatchpoints());
 		// a clicked variable shows (name = value) in the text area below
 		debugVariablePanel.setOnShowVariable(text->{
 			logBatcher.flush();

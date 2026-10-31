@@ -85,4 +85,32 @@ public class TestDebugVariablePanel {
 		assertEquals("maybe", DebugVariablePanel.parseValue(Boolean.TRUE, "maybe"));
 		assertEquals("line 1\nline 2", DebugVariablePanel.parseValue("x", "line 1\nline 2"));
 	}
+
+	@Test
+	public void watchpointsTable() throws Exception {
+		SwingUtilities.invokeAndWait(()->{
+			List<us.bringardner.fsh.ide.core.Watchpoint> list = new java.util.concurrent.CopyOnWriteArrayList<>();
+			list.add(new us.bringardner.fsh.ide.core.Watchpoint("$count", true, false));
+			DebugVariablePanel panel = new DebugVariablePanel();
+			panel.setWatchpoints(list);
+			JTable table = panel.watchpointsTable();
+			assertEquals(1, table.getModel().getRowCount());
+			assertEquals("count", table.getModel().getValueAt(0, 1));
+			assertEquals(true, table.getModel().getValueAt(0, 2));
+			assertEquals(false, table.getModel().getValueAt(0, 3));
+			// the check boxes change the watchpoint the script sees
+			table.getModel().setValueAt(true, 0, 3);
+			table.getModel().setValueAt(false, 0, 0);
+			assertTrue(list.get(0).isWrite());
+			assertTrue(!list.get(0).isEnabled());
+		});
+	}
+
+	@Test
+	public void watchpointSettingsNeedANameAndReadOrWrite() {
+		assertEquals(null, DebugVariablePanel.watchpointError("x", false, true));
+		assertTrue(DebugVariablePanel.watchpointError("", true, true) != null);
+		assertTrue(DebugVariablePanel.watchpointError("a-b", true, true) != null);
+		assertTrue(DebugVariablePanel.watchpointError("x", false, false) != null);
+	}
 }
