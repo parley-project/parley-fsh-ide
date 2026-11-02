@@ -78,6 +78,10 @@ public class TestEditorCompletions {
 			List<Completion> sorted = new java.util.ArrayList<>(choices);
 			sorted.sort(new SortByRelevanceComparator());
 			assertEquals(t[2], sorted.get(0).getReplacementText(), t[0] + ": the first, as the template has them");
+			// the library puts in toString(): the value alone, never what it means
+			for(Completion choice : choices) {
+				assertEquals(choice.getReplacementText(), choice.toString(), t[0]);
+			}
 			for(int i = 0; i < tc.getParamCount(); i++) {
 				if( i != field ) {
 					assertNull(provider.getParameterChoicesProvider().getParameterChoices(null, tc.getParam(i)), t[0] + " " + i);
@@ -88,5 +92,19 @@ public class TestEditorCompletions {
 				.filter(c->c.getInputText().equals("if-logic")).findFirst().get();
 		List<Completion> or = provider.getParameterChoicesProvider().getParameterChoices(null, logic.getParam(1));
 		assertTrue(or.stream().anyMatch(c->c.getReplacementText().equals("||")));
+	}
+
+	/** the list shows a choice with what it means, the field gets the value */
+	@Test
+	public void theListShowsTheMeaning() {
+		DefaultCompletionProvider provider = EditorPanel.completionProvider(Configuration.createDefault().getTemplates(), List.of());
+		TemplateCompletion tc = (TemplateCompletion) offered(provider, "if-command").stream()
+				.filter(c->c.getInputText().equals("if-command")).findFirst().get();
+		Completion math = provider.getParameterChoicesProvider().getParameterChoices(null, tc.getParam(0)).stream()
+				.filter(c->c.getReplacementText().startsWith("((")).findFirst().get();
+		assertEquals("(( x > 0 ))", math.toString());
+		javax.swing.JLabel shown = (javax.swing.JLabel) new EditorPanel.ChoiceRenderer()
+				.getListCellRendererComponent(new javax.swing.JList<>(), math, 0, false, false);
+		assertEquals("(( x > 0 )) \u2014 an arithmetic expression isn't zero", shown.getText());
 	}
 }

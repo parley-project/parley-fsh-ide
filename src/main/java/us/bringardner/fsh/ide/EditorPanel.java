@@ -64,6 +64,7 @@ import javax.swing.text.JTextComponent;
 import org.fife.ui.autocomplete.AutoCompletion;
 import org.fife.ui.autocomplete.BasicCompletion;
 import org.fife.ui.autocomplete.Completion;
+import org.fife.ui.autocomplete.CompletionProvider;
 import org.fife.ui.autocomplete.DefaultCompletionProvider;
 import org.fife.ui.autocomplete.ParameterChoicesProvider;
 import org.fife.ui.autocomplete.ParameterizedCompletion;
@@ -524,6 +525,7 @@ public class EditorPanel extends JPanel {
 					autoComplete = new AutoCompletion(provider); 
 					autoComplete.setAutoCompleteEnabled(true);
 					autoComplete.setParameterAssistanceEnabled(true);
+					autoComplete.setParamChoicesRenderer(new ChoiceRenderer());
 					autoComplete.install(editorPane);
 				} else {
 					autoComplete.setCompletionProvider(provider);
@@ -632,7 +634,7 @@ public class EditorPanel extends JPanel {
 					List<Completion> items = new ArrayList<>();
 					for(int n = 0; n < list.size(); n++) {
 						TemplateText.Choice c = list.get(n);
-						BasicCompletion item = new BasicCompletion(this, c.value, c.label.isEmpty() ? null : c.label);
+						ChoiceCompletion item = new ChoiceCompletion(this, c.value, c.label);
 						item.setRelevance(list.size()-n);	// (the list is sorted by relevance: in the template's order)
 						items.add(item);
 					}
@@ -640,6 +642,38 @@ public class EditorPanel extends JPanel {
 				}
 				param++;
 			}
+		}
+	}
+
+	/**
+	 * One of a template field's choices. The library puts in what toString() gives, so that's
+	 * the value alone; the list shows what it means beside it ({@link ChoiceRenderer}).
+	 */
+	static class ChoiceCompletion extends BasicCompletion {
+		ChoiceCompletion(CompletionProvider provider, String value, String label) {
+			super(provider, value, label == null || label.isEmpty() ? null : label);
+		}
+
+		@Override
+		public String toString() {
+			return getReplacementText();
+		}
+	}
+
+	/** A field's choices as the list shows them: the value, then what it means. */
+	static class ChoiceRenderer extends javax.swing.DefaultListCellRenderer {
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public java.awt.Component getListCellRendererComponent(javax.swing.JList<?> list, Object value, int index,
+				boolean selected, boolean focus) {
+			Object shown = value;
+			if( value instanceof ChoiceCompletion ) {
+				ChoiceCompletion c = (ChoiceCompletion) value;
+				shown = c.getShortDescription() == null ? c.getReplacementText()
+						: c.getReplacementText() + " \u2014 " + c.getShortDescription();
+			}
+			return super.getListCellRendererComponent(list, shown, index, selected, focus);
 		}
 	}
 
