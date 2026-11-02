@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.fife.com.swabunga.spell.engine.GenericSpellDictionary;
 import org.fife.com.swabunga.spell.engine.SpellDictionaryHashMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -42,6 +43,17 @@ public class TestSpellDictionaryFile {
 		assertTrue(dict.addWord("frobnicate"));
 		assertTrue(dict.isCorrect("frobnicate"));
 		assertEquals(List.of("zorp", "frobnicate"), Files.readAllLines(words.toPath(), StandardCharsets.UTF_8));
+		assertTrue(words.delete(), "the file is still open");
+	}
+
+	@Test
+	public void theGenericDictionaryClosesItsWordListToo() throws Exception {
+		File words = dir.resolve("generic.txt").toFile();
+		Files.write(words.toPath(), List.of("zorp", "quux"), StandardCharsets.UTF_8);
+		GenericSpellDictionary dict = new GenericSpellDictionary(words);
+		assertTrue(dict.isCorrect("zorp"));
+		assertTrue(dict.addWord("frobnicate"));
+		assertEquals(List.of("zorp", "quux", "frobnicate"), Files.readAllLines(words.toPath(), StandardCharsets.UTF_8));
 		assertTrue(words.delete(), "the file is still open");
 	}
 }
