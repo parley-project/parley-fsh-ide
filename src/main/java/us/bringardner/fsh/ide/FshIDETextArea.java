@@ -12,24 +12,28 @@
 */
 package us.bringardner.fsh.ide;
 
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
-import org.fife.com.swabunga.spell.engine.SpellDictionary;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaEditorKit;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
-import org.fife.ui.rsyntaxtextarea.spell.SpellingParser;
 
 import us.bringardner.fsh.ide.core.SpellChecking;
 
@@ -49,20 +53,96 @@ public class FshIDETextArea extends RSyntaxTextArea {
 	}
 
 	
-	/**
-	 * A spelling parser on dict whose "Add to dictionary" saves to the user's words
-	 * (~/.fsh-ide/words.txt), the file the JavaFX IDE adds to and the dictionary is read with.
-	 */
-	static SpellingParser spellingParser(SpellDictionary dict) {
-		SpellingParser parser = new SpellingParser(dict);
-		File words = SpellChecking.userWordsFile();
-		try {
-			words.getParentFile().mkdirs();
-			parser.setUserDictionary(words);
-		} catch (IOException e) {
-			// words can't be added, but spelling is still checked
+	/** The spell checker, once the dictionary has been read (in the background); null before. */
+	private volatile FshSpellingParser spelling;
+	/** where the right-click that opens the popup menu was, to find the word it was on */
+	Point popupPoint;
+	/** the spelling items at the top of the popup menu now, taken out the next time */
+	private final List<Component> spellingItems = new ArrayList<>();
+
+	/** whether to check spelling: kept here for the parser, which is made when the dictionary has been read */
+	private volatile boolean spellChecking = true;
+
+	/** Turns spell checking of comments and quoted text on or off. */
+	public void setSpellChecking(boolean on) {
+		spellChecking = on;
+		FshSpellingParser sp = spelling;
+		if( sp != null ) {
+			sp.setChecking(on);
 		}
-		return parser;
+	}
+
+	public boolean isSpellChecking() {
+		return spellChecking;
+	}
+
+	/** The spell checker for this text area, or null until the dictionary has been read. */
+	FshSpellingParser getSpelling() {
+		return spelling;
+	}
+
+	@Override
+	protected void processMouseEvent(MouseEvent e) {
+		// (before the listeners, one of which shows the popup menu: configurePopupMenu needs the point)
+		if( e.isPopupTrigger() ) {
+			popupPoint = e.getPoint();
+		}
+		super.processMouseEvent(e);
+	}
+
+	/** The popup menu with, when the click was on a misspelled word, the suggestions, Ignore and Add to Dictionary first. */
+	@Override
+	protected void configurePopupMenu(JPopupMenu popupMenu) {
+		super.configurePopupMenu(popupMenu);
+		for(Component c : spellingItems) {
+			popupMenu.remove(c);
+		}
+		spellingItems.clear();
+		FshSpellingParser sp = spelling;
+		if( sp == null || popupPoint == null ) {
+			return;
+		}
+		int pos = viewToModel2D(popupPoint);
+		int[] word = pos < 0 ? null : sp.misspelledAt(pos);
+		if( word == null ) {
+			return;
+		}
+		String w;
+		try {
+			w = getText(word[0], word[1]-word[0]);
+		} catch (BadLocationException e) {
+			return;
+		}
+		List<Component> items = new ArrayList<>();
+		List<String> suggestions = sp.suggestions(w, 6);
+		for(String s : suggestions) {
+			JMenuItem item = new JMenuItem(s);
+			item.addActionListener(e->replaceRange(s, word[0], word[1]));
+			items.add(item);
+		}
+		if( suggestions.isEmpty() ) {
+			JMenuItem none = new JMenuItem("No suggestions");
+			none.setEnabled(false);
+			items.add(none);
+		}
+		items.add(new JPopupMenu.Separator());
+		JMenuItem ignore = new JMenuItem("Ignore \""+w+"\"");
+		ignore.addActionListener(e->sp.ignore(w));
+		items.add(ignore);
+		JMenuItem add = new JMenuItem("Add \""+w+"\" to Dictionary");
+		add.addActionListener(e->{
+			try {
+				sp.addToDictionary(w);
+			} catch (IOException ex) {
+				sp.ignore(w);
+			}
+		});
+		items.add(add);
+		items.add(new JPopupMenu.Separator());
+		for(int i=0; i < items.size(); i++) {
+			popupMenu.insert(items.get(i), i);
+		}
+		spellingItems.addAll(items);
 	}
 
 	private void initMe() {
@@ -73,10 +153,15 @@ public class FshIDETextArea extends RSyntaxTextArea {
 		setLineWrap(true);
 		setTabSize(4);
 	
-		// each text area needs its own parser, but they can share the dictionary
+		// each text area needs its own parser (its ignored words), but they share the dictionary
 		SpellChecking.english().thenAccept(dict->{
 			if( dict != null ) {
-				SwingUtilities.invokeLater(()->addParser(spellingParser(dict)));
+				SwingUtilities.invokeLater(()->{
+					FshSpellingParser parser = new FshSpellingParser(this, dict);
+					parser.setChecking(spellChecking);
+					spelling = parser;
+					addParser(parser);
+				});
 			}
 		});
 

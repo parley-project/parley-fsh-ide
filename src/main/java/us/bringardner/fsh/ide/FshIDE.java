@@ -181,6 +181,7 @@ public class FshIDE extends JFrame  {
 	private static final long serialVersionUID = 1L;
 
 	private static final String PREF_RECENT_LIST = "RecentList";
+	private static final String PREF_SPELLING = "Spelling";
 
 	private static final String KEY_SCREEN_LOCATION = "Location";
 

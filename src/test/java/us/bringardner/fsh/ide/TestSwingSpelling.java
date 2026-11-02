@@ -1,22 +1,38 @@
 package us.bringardner.fsh.ide;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.geom.Rectangle2D;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
+
 import org.fife.com.swabunga.spell.engine.SpellDictionary;
-import org.fife.ui.rsyntaxtextarea.spell.SpellingParser;
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import us.bringardner.fsh.ide.core.SpellChecking;
 
-/** The Swing editor's spelling shares the user's words with the JavaFX IDE (~/.fsh-ide/words.txt). */
+/**
+ * The Swing editor's spelling is the JavaFX editor's: the same words are flagged, the same menu
+ * (suggestions, Ignore, Add to Dictionary), and the user's words are shared (~/.fsh-ide/words.txt).
+ */
 public class TestSwingSpelling {
+
+	static final String SCRIPT = "# a mispeled wrod here\necho \"and wroldwide too\"\nmispeled=1\n";
 
 	@TempDir
 	static Path home;
@@ -31,32 +47,134 @@ public class TestSwingSpelling {
 		Files.writeString(words, "fshide\n");
 	}
 
-	/** The word list is open until collected (see TestHandles), and the folder is deleted next. */
-	@org.junit.jupiter.api.AfterAll
-	public static void releaseWordList() throws Exception {
-		TestHandles.release();
-	}
-
 	@Test
 	public void readsTheUsersWords() throws Exception {
 		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
 		assertTrue(dict.isCorrect("fshide"));
 	}
 
-	@Test
-	public void addsToTheUsersWords() throws Exception {
-		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
-		SpellingParser parser = FshIDETextArea.spellingParser(dict);
-		// with a user dictionary, the parser offers "Add to dictionary", and adds there
-		assertEquals(SpellChecking.userWordsFile(), parser.getUserDictionary());
-		assertTrue(parser.getAllowAdd());
+	private FshIDETextArea area(String text) {
+		FshIDETextArea area = new FshIDETextArea(10, 40);
+		area.setSize(600, 200);
+		area.setText(text);
+		return area;
+	}
 
-		// what the "Add to dictionary" link does: add to the user dictionary
-		java.lang.reflect.Field sc = SpellingParser.class.getDeclaredField("sc");
-		sc.setAccessible(true);
-		Object checker = sc.get(parser);
-		checker.getClass().getMethod("addToDictionary", String.class).invoke(checker, "wroldwide");
-		assertTrue(Files.readString(SpellChecking.userWordsFile().toPath()).contains("wroldwide"));
-		assertTrue(Files.readString(SpellChecking.userWordsFile().toPath()).contains("fshide"));
+	private List<String> flagged(FshSpellingParser parser, FshIDETextArea area) {
+		parser.parse((RSyntaxDocument) area.getDocument(), SyntaxConstants.SYNTAX_STYLE_UNIX_SHELL);
+		String text = area.getText();
+		List<String> ret = new ArrayList<>();
+		for(int i = 0; i < text.length(); i++) {
+			int[] r = parser.misspelledAt(i);
+			if( r != null && r[0] == i ) {
+				ret.add(text.substring(r[0], r[1]));
+			}
+		}
+		return ret;
+	}
+
+	@Test
+	public void flagsWhatTheJavaFxEditorFlags() throws Exception {
+		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
+		FshIDETextArea area = area(SCRIPT);
+		FshSpellingParser parser = new FshSpellingParser(area, dict);
+		// the comment and the quoted text, not the variable name
+		assertEquals(List.of("mispeled", "wrod", "wroldwide"), flagged(parser, area));
+		assertEquals(SpellChecking.misspelled(SCRIPT, dict::isCorrect).size(), 3);
+	}
+
+	@Test
+	public void ignoreLeavesAWordAlone() throws Exception {
+		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
+		FshIDETextArea area = area(SCRIPT);
+		FshSpellingParser parser = new FshSpellingParser(area, dict);
+		parser.ignore("wrod");
+		assertEquals(List.of("mispeled", "wroldwide"), flagged(parser, area));
+	}
+
+	@Test
+	public void addToDictionaryAddsToTheUsersWords() throws Exception {
+		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
+		FshIDETextArea area = area("# zzyzx\n");
+		FshSpellingParser parser = new FshSpellingParser(area, dict);
+		assertEquals(List.of("zzyzx"), flagged(parser, area));
+		parser.addToDictionary("zzyzx");
+		assertEquals(List.of(), flagged(parser, area));
+		String saved = Files.readString(SpellChecking.userWordsFile().toPath());
+		assertTrue(saved.contains("zzyzx"), saved);
+		assertTrue(saved.contains("fshide"), saved);
+	}
+
+	@Test
+	public void checkingCanBeSwitchedOff() throws Exception {
+		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
+		FshIDETextArea area = area(SCRIPT);
+		FshSpellingParser parser = new FshSpellingParser(area, dict);
+		assertEquals(3, flagged(parser, area).size());
+		parser.setChecking(false);
+		assertEquals(List.of(), flagged(parser, area));
+		parser.setChecking(true);
+		assertEquals(3, flagged(parser, area).size());
+	}
+
+	/** The popup menu on a misspelled word has the suggestions, Ignore and Add first, then the usual items. */
+	@Test
+	public void theRightClickMenuHasTheSpellingItems() throws Exception {
+		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
+		FshIDETextArea area = area("# qqwwee here\n");
+		FshSpellingParser parser = new FshSpellingParser(area, dict);
+		setSpelling(area, parser);
+		assertEquals(List.of("qqwwee"), flagged(parser, area));
+
+		JPopupMenu menu = area.getPopupMenu();
+		int usual = menu.getComponentCount();
+		Rectangle2D r = area.modelToView2D(4);
+		area.popupPoint = new Point((int) r.getCenterX() + 2, (int) r.getCenterY());
+		area.configurePopupMenu(menu);
+		List<String> labels = labels(menu);
+		assertTrue(labels.contains("Ignore \"qqwwee\""), labels.toString());
+		assertTrue(labels.contains("Add \"qqwwee\" to Dictionary"), labels.toString());
+		assertTrue(menu.getComponentCount() > usual);
+
+		// the same click twice does not stack the items
+		int count = menu.getComponentCount();
+		area.configurePopupMenu(menu);
+		assertEquals(count, menu.getComponentCount());
+
+		// a click elsewhere takes them out
+		Rectangle2D elsewhere = area.modelToView2D(area.getText().length() - 1);
+		area.popupPoint = new Point((int) elsewhere.getX() + 400, (int) elsewhere.getCenterY());
+		area.configurePopupMenu(menu);
+		assertEquals(usual, menu.getComponentCount());
+
+		// "Add" does what the JavaFX menu's does
+		area.popupPoint = new Point((int) r.getCenterX() + 2, (int) r.getCenterY());
+		area.configurePopupMenu(menu);
+		for(Component c : menu.getComponents()) {
+			if( c instanceof JMenuItem && ((JMenuItem) c).getText().startsWith("Add \"qqwwee\"") ) {
+				((JMenuItem) c).doClick();
+			}
+		}
+		assertTrue(Files.readString(SpellChecking.userWordsFile().toPath()).contains("qqwwee"));
+		assertEquals(List.of(), flagged(parser, area));
+		assertNull(parser.misspelledAt(4));
+	}
+
+	private static List<String> labels(JPopupMenu menu) {
+		List<String> ret = new ArrayList<>();
+		for(Component c : menu.getComponents()) {
+			if( c instanceof JMenuItem ) {
+				ret.add(((JMenuItem) c).getText());
+			}
+		}
+		return ret;
+	}
+
+	/** The text area makes its own parser when the dictionary is read; the test uses its own. */
+	private static void setSpelling(FshIDETextArea area, FshSpellingParser parser) throws Exception {
+		java.lang.reflect.Field f = FshIDETextArea.class.getDeclaredField("spelling");
+		f.setAccessible(true);
+		f.set(area, parser);
+		SwingUtilities.invokeAndWait(()->{});
 	}
 }

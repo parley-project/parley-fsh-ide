@@ -176,8 +176,11 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 - `core.FoldRegions` and `core.SpellChecking`: the blocks that fold, and spell checking, without a
   UI. The English dictionary is read once and shared by both IDEs; words added to it are kept in
   `~/.fsh-ide/words.txt`.
-- The Swing editor's spelling tooltip's "Add to dictionary" now works (it had no user dictionary,
-  so adding only beeped). Added words go to `~/.fsh-ide/words.txt`, which both IDEs read.
+- The Swing editor's spelling is the JavaFX editor's (`FshSpellingParser`): the same words are underlined
+  (comments and quoted text, not code, acronyms or camelCase), a right-click offers suggestions,
+  Ignore and Add to Dictionary, Edit > Check Spelling switches it off, and added words go to
+  `~/.fsh-ide/words.txt`, which both IDEs read. (It used the spell checker library's own parser, whose
+  tooltip links are gone, and whose "Add to dictionary" had no user dictionary and only beeped.)
 - A new script is empty, not one blank line (`ScriptDocument.parse("")`).
 
 ### Fixed
