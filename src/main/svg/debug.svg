@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6d365"/>
+      <stop offset="0.55" stop-color="#e0a82e"/>
+      <stop offset="1" stop-color="#a8761a"/>
+    </linearGradient>
+    <linearGradient id="play" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5cd16a"/>
+      <stop offset="1" stop-color="#1f8a2e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- legs -->
+  <g stroke="#5a3d0a" stroke-width="1.8" stroke-linecap="round" fill="none">
+    <path d="M7 12 L3.5 10"/>
+    <path d="M6.5 17 L2.5 17"/>
+    <path d="M7 22 L3.5 25"/>
+    <path d="M21 12 L24.5 10"/>
+    <path d="M21.5 17 L25 17"/>
+    <!-- antennae -->
+    <path d="M11 6.5 Q9.5 3.5 7.5 3"/>
+    <path d="M17 6.5 Q18.5 3.5 20.5 3"/>
+  </g>
+
+  <!-- head -->
+  <ellipse cx="14" cy="8.5" rx="4.2" ry="3" fill="#5a3d0a"/>
+
+  <!-- body -->
+  <ellipse cx="14" cy="18" rx="7.6" ry="9" fill="url(#body)" stroke="#5a3d0a" stroke-width="1.4"/>
+  <!-- wing seam -->
+  <path d="M14 9.5 V26.5" stroke="#5a3d0a" stroke-width="1.2"/>
+  <!-- spots -->
+  <circle cx="10.8" cy="15" r="1.4" fill="#5a3d0a"/>
+  <circle cx="17.2" cy="15" r="1.4" fill="#5a3d0a"/>
+  <circle cx="11" cy="21" r="1.2" fill="#5a3d0a"/>
+  <!-- highlight -->
+  <path d="M9.2 13 Q10 10.6 12.2 10.2" stroke="#fff6d8" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- play badge -->
+  <circle cx="24" cy="24" r="7" fill="#ffffff"/>
+  <circle cx="24" cy="24" r="6" fill="url(#play)" stroke="#145a1e" stroke-width="1"/>
+  <path d="M22 20.8 L27.6 24 L22 27.2 Z" fill="#ffffff"/>
+</svg>

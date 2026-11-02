@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f6d365"/><stop offset="0.55" stop-color="#e0a82e"/><stop offset="1" stop-color="#a8761a"/>
+  </linearGradient>
+  <linearGradient id="paleGold" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fff3cf"/><stop offset="1" stop-color="#f1d58c"/>
+  </linearGradient>
+  <linearGradient id="green" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#5cd16a"/><stop offset="1" stop-color="#1f8a2e"/>
+  </linearGradient>
+  <linearGradient id="red" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f07a68"/><stop offset="1" stop-color="#b3261e"/>
+  </linearGradient>
+  <linearGradient id="ice" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#9fd4ff"/><stop offset="1" stop-color="#3a8fd8"/>
+  </linearGradient>
+  <linearGradient id="term" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#4a3410"/><stop offset="1" stop-color="#2a1d06"/>
+  </linearGradient>
+</defs><path d="M10.3 9.2 A10 10 0 1 0 21.7 9.2" fill="none" stroke="#6e140e" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.3 9.2 A10 10 0 1 0 21.7 9.2" fill="none" stroke="#d9473a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 4 V15" fill="none" stroke="#6e140e" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 4 V15" fill="none" stroke="#d9473a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
