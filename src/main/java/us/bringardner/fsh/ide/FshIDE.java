@@ -693,7 +693,7 @@ public class FshIDE extends JFrame  {
 
 
 		debugButton = new JButton("");
-		debugButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/eclipe_debug_view.png")));
+		debugButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/debug.png")));
 		executePanel.add(debugButton);
 		debugButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {

@@ -41,6 +41,8 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -99,7 +101,7 @@ public class IdeWindow {
 	private final Menu recentMenu = new Menu("Open Recent");
 	private final CheckMenuItem useSelection = new CheckMenuItem("Run Selected Code Only");
 	private final Button runButton = new Button("\u25b6 Run");
-	private final Button debugButton = new Button("\u2699 Debug");
+	private final Button debugButton = new Button("Debug");
 	private final Button stopButton = new Button("\u25a0 Stop");
 	private final Button resumeButton = new Button("Resume");
 	private final Button stepOverButton = new Button("Step Over");
@@ -421,6 +423,7 @@ public class IdeWindow {
 
 	private javafx.scene.layout.FlowPane toolbar() {
 		runButton.setOnAction(e->run());
+		debugButton.setGraphic(new ImageView(new Image(IdeWindow.class.getResource("/img/debug.png").toExternalForm())));
 		debugButton.setOnAction(e->debug());
 		stopButton.setOnAction(e->stop());
 		resumeButton.setOnAction(e->resumeScript());
