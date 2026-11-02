@@ -42,8 +42,25 @@ public final class DebugVariables {
 	 * (a debugger can leave these out, so the script's own variables stand out).
 	 */
 	public static boolean isInheritedEnvironment(String name, Object value) {
-		String env = System.getenv(name);
+		String env = environment(name);
 		return env != null && env.equals(value == null ? null : String.valueOf(value));
+	}
+
+	/**
+	 * The environment's value of the variable spelled exactly name, or null. (System.getenv(name)
+	 * ignores case on Windows, where it made a script's own path look like the environment's Path.)
+	 */
+	static String environment(String name) {
+		String ret = System.getenv(name);
+		if( ret == null ) {
+			return null;
+		}
+		for(String key : System.getenv().keySet()) {
+			if( key.equals(name)) {
+				return ret;
+			}
+		}
+		return null;
 	}
 
 	// the variables a new shell starts with (IFS, PS1, OPTIND ...) and their values
@@ -101,7 +118,7 @@ public final class DebugVariables {
 		if( name.startsWith("$")) {
 			return name.equals("$0");
 		}
-		return shellDefaults().containsKey(name) || System.getenv(name) != null || SET_BY_FSH.contains(name);
+		return shellDefaults().containsKey(name) || environment(name) != null || SET_BY_FSH.contains(name);
 	}
 
 	/** The variables, by name, that the script defined (or fsh did, if fshDefined is true). */

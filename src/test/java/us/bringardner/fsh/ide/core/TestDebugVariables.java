@@ -1,6 +1,8 @@
 package us.bringardner.fsh.ide.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -16,6 +18,29 @@ import us.bringardner.fsh.Argument;
 
 /** Showing and changing a paused script's variables, the same in both IDEs. */
 public class TestDebugVariables {
+
+	/**
+	 * Windows names its search path Path and ignores case when it is asked for a variable; a script's
+	 * own variable that differs from an environment variable only in case (path) is its own, not fsh's.
+	 */
+	@Test
+	public void aVariableThatDiffersFromTheEnvironmentsOnlyInCaseIsTheScripts() {
+		String mixed = null;
+		for(String key : System.getenv().keySet()) {
+			if( !key.equals(key.toLowerCase()) && !key.equals(key.toUpperCase())
+					&& System.getenv().keySet().stream().noneMatch(k -> k.equals(key.toLowerCase()))) {
+				mixed = key;
+				break;
+			}
+		}
+		org.junit.jupiter.api.Assumptions.assumeTrue(mixed != null, "no environment variable with mixed case");
+		String value = System.getenv(mixed);
+		String lower = mixed.toLowerCase();
+		assertTrue(DebugVariables.isFshDefined(mixed));
+		assertTrue(DebugVariables.isInheritedEnvironment(mixed, value));
+		assertFalse(DebugVariables.isFshDefined(lower), lower + " is the script's");
+		assertFalse(DebugVariables.isInheritedEnvironment(lower, value), lower + " is the script's");
+	}
 
 	@Test
 	public void listedByNameWithTheirTypes() {
