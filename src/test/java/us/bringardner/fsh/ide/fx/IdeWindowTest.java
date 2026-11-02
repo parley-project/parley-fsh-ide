@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import javafx.stage.Stage;
+import us.bringardner.fsh.ide.core.ExitChoice;
 import us.bringardner.fsh.ide.core.RunSettings;
 import us.bringardner.fsh.ide.core.RunSettingsStore;
 import us.bringardner.parley.files.FileSource;
@@ -75,6 +76,26 @@ public class IdeWindowTest {
 		@Override
 		protected RunSettingsStore runSettings() {
 			return store;
+		}
+
+		// the answer to the exit question, and how often it was asked
+		ExitChoice exitAnswer = ExitChoice.CANCEL;
+		int exitQuestions;
+
+		@Override
+		protected ExitChoice askExit() {
+			exitQuestions++;
+			return exitAnswer;
+		}
+
+		// the file Save As picks (null: canceled), and whether it was asked
+		FileSource saveAsFile;
+		boolean saveAsAsked;
+
+		@Override
+		protected FileSource chooseSaveFile() {
+			saveAsAsked = true;
+			return saveAsFile;
 		}
 	}
 
@@ -218,6 +239,112 @@ public class IdeWindowTest {
 				return false;
 			}
 		});
+	}
+
+	@Test
+	public void exitWithNothingChangedAsksNothing() throws Exception {
+		TestWindow w = window();
+		Fx.run(()->w.setCode("echo a\n", null));
+		assertTrue(Fx.call(w::close));
+		assertEquals(0, w.exitQuestions);
+	}
+
+	@Test
+	public void exitCancelKeepsTheWindowAndItsChanges() throws Exception {
+		TestWindow w = window();
+		Fx.run(()->{
+			w.setCode("echo a\n", null);
+			w.editor().getCodeArea().appendText("echo b\n");
+		});
+		w.exitAnswer = ExitChoice.CANCEL;
+		assertFalse(Fx.call(w::close));
+		assertEquals(1, w.exitQuestions);
+		assertTrue(Fx.call(w::hasChanged));
+		assertEquals("echo a\necho b\n", Fx.call(()->w.editor().getText()));
+	}
+
+	@Test
+	public void exitDiscardClosesWithoutSaving() throws Exception {
+		FileSource f = file("keep.sh", "echo a\n");
+		TestWindow w = window();
+		Fx.run(()->w.load(f));
+		Fx.waitFor(()->w.scriptFile() != null);
+		Fx.run(()->w.editor().getCodeArea().appendText("echo b\n"));
+		w.exitAnswer = ExitChoice.DISCARD;
+		assertTrue(Fx.call(w::close));
+		assertEquals("echo a\n", Files.readString(dir.resolve("keep.sh")));
+	}
+
+	@Test
+	public void exitSaveWritesTheFileFirst() throws Exception {
+		FileSource f = file("save.sh", "echo a\n");
+		TestWindow w = window();
+		Fx.run(()->w.load(f));
+		Fx.waitFor(()->w.scriptFile() != null);
+		Fx.run(()->w.editor().getCodeArea().appendText("echo b\n"));
+		w.exitAnswer = ExitChoice.SAVE;
+		assertTrue(Fx.call(w::close));
+		// written by the time close() answers, not later in the background
+		assertEquals("echo a\necho b\n", Files.readString(dir.resolve("save.sh")));
+		assertFalse(w.saveAsAsked);
+		assertFalse(Fx.call(w::hasChanged));
+	}
+
+	@Test
+	public void exitSaveOfANewScriptAsksForAFile() throws Exception {
+		TestWindow w = window();
+		Fx.run(()->{
+			w.setCode("", null);
+			w.editor().getCodeArea().appendText("echo new\n");
+		});
+		w.exitAnswer = ExitChoice.SAVE;
+
+		// Save As canceled: the window stays open, still changed
+		w.saveAsFile = null;
+		assertFalse(Fx.call(w::close));
+		assertTrue(w.saveAsAsked);
+		assertTrue(Fx.call(w::hasChanged));
+
+		// a file chosen: saved there, and the window closes
+		w.saveAsFile = FileSourceFactory.getDefaultFactory().createFileSource(dir.resolve("new.sh").toString());
+		assertTrue(Fx.call(w::close));
+		assertEquals("echo new\n", Files.readString(dir.resolve("new.sh")));
+	}
+
+	@Test
+	public void exitSaveThatFailsKeepsTheWindow() throws Exception {
+		TestWindow w = window();
+		Fx.run(()->{
+			w.setCode("", null);
+			w.editor().getCodeArea().appendText("echo x\n");
+		});
+		w.exitAnswer = ExitChoice.SAVE;
+		// a folder that isn't there
+		w.saveAsFile = FileSourceFactory.getDefaultFactory().createFileSource(dir.resolve("no/such/dir/x.sh").toString());
+		assertFalse(Fx.call(w::close));
+		assertEquals(1, w.problems.size(), w.problems.toString());
+		assertTrue(w.problems.get(0).startsWith("Can't save"), w.problems.get(0));
+		assertTrue(Fx.call(w::hasChanged));
+	}
+
+	@Test
+	public void theExitQuestionsButtonsAreInOrder() throws Exception {
+		TestWindow w = window();
+		List<String> labels = Fx.call(()->{
+			javafx.scene.control.Alert a = w.exitQuestion();
+			List<String> l = new ArrayList<>();
+			for(javafx.scene.control.ButtonType b : a.getDialogPane().getButtonTypes()) {
+				l.add(b.getText()+"="+IdeWindow.exitChoice(b));
+			}
+			javafx.scene.control.ButtonBar bar = (javafx.scene.control.ButtonBar) a.getDialogPane().lookup(".button-bar");
+			l.add(bar.getButtonOrder());
+			// closing the question (the window's close box) is Cancel
+			l.add(String.valueOf(a.getDialogPane().getButtonTypes().stream()
+					.anyMatch(b->b.getButtonData() == javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE)));
+			return l;
+		});
+		assertEquals(List.of("Cancel=CANCEL", "Discard and exit=DISCARD", "Save and exit=SAVE",
+				javafx.scene.control.ButtonBar.BUTTON_ORDER_NONE, "true"), labels);
 	}
 
 	@Test

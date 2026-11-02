@@ -21,6 +21,7 @@ import us.bringardner.fsh.ide.core.ScriptOutline;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.CompileError;
 import us.bringardner.fsh.ide.core.DebugSession;
+import us.bringardner.fsh.ide.core.ExitChoice;
 import us.bringardner.fsh.ide.core.LogBatcher;
 import us.bringardner.fsh.ide.core.RecentFiles;
 import us.bringardner.fsh.ide.core.RunSettings;
@@ -104,11 +105,12 @@ public class FshIDE extends JFrame  {
 	}
 
 	/**
-	 * Closes a window, asking first only if something would be lost: unsaved changes, or a script
-	 * still running (which is stopped). The application exits with its last window.
+	 * Closes a window, asking first only if something would be lost: unsaved changes (Cancel,
+	 * Discard and exit, or Save and exit), or a script still running (which is stopped). The
+	 * application exits with its last window.
 	 */
 	private synchronized static void close(FshIDE p) {
-		if( !p.okToDiscard() || !p.okToStopScript()) {
+		if( !p.okToExit() || !p.okToStopScript()) {
 			return;
 		}
 		p.stopScript();
@@ -168,7 +170,49 @@ public class FshIDE extends JFrame  {
 		return !hasChanged() || showConfirmDialog() == JOptionPane.OK_OPTION;
 	}
 
-	private boolean hasChanged() {
+	/**
+	 * Closing the window (or quitting): true if there are no unsaved changes, or the user chooses
+	 * Discard and exit, or Save and exit and the script is saved. Cancel, closing the question, or
+	 * a save that doesn't happen (Save As canceled, an error) keeps the window open.
+	 */
+	boolean okToExit() {
+		if( !hasChanged()) {
+			return true;
+		}
+		switch (askExit()) {
+		case DISCARD:
+			return true;
+		case SAVE:
+			actionSave();
+			return !hasChanged();
+		default:
+			return false;
+		}
+	}
+
+	/** Asks what to do with unsaved changes when the window closes; tests override it. */
+	protected ExitChoice askExit() {
+		Object[] options = { "Cancel", "Discard and exit", "Save and exit" };
+		int ret = JOptionPane.showOptionDialog(this, "There are unsaved changes.", "Unsaved Changes",
+				JOptionPane.DEFAULT_OPTION,
+				JOptionPane.WARNING_MESSAGE,
+				null,
+				options,
+				options[2]);
+		switch (ret) {
+		case 1: return ExitChoice.DISCARD;
+		case 2: return ExitChoice.SAVE;
+		// Cancel, or the question closed
+		default: return ExitChoice.CANCEL;
+		}
+	}
+
+	/** The editor, for tests. */
+	EditorPanel editor() {
+		return editorPane;
+	}
+
+	boolean hasChanged() {
 
 		boolean ret = !original.equals(getDocument());
 
@@ -1102,7 +1146,7 @@ public class FshIDE extends JFrame  {
 	 */
 	static boolean okToQuit() {
 		for(FshIDE w : new ArrayList<>(ideWindows)) {
-			if( !w.okToDiscard() || !w.okToStopScript()) {
+			if( !w.okToExit() || !w.okToStopScript()) {
 				return false;
 			}
 		}
@@ -1530,7 +1574,8 @@ public class FshIDE extends JFrame  {
 
 	}
 
-	private void addRecent(FileSource file2) {
+	/** Adds file to the recent list (kept in the preferences); tests override it. */
+	protected void addRecent(FileSource file2) {
 		recent.add(file2.getAbsolutePath(), Configuration.getInstance().getMaxRecent());
 		saveRecentList();
 		buildRecentMenu();

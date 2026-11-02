@@ -31,6 +31,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Label;
@@ -54,6 +56,7 @@ import us.bringardner.fsh.ide.core.CompileError;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.DebugSession;
 import us.bringardner.fsh.ide.core.DebugVariables;
+import us.bringardner.fsh.ide.core.ExitChoice;
 import us.bringardner.fsh.ide.core.LogBatcher;
 import us.bringardner.fsh.ide.core.LoupeSession;
 import us.bringardner.fsh.ide.core.RecentFiles;
@@ -570,6 +573,88 @@ public class IdeWindow {
 		return !hasChanged() || confirm("There are unsaved changes. Discard them?");
 	}
 
+	/**
+	 * Closing the window (or quitting): true if there are no unsaved changes, or the user chooses
+	 * Discard and exit, or Save and exit and the script is saved. Cancel, closing the question, or
+	 * a save that doesn't happen (Save As canceled, an error) keeps the window open.
+	 */
+	boolean okToExit() {
+		if( !hasChanged()) {
+			return true;
+		}
+		switch (askExit()) {
+		case DISCARD:
+			return true;
+		case SAVE:
+			return saveNow();
+		default:
+			return false;
+		}
+	}
+
+	/** Asks what to do with unsaved changes when the window closes; tests override it. */
+	protected ExitChoice askExit() {
+		Alert a = exitQuestion();
+		// closing the question is Cancel
+		return a.showAndWait().map(IdeWindow::exitChoice).orElse(ExitChoice.CANCEL);
+	}
+
+	/** The exit question: Cancel, Discard and exit, Save and exit, in that order on every platform. */
+	Alert exitQuestion() {
+		ButtonType cancel = new ButtonType("Cancel", ButtonData.CANCEL_CLOSE);
+		ButtonType discard = new ButtonType("Discard and exit", ButtonData.OTHER);
+		ButtonType save = new ButtonType("Save and exit", ButtonData.OK_DONE);
+		Alert a = new Alert(AlertType.WARNING, "There are unsaved changes.", cancel, discard, save);
+		a.setTitle("Unsaved Changes");
+		a.setHeaderText(null);
+		a.initOwner(stage);
+		FxBrand.apply(a);
+		// not each platform's own order
+		if( a.getDialogPane().lookup(".button-bar") instanceof ButtonBar ) {
+			((ButtonBar) a.getDialogPane().lookup(".button-bar")).setButtonOrder(ButtonBar.BUTTON_ORDER_NONE);
+		}
+		return a;
+	}
+
+	/** The choice an exit question's button stands for. */
+	static ExitChoice exitChoice(ButtonType b) {
+		switch (b.getButtonData()) {
+		case OK_DONE: return ExitChoice.SAVE;
+		case OTHER: return ExitChoice.DISCARD;
+		default: return ExitChoice.CANCEL;
+		}
+	}
+
+	/**
+	 * Saves the script now, not in the background, for Save and exit: asks for a file if it has
+	 * none; false if it isn't saved (no file chosen, or an error, which is reported).
+	 */
+	boolean saveNow() {
+		FileSource file = scriptFile;
+		if( file == null ) {
+			file = chooseSaveFile();
+			if( file == null ) {
+				return false;
+			}
+		}
+		ScriptDocument doc = getDocument();
+		try {
+			saved(file, doc, doc.save(file, runSettings()));
+			return true;
+		} catch (IOException e) {
+			status.setText("");
+			report("Can't save "+file.getAbsolutePath(), e);
+			return false;
+		}
+	}
+
+	/** Asks for the file to save to (Save As); null if none is chosen. Tests override it. */
+	protected FileSource chooseSaveFile() {
+		FileSourceChooser fc = chooser();
+		fc.setInitialFileName(scriptFile == null ? "script.sh" : scriptFile.getName());
+		return fc.showSaveDialog(stage);
+	}
+
 	/** Asks the user; tests override it. */
 	protected boolean confirm(String question) {
 		Alert a = new Alert(AlertType.CONFIRMATION, question, ButtonType.YES, ButtonType.NO);
@@ -673,9 +758,7 @@ public class IdeWindow {
 	}
 
 	void actionSaveAs() {
-		FileSourceChooser fc = chooser();
-		fc.setInitialFileName(scriptFile == null ? "script.sh" : scriptFile.getName());
-		FileSource file = fc.showSaveDialog(stage);
+		FileSource file = chooseSaveFile();
 		if( file != null ) {
 			save(file);
 		}
@@ -693,13 +776,7 @@ public class IdeWindow {
 		BACKGROUND.execute(()->{
 			try {
 				String warning = doc.save(file, store);
-				Platform.runLater(()->{
-					scriptFile = file;
-					original = doc;
-					addRecent(file);
-					status.setText(warning != null ? warning : "Saved "+file.getAbsolutePath());
-					updateTitle();
-				});
+				Platform.runLater(()->saved(file, doc, warning));
 			} catch (IOException e) {
 				Platform.runLater(()->{
 					status.setText("");
@@ -707,6 +784,15 @@ public class IdeWindow {
 				});
 			}
 		});
+	}
+
+	/** After doc is written to file: it's the window's script, and no longer changed. */
+	private void saved(FileSource file, ScriptDocument doc, String warning) {
+		scriptFile = file;
+		original = doc;
+		addRecent(file);
+		status.setText(warning != null ? warning : "Saved "+file.getAbsolutePath());
+		updateTitle();
 	}
 
 	// ---- recent files
@@ -1214,11 +1300,12 @@ public class IdeWindow {
 	}
 
 	/**
-	 * Asks about unsaved changes and a running (or paused) script, stops the script, and remembers
-	 * where the window was; false if the user says no.
+	 * Asks about unsaved changes (Cancel, Discard and exit, or Save and exit) and a running (or
+	 * paused) script, stops the script, and remembers where the window was; false if the window
+	 * stays open.
 	 */
 	boolean close() {
-		if( !okToDiscard()) {
+		if( !okToExit()) {
 			return false;
 		}
 		if( isRunning() && !confirm("A script is still running. Stop it and close?")) {
