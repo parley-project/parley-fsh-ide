@@ -57,7 +57,7 @@ public class TestTemplates {
 		List<String> names = new ArrayList<>();
 		Configuration.createDefault().getTemplates().forEach(t->names.add(t.getName()));
 		for(String n : new String[] {"function", "read-lines", "read-command", "elif", "heredoc", "subst", "or-exit",
-				"if-not", "if-file", "if-dir", "if-empty", "if-set", "match", "strip-prefix", "strip-suffix", "replace",
+				"if-not", "if-file", "match", "strip-prefix", "strip-suffix", "replace",
 				"length", "substring", "array", "for-each", "map", "for-keys", "args", "getopts", "connect", "scratch",
 				"copy-across", "find-each"}) {
 			assertTrue(names.contains(n), n);
@@ -98,7 +98,7 @@ public class TestTemplates {
 				{"if-files", "-nt", "-ot", "-ef"},
 				{"if-string", "==", "!=", "=~", "<", ">"},
 				{"if-number", "-eq", "-ne", "-lt", "-le", "-gt", "-ge"},
-				{"if-variable", "-v", "! -v"},
+				{"if-variable", "-n \"$var\"", "-z \"$var\"", "-v var", "! -v var"},
 				{"if-logic", "&&", "||"},
 				{"if-command", "command", "! command", "command -v name >/dev/null 2>&1", "[ $# -lt 1 ]", "[ \"$EUID\" -eq 0 ]"},
 		};
@@ -132,7 +132,7 @@ public class TestTemplates {
 			}
 		}
 		// the single if- tests are choices now
-		for(String gone : new String[] {"if-exists", "if-readable", "if-newer", "if-eq", "if-and", "if-ok"}) {
+		for(String gone : new String[] {"if-dir", "if-empty", "if-set", "if-exists", "if-readable", "if-newer", "if-eq", "if-and", "if-ok"}) {
 			assertTrue(all.stream().noneMatch(x->gone.equals(x.getName())), gone);
 		}
 	}
@@ -168,10 +168,14 @@ public class TestTemplates {
 		saved.removeIf(t->t.getName().equals("if-command"));
 		saved.add(oldFile);
 		saved.add(oldExists);
+		Template oldDir = new Template("if-dir", "if-dir: a directory exists",
+				"if [ -d \"$$${dir}\" ]; then\n  ${echo \"found\"}\nfi\n");
+		saved.add(oldDir);
 		config.setTemplates(saved);
 		List<Template> now = config.getTemplates();
 		assertFalse(now.contains(oldFile));
 		assertFalse(now.contains(oldExists));
+		assertFalse(now.contains(oldDir), "if-dir is if-file's -d now");
 		assertEquals(1, now.stream().filter(t->t.getName().equals("if-file")).count());
 		assertTrue(now.stream().anyMatch(t->t.getName().equals("if-file") && t.getCode().contains("${|")));
 		assertFalse(now.stream().anyMatch(t->t.getName().equals("if-command")), "deleted, it stays deleted");

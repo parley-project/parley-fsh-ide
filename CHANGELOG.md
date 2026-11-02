@@ -8,10 +8,12 @@
   field with choices: `if-file` (exists, a regular file, a directory, a link, readable, writable,
   runnable, a pipe, a socket, a device, the set-user-ID, set-group-ID and sticky bits, yours, your
   group's, changed since read, doesn't exist), `if-files` (newer, older, the same file),
-  `if-string` (==, !=, =~, <, >), `if-number` (-eq, -ne, -lt, -le, -gt, -ge), `if-variable` (set
-  or not), `if-logic` (&& or ||) and `if-command` (succeeds, fails, is available, too few
-  arguments, root, a terminal, interactive, a shell option, an arithmetic expression). `if-file`
-  takes the place of the old one (a regular file exists), which is `-f` among its choices.
+  `if-string` (==, !=, =~, <, >), `if-number` (-eq, -ne, -lt, -le, -gt, -ge), `if-variable`
+  (empty or not, set or not), `if-logic` (&& or ||) and `if-command` (succeeds, fails, is
+  available, too few arguments, root, a terminal, interactive, a shell option, an arithmetic
+  expression). `if-file` takes the place of the old one (a regular file exists), which is `-f`
+  among its choices, and `if-dir`, `if-empty` and `if-set` are gone: they're `if-file`'s `-d` and
+  `if-variable`'s `-z` and `-n`. (Unchanged copies of them in your settings go too.)
 - Template fields with choices: `${|-e : exists|-f : a regular file}` puts in the first value,
   and when the field is the one being filled in, the editor lists the choices under it, each with
   what it means (Up and Down, Enter or a click). In the JavaFX IDE, Tab now goes from field to

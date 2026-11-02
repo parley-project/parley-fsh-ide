@@ -340,18 +340,6 @@ public class Configuration {
 					"if ! ${command}; then\n"
 					+ "  ${echo \"failed\"}\n"
 					+ "fi\n"),
-			new Template( "if-dir", "if-dir: a directory exists", 
-					"if [ -d \"$$${dir}\" ]; then\n"
-					+ "  ${echo \"found\"}\n"
-					+ "fi\n"),
-			new Template( "if-empty", "if-empty: a variable is empty or unset", 
-					"if [ -z \"$$${var}\" ]; then\n"
-					+ "  ${echo \"empty\"}\n"
-					+ "fi\n"),
-			new Template( "if-set", "if-set: a variable isn't empty", 
-					"if [ -n \"$$${var}\" ]; then\n"
-					+ "  ${echo \"set\"}\n"
-					+ "fi\n"),
 			new Template( "if-file", "if-file: a file test: exists, a regular file, a directory, a link, readable, writable... (choose the test)", 
 					"if [ ${|-e : exists|! -e : doesn't exist|-f : is a regular file|-d : is a directory|-L : is a symbolic link|-s : exists and isn't empty|-r : you can read it|-w : you can write it|-x : you can run it (a directory: go into it)|-p : is a named pipe (FIFO)|-S : is a socket|-c : is a character device|-b : is a block device|-u : its set-user-ID bit is set|-g : its set-group-ID bit is set|-k : its sticky bit is set|-O : you own it|-G : its group is yours|-N : it changed since it was last read} \"$$${file}\" ]; then\n"
 					+ "  ${echo \"yes\"}\n"
@@ -368,8 +356,8 @@ public class Configuration {
 					"if [ \"$$${var}\" ${|-eq : equals|-ne : doesn't equal|-lt : is less than|-le : is less than or equal to|-gt : is greater than|-ge : is greater than or equal to} ${0} ]; then\n"
 					+ "  ${echo \"yes\"}\n"
 					+ "fi\n"),
-			new Template( "if-variable", "if-variable: a variable is set or not, even to nothing (choose the test; if-empty and if-set test its value)", 
-					"if [[ ${|-v : is set (even to nothing)|! -v : isn't set at all} ${var} ]]; then\n"
+			new Template( "if-variable", "if-variable: a variable is empty or not, set or not (choose the test, then put in the name)", 
+					"if [[ ${|-n \"$$var\" : isn't empty|-z \"$$var\" : is empty or unset|-v var : is set, even to nothing|! -v var : isn't set at all} ]]; then\n"
 					+ "  ${echo \"yes\"}\n"
 					+ "fi\n"),
 			new Template( "if-logic", "if-logic: two tests, and or or (choose)", 
@@ -509,6 +497,25 @@ public class Configuration {
 	 * an unchanged copy is taken out when it's read; one the user changed is theirs and stays.
 	 */
 	private static Template retiredTemplates [] = {
+
+			// if-dir, if-empty and if-set: choices of if-file and if-variable now
+			new Template( "if-dir", "if-dir: a directory exists", 
+					"if [ -d \"$$${dir}\" ]; then\n"
+					+ "  ${echo \"found\"}\n"
+					+ "fi\n"),
+			new Template( "if-empty", "if-empty: a variable is empty or unset", 
+					"if [ -z \"$$${var}\" ]; then\n"
+					+ "  ${echo \"empty\"}\n"
+					+ "fi\n"),
+			new Template( "if-set", "if-set: a variable isn't empty", 
+					"if [ -n \"$$${var}\" ]; then\n"
+					+ "  ${echo \"set\"}\n"
+					+ "fi\n"),
+			// if-variable before it had the empty tests
+			new Template( "if-variable", "if-variable: a variable is set or not, even to nothing (choose the test; if-empty and if-set test its value)", 
+					"if [[ ${|-v : is set (even to nothing)|! -v : isn't set at all} ${var} ]]; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
 
 			new Template( "if-file", "if-file: a file exists", 
 					"if [ -f \"$$${file}\" ]; then\n"
