@@ -12,6 +12,7 @@ import java.util.List;
 import org.fife.com.swabunga.spell.engine.GenericSpellDictionary;
 import org.fife.com.swabunga.spell.engine.GenericTransformator;
 import org.fife.com.swabunga.spell.engine.PropertyConfiguration;
+import org.fife.com.swabunga.spell.engine.SpellDictionaryCachedDichoDisk;
 import org.fife.com.swabunga.spell.engine.SpellDictionaryDichoDisk;
 import org.fife.com.swabunga.spell.engine.SpellDictionaryDisk;
 import org.fife.com.swabunga.spell.engine.SpellDictionaryHashMap;
@@ -99,5 +100,26 @@ public class TestSpellDictionaryFile {
 	@Test
 	public void theConfigurationIsReadAndClosed() {
 		assertTrue(new PropertyConfiguration().getInteger(org.fife.com.swabunga.spell.engine.Configuration.SPELL_THRESHOLD) > 0);
+	}
+
+	@Test
+	public void theCachedDichoDiskClosesItsPreCacheFile() throws Exception {
+		String home = System.getProperty("user.home");
+		System.setProperty("user.home", dir.toString());
+		try {
+			File words = dir.resolve("sorted2.txt").toFile();
+			Files.write(words.toPath(), List.of("apple", "banana"), StandardCharsets.UTF_8);
+			SpellDictionaryCachedDichoDisk first = new SpellDictionaryCachedDichoDisk(words);
+			first.saveCache();
+			first.close();
+			File pre = new File(new File(dir.toFile(), ".jazzy"), "sorted2.txt.pre");
+			assertTrue(pre.isFile());
+			SpellDictionaryCachedDichoDisk second = new SpellDictionaryCachedDichoDisk(words);
+			second.close();
+			assertTrue(pre.delete(), "the pre-cache file is still open");
+			assertTrue(words.delete(), "the word list is still open");
+		} finally {
+			System.setProperty("user.home", home);
+		}
 	}
 }
