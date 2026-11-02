@@ -105,6 +105,23 @@ public class CompletionPopup {
 		return more ? c.label+" \u2014 "+c.description : c.label;
 	}
 
+	/**
+	 * Scrolls list just enough to show its selected item: Up and Down move the selection, which
+	 * alone doesn't scroll, so past the last row in view it went out of sight.
+	 */
+	static void reveal(ListView<?> list) {
+		int i = list.getSelectionModel().getSelectedIndex();
+		if( i < 0 ) {
+			return;
+		}
+		javafx.scene.Node flow = list.lookup(".virtual-flow");
+		if( flow instanceof javafx.scene.control.skin.VirtualFlow ) {
+			((javafx.scene.control.skin.VirtualFlow<?>) flow).scrollTo(i);
+		} else {
+			list.scrollTo(i);
+		}
+	}
+
 	/** Shows what can finish the word before the caret (nothing happens if there's nothing). */
 	public void show() {
 		if( !active ) {
@@ -143,10 +160,12 @@ public class CompletionPopup {
 		switch (e.getCode()) {
 		case UP:
 			list.getSelectionModel().selectPrevious();
+			reveal(list);
 			e.consume();
 			break;
 		case DOWN:
 			list.getSelectionModel().selectNext();
+			reveal(list);
 			e.consume();
 			break;
 		case ENTER:

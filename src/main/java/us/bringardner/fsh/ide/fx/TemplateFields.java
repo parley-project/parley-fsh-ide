@@ -262,10 +262,12 @@ public class TemplateFields {
 			switch (e.getCode()) {
 			case UP:
 				list.getSelectionModel().selectPrevious();
+				CompletionPopup.reveal(list);
 				e.consume();
 				return;
 			case DOWN:
 				list.getSelectionModel().selectNext();
+				CompletionPopup.reveal(list);
 				e.consume();
 				return;
 			case ENTER:

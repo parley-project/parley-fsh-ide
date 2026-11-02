@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javafx.scene.control.ListView;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -155,6 +156,41 @@ public class EditingTest {
 	private static void key(TestWindow w, KeyCode code, boolean shift) throws Exception {
 		KeyEvent e = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", code, shift, false, false, false);
 		Fx.run(()->javafx.event.Event.fireEvent(w.editor().getCodeArea(), e));
+	}
+
+	/** the last row of the list in view and the selected one, by index */
+	private static int[] inView(ListView<?> list) {
+		javafx.scene.control.skin.VirtualFlow<?> flow = (javafx.scene.control.skin.VirtualFlow<?>) list.lookup(".virtual-flow");
+		return new int[] {flow.getFirstVisibleCell().getIndex(), flow.getLastVisibleCell().getIndex(),
+				list.getSelectionModel().getSelectedIndex()};
+	}
+
+	/** Down past the last row in view scrolls the list, Up past the first scrolls it back */
+	@Test
+	public void theListScrollsWithTheSelection() throws Exception {
+		TestWindow w = window("");
+		Fx.run(()->{
+			w.stage().show();
+			w.completion().show();	// (nothing typed: every template)
+		});
+		Fx.waitFor(()->w.completion().isShowing());
+		int size = Fx.call(()->w.completion().list.getItems().size());
+		int[] at = Fx.call(()->inView(w.completion().list));
+		assertTrue(at[1]+3 < size, "more than fit: " + size + " " + java.util.Arrays.toString(at));
+		for(int i = 0; i < at[1]+3; i++) {
+			key(w, KeyCode.DOWN, false);
+		}
+		Fx.run(()->{});	// (a layout pass)
+		int[] now = Fx.call(()->inView(w.completion().list));
+		assertEquals(at[1]+3, now[2]);
+		assertTrue(now[0] <= now[2] && now[2] <= now[1], "the selected one is in view: " + java.util.Arrays.toString(now));
+		for(int i = 0; i < at[1]+3; i++) {
+			key(w, KeyCode.UP, false);
+		}
+		Fx.run(()->{});
+		now = Fx.call(()->inView(w.completion().list));
+		assertEquals(0, now[2]);
+		assertEquals(0, now[0], "back at the top");
 	}
 
 	/** Tab goes from field to field; a field with choices lists them, and one chosen goes in */

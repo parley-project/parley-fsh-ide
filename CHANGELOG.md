@@ -95,6 +95,8 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- JavaFX IDE: Down past the last completion in view selected one out of sight; the list scrolls
+  with the selection now (Up too), and the list of a template field's choices does the same.
 - The Swing IDE's autocompletion offered only some of the templates that start with what's
   typed: `if` listed the if- templates only up to `if-dir`. The completion library looks them up
   by name but kept them sorted by description; they're sorted by name now.
