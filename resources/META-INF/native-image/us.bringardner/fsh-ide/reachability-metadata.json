@@ -3927,25 +3927,16 @@
       "glob": "english_dic.zip"
     },
     {
-      "glob": "img/Globe100x100.png"
-    },
-    {
-      "glob": "img/Globe16x16.png"
-    },
-    {
-      "glob": "img/Globe25x25.png"
-    },
-    {
-      "glob": "img/Globe64x64.png"
-    },
-    {
-      "glob": "img/Stop.png"
-    },
-    {
       "glob": "img/breakpoint.png"
     },
     {
+      "glob": "img/breakpoint@2x.png"
+    },
+    {
       "glob": "img/cancel.png"
+    },
+    {
+      "glob": "img/cancel@2x.png"
     },
     {
       "glob": "img/debug.png"
@@ -3957,31 +3948,64 @@
       "glob": "img/error.png"
     },
     {
-      "glob": "img/resume.png"
-    },
-    {
-      "glob": "img/run.png"
-    },
-    {
-      "glob": "img/step_into.png"
-    },
-    {
-      "glob": "img/step_over.png"
-    },
-    {
-      "glob": "img/step_return.png"
-    },
-    {
-      "glob": "img/suspend.png"
-    },
-    {
-      "glob": "img/terminate.png"
+      "glob": "img/error@2x.png"
     },
     {
       "glob": "img/redirect_in.png"
     },
     {
       "glob": "img/redirect_out.png"
+    },
+    {
+      "glob": "img/resume.png"
+    },
+    {
+      "glob": "img/resume@2x.png"
+    },
+    {
+      "glob": "img/run.png"
+    },
+    {
+      "glob": "img/run@2x.png"
+    },
+    {
+      "glob": "img/smile20x20.png"
+    },
+    {
+      "glob": "img/step_into.png"
+    },
+    {
+      "glob": "img/step_into@2x.png"
+    },
+    {
+      "glob": "img/step_over.png"
+    },
+    {
+      "glob": "img/step_over@2x.png"
+    },
+    {
+      "glob": "img/step_return.png"
+    },
+    {
+      "glob": "img/step_return@2x.png"
+    },
+    {
+      "glob": "img/Stop.png"
+    },
+    {
+      "glob": "img/suspend.png"
+    },
+    {
+      "glob": "img/suspend@2x.png"
+    },
+    {
+      "glob": "img/terminate.png"
+    },
+    {
+      "glob": "img/terminate@2x.png"
+    },
+    {
+      "glob": "img/trashcan-red-20x22.png"
     },
     {
       "glob": "org/fife/com/swabunga/spell/engine/configuration.properties"
