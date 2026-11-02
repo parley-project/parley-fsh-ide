@@ -199,10 +199,10 @@ public boolean addWord(String word) {
     if (dictFile!=null) {
 	    try {
 	    	// Append new word to user's word file
-	    	BufferedWriter w = new BufferedWriter(new FileWriter(dictFile, true));
-	    	w.write(word);
-	    	w.write("\n");
-	    	w.close();
+	    	try (BufferedWriter w = new BufferedWriter(new FileWriter(dictFile, true))) {
+	    		w.write(word);
+	    		w.write("\n");
+	    	}
 	    	return true;
 	    } catch (IOException ex) {
 	      System.out.println("Error writing to dictionary file");

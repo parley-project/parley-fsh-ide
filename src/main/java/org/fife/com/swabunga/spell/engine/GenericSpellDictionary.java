@@ -122,11 +122,11 @@ public class GenericSpellDictionary extends SpellDictionaryASpell {
     putWord(word);
     if (dictFile!=null) {
 	    try {
-	      FileWriter w = new FileWriter(dictFile.toString(), true);
-	      // Open with append.
-	      w.write(word);
-	      w.write("\n");
-	      w.close();
+	      try (FileWriter w = new FileWriter(dictFile.toString(), true)) {
+	        // Open with append.
+	        w.write(word);
+	        w.write("\n");
+	      }
 	    } catch (IOException ex) {
 	      System.out.println("Error writing to dictionary file");
 	      ex.printStackTrace();
