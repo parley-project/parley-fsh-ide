@@ -33,7 +33,7 @@ public class BreakpointBorderFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 
-	private Icon breakpointIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(FshIDE.class.getResource("/img/eclipse_brkp_obj.png")));
+	private Icon breakpointIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(FshIDE.class.getResource("/img/breakpoint.png")));
 	private JTextArea lineNumberTextArea;
 	private JPanel iconPanel;
 	private List<Breakpoint> breaks = new ArrayList<>();
@@ -133,7 +133,7 @@ public class BreakpointBorderFrame extends JFrame {
 
 		JButton btnNewButton = new JButton("");
 		btnNewButton.setOpaque(false);
-		btnNewButton.setIcon(new ImageIcon(BreakpointBorderFrame.class.getResource("/img/eclipse_brkp_obj.png")));
+		btnNewButton.setIcon(new ImageIcon(BreakpointBorderFrame.class.getResource("/img/breakpoint.png")));
 		//iconPanel.add(btnNewButton);
 	}
 }

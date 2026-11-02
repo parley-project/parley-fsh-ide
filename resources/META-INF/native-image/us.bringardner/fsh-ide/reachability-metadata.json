@@ -3942,37 +3942,40 @@
       "glob": "img/Stop.png"
     },
     {
-      "glob": "img/eclipe_debug_view.png"
+      "glob": "img/breakpoint.png"
     },
     {
-      "glob": "img/eclipe_delete_config@2x.png"
+      "glob": "img/cancel.png"
     },
     {
-      "glob": "img/eclipe_resume_co.png"
+      "glob": "img/debug.png"
     },
     {
-      "glob": "img/eclipe_run_exc.png"
+      "glob": "img/debug@2x.png"
     },
     {
-      "glob": "img/eclipe_stepinto_co.png"
+      "glob": "img/error.png"
     },
     {
-      "glob": "img/eclipe_terminate_co.png"
+      "glob": "img/resume.png"
     },
     {
-      "glob": "img/eclipse_brkp_obj.png"
+      "glob": "img/run.png"
     },
     {
-      "glob": "img/eclipse_err_obj.png"
+      "glob": "img/step_into.png"
     },
     {
-      "glob": "img/eclipse_stepover_co.png"
+      "glob": "img/step_over.png"
     },
     {
-      "glob": "img/eclipse_stepreturn_co.png"
+      "glob": "img/step_return.png"
     },
     {
-      "glob": "img/eclipse_suspend_co.png"
+      "glob": "img/suspend.png"
+    },
+    {
+      "glob": "img/terminate.png"
     },
     {
       "glob": "img/redirect_in.png"

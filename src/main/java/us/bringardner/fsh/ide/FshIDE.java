@@ -703,8 +703,8 @@ public class FshIDE extends JFrame  {
 
 
 		executeButton = new JButton("");
-		executeButton.setSelectedIcon(new ImageIcon(FshIDE.class.getResource("/img/eclipe_delete_config@2x.png")));
-		executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/eclipe_run_exc.png")));
+		executeButton.setSelectedIcon(new ImageIcon(FshIDE.class.getResource("/img/terminate.png")));
+		executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/run.png")));
 		executePanel.add(executeButton);
 
 		scriptArgPanel = new JPanel();
@@ -1346,7 +1346,7 @@ public class FshIDE extends JFrame  {
 			}
 
 			scriptArgPanel.setVisible(true);
-			executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/eclipe_run_exc.png")));		
+			executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/run.png")));		
 			horizontalStrut.setVisible(true);
 			debugButton.setVisible(true);
 			executeButton.setVisible(true);

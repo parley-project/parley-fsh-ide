@@ -127,7 +127,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 
 		JButton cancelButton = new JButton("");
 		cancelButton.setToolTipText("Cancel");
-		cancelButton.setIcon(new ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/eclipe_delete_edit.png")));
+		cancelButton.setIcon(new ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/cancel.png")));
 		cancelButton.addActionListener(new ActionListener() {
 			
 

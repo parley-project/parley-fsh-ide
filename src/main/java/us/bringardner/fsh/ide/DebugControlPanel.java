@@ -47,7 +47,7 @@ public class DebugControlPanel extends JPanel {
 				actionResume();
 			}
 		});
-		resumeButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/eclipe_resume_co.png")));
+		resumeButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/resume.png")));
 		resumeButton.setToolTipText("Resume");
 		add(resumeButton);
 
@@ -58,7 +58,7 @@ public class DebugControlPanel extends JPanel {
 			}
 		});
 		suspendButton.setForeground(Color.YELLOW);
-		suspendButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/eclipse_suspend_co.png")));
+		suspendButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/suspend.png")));
 		suspendButton.setToolTipText("Suspend");
 		add(suspendButton);
 
@@ -68,12 +68,12 @@ public class DebugControlPanel extends JPanel {
 				actionTerminate();
 			}
 		});
-		terminateButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/eclipe_terminate_co.png")));
+		terminateButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/terminate.png")));
 		terminateButton.setToolTipText("Terminate");
 		add(terminateButton);
 
 		JButton stepIntoButton = new JButton("");
-		stepIntoButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/eclipe_stepinto_co.png")));
+		stepIntoButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/step_into.png")));
 		stepIntoButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionStepInto();
@@ -83,7 +83,7 @@ public class DebugControlPanel extends JPanel {
 		add(stepIntoButton);
 
 		JButton stepOverButton = new JButton("");
-		stepOverButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/eclipse_stepover_co.png")));
+		stepOverButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/step_over.png")));
 		stepOverButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionStepOver();
@@ -93,7 +93,7 @@ public class DebugControlPanel extends JPanel {
 		add(stepOverButton);
 
 		JButton stepToReturnButton = new JButton("");
-		stepToReturnButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/eclipse_stepreturn_co.png")));
+		stepToReturnButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/step_return.png")));
 		stepToReturnButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionStepToReturn();

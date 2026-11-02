@@ -118,8 +118,8 @@ public class EditorPanel extends JPanel {
 	private RTextScrollPane scrollPane;
 	
 	private FileSource scriptDir;
-	private Icon breakpointIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(FshIDE.class.getResource("/img/eclipse_brkp_obj.png")));
-	private Icon errorIcon      = new ImageIcon(Toolkit.getDefaultToolkit().getImage(FshIDE.class.getResource("/img/eclipse_err_obj.png")));
+	private Icon breakpointIcon = new ImageIcon(Toolkit.getDefaultToolkit().getImage(FshIDE.class.getResource("/img/breakpoint.png")));
+	private Icon errorIcon      = new ImageIcon(Toolkit.getDefaultToolkit().getImage(FshIDE.class.getResource("/img/error.png")));
 
 	private Gutter gutter;
 	// Edited on the EDT only. Each breakpoint's gutter icon tracks its line as the text changes.
