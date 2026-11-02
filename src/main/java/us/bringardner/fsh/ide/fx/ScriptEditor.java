@@ -61,6 +61,8 @@ import us.bringardner.fsh.ide.core.TemplateText;
 public class ScriptEditor extends StackPane {
 
 	private final CodeArea area = new CodeArea();
+	/** the fields of a template just inserted: Tab between them, and the lists of their choices */
+	private final TemplateFields templateFields = new TemplateFields(area);
 	// each breakpoint and the offset of the start of its line, kept up to date as text changes
 	private final Map<Breakpoint,Integer> marks = new LinkedHashMap<>();
 	// line -> breakpoint, rebuilt after each change; the script's thread reads it
@@ -631,17 +633,24 @@ public class ScriptEditor extends StackPane {
 
 	/**
 	 * Replaces [start, end) with an expanded template, then selects its first field (to type
-	 * over) or puts the caret where the template says, else after it.
+	 * over; Tab goes on to the next, and a field with choices lists them: {@link TemplateFields})
+	 * or puts the caret where the template says, else after it.
 	 */
 	public void insert(int start, int end, TemplateText.Expansion e) {
+		templateFields.stop();
 		area.replaceText(start, end, e.text);
 		if( e.cursor >= 0 ) {
 			area.moveTo(start+e.cursor);
 		} else if( !e.fields.isEmpty()) {
-			area.selectRange(start+e.fields.get(0)[0], start+e.fields.get(0)[1]);
+			templateFields.start(start, e);
 		} else {
 			area.moveTo(start+e.text.length());
 		}
 		area.requestFollowCaret();
+	}
+
+	/** The fields of the template just inserted ({@link TemplateFields}). */
+	public TemplateFields getTemplateFields() {
+		return templateFields;
 	}
 }

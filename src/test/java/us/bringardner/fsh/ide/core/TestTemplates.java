@@ -89,24 +89,104 @@ public class TestTemplates {
 		assertTrue(now.stream().noneMatch(t->"do-statement".equals(t.getDescription())));
 	}
 
-	/** the tests a script makes (the if- templates): each one is there, and parses */
+	/** the tests a script makes: one template for each kind, the test a field with choices */
 	@Test
-	public void theTestTemplatesAreThereAndParse() {
-		String[] tests = {
-				"if-exists", "if-missing", "if-link", "if-size", "if-readable", "if-writable", "if-executable",
-				"if-pipe", "if-socket", "if-char-device", "if-block-device", "if-setuid", "if-setgid", "if-sticky",
-				"if-owned", "if-group-owned", "if-modified", "if-newer", "if-older", "if-same-file", "if-terminal",
-				"if-equal", "if-not-equal", "if-before", "if-after", "if-like", "if-contains", "if-starts-with",
-				"if-ends-with", "if-no-match", "if-number", "if-yes", "if-defined", "if-undefined", "if-option",
-				"if-interactive", "if-eq", "if-ne", "if-lt", "if-le", "if-gt", "if-ge", "if-math", "if-even", "if-and",
-				"if-or", "if-not-test", "if-ok", "if-status", "if-have", "if-args", "if-root"
-		};
+	public void theTestGroupsAreThereAndParse() {
 		List<Template> all = Configuration.createDefault().getTemplates();
-		for(String n : tests) {
-			Template t = all.stream().filter(x->n.equals(x.getName())).findFirst().orElse(null);
-			assertNotNull(t, n);
-			assertTrue(t.getDescription().startsWith(n + ": "), t.getDescription());
-			assertNull(TemplateList.check(t), n + " parses");
+		String[][] groups = {
+				{"if-file", "-e", "-f", "-d", "-L", "-s", "-r", "-w", "-x", "-p", "-S", "-c", "-b", "-u", "-g", "-k", "-O", "-G", "-N", "! -e"},
+				{"if-files", "-nt", "-ot", "-ef"},
+				{"if-string", "==", "!=", "=~", "<", ">"},
+				{"if-number", "-eq", "-ne", "-lt", "-le", "-gt", "-ge"},
+				{"if-variable", "-v", "! -v"},
+				{"if-logic", "&&", "||"},
+				{"if-command", "command", "! command", "command -v name >/dev/null 2>&1", "[ $# -lt 1 ]", "[ \"$EUID\" -eq 0 ]"},
+		};
+		for(String[] g : groups) {
+			Template t = all.stream().filter(x->g[0].equals(x.getName())).findFirst().orElse(null);
+			assertNotNull(t, g[0]);
+			assertTrue(t.getDescription().startsWith(g[0] + ": "), t.getDescription());
+			assertNull(TemplateList.check(t), g[0] + " parses");
+			TemplateText.Expansion e = TemplateText.expand(t.getCode());
+			List<String> values = new ArrayList<>();
+			for(List<TemplateText.Choice> c : e.choices) {
+				if( c != null ) {
+					c.forEach(x->values.add(x.value));
+					assertTrue(c.stream().allMatch(x->!x.label.isEmpty()), g[0] + ": each choice says what it means");
+				}
+			}
+			for(int i = 1; i < g.length; i++) {
+				assertTrue(values.contains(g[i]), g[0] + " offers " + g[i] + ": " + values);
+			}
+			// each choice put in parses too
+			for(int f = 0; f < e.fields.size(); f++) {
+				if( e.choices.get(f) == null ) {
+					continue;
+				}
+				for(TemplateText.Choice c : e.choices.get(f)) {
+					String text = e.text.substring(0, e.fields.get(f)[0]) + c.value + e.text.substring(e.fields.get(f)[1]);
+					List<CompileError> errors = new ArrayList<>();
+					ScriptParser.parse(text, errors);
+					assertTrue(errors.isEmpty(), g[0] + " with " + c.value + ": " + errors);
+				}
+			}
 		}
+		// the single if- tests are choices now
+		for(String gone : new String[] {"if-exists", "if-readable", "if-newer", "if-eq", "if-and", "if-ok"}) {
+			assertTrue(all.stream().noneMatch(x->gone.equals(x.getName())), gone);
+		}
+	}
+
+	@Test
+	public void aFieldWithChoicesPutsInTheFirst() {
+		TemplateText.Expansion e = TemplateText.expand("if [ ${|-e : exists|-f : a file|-d} \"$$${file}\" ]");
+		assertEquals("if [ -e \"$file\" ]", e.text);
+		assertEquals(2, e.fields.size());
+		assertEquals("-e", e.text.substring(e.fields.get(0)[0], e.fields.get(0)[1]));
+		assertEquals("file", e.text.substring(e.fields.get(1)[0], e.fields.get(1)[1]));
+		assertEquals(3, e.choices.get(0).size());
+		assertEquals("a file", e.choices.get(0).get(1).label);
+		assertEquals("-d", e.choices.get(0).get(2).value);
+		assertEquals("", e.choices.get(0).get(2).label);
+		assertNull(e.choices.get(1));
+		// \ for a | or } in a value, $$ for a $
+		e = TemplateText.expand("a ${|\\|\\| : or|$$x\\} : brace} b");
+		assertEquals("a || b", e.text);
+		assertEquals("$x}", e.choices.get(0).get(1).value);
+		// for the Swing IDE: a plain field of the first value
+		assertEquals("if [ ${-e} \"$$${file}\" ]", TemplateText.withoutChoices("if [ ${|-e : exists|-f : a file} \"$$${file}\" ]"));
+	}
+
+	@Test
+	public void theOldIfFileAndTheSingleTestsGiveWayToTheGroups() {
+		Template oldFile = new Template("if-file", "if-file: a file exists",
+				"if [ -f \"$$${file}\" ]; then\n  ${echo \"found\"}\nfi\n");
+		Template oldExists = new Template("if-exists", "if-exists: a file or directory exists (-e)",
+				"if [ -e \"$$${file}\" ]; then\n  ${echo \"found\"}\nfi\n");
+		Configuration config = Configuration.createDefault();
+		List<Template> saved = new ArrayList<>(config.getTemplates());
+		saved.removeIf(t->t.getName().equals("if-command"));
+		saved.add(oldFile);
+		saved.add(oldExists);
+		config.setTemplates(saved);
+		List<Template> now = config.getTemplates();
+		assertFalse(now.contains(oldFile));
+		assertFalse(now.contains(oldExists));
+		assertEquals(1, now.stream().filter(t->t.getName().equals("if-file")).count());
+		assertTrue(now.stream().anyMatch(t->t.getName().equals("if-file") && t.getCode().contains("${|")));
+		assertFalse(now.stream().anyMatch(t->t.getName().equals("if-command")), "deleted, it stays deleted");
+	}
+
+	/** a template's name with hyphens is one word to complete, a hyphen elsewhere isn't */
+	@Test
+	public void theWordToCompleteKeepsHyphensForTemplateNames() {
+		List<Template> all = Configuration.createDefault().getTemplates();
+		assertEquals("if-fi", Completions.prefix("x=1\nif-fi", 9, all));
+		assertEquals("if-", Completions.prefix("if-", 3, all));
+		assertEquals("co", Completions.prefix("echo $((x-co", 12, all), "a variable after a minus");
+		assertEquals("la", Completions.prefix("ls -la", 6, all), "an option");
+		List<String> names = new ArrayList<>();
+		Completions.matching("if-fi", all, "").forEach(c->names.add(c.label));
+		assertEquals(List.of("if-file", "if-files"), names);
 	}
 }

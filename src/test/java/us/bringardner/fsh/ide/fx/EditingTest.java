@@ -152,6 +152,77 @@ public class EditingTest {
 		assertEquals("count=0\necho $count", Fx.call(()->w.editor().getText()));
 	}
 
+	private static void key(TestWindow w, KeyCode code, boolean shift) throws Exception {
+		KeyEvent e = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", code, shift, false, false, false);
+		Fx.run(()->javafx.event.Event.fireEvent(w.editor().getCodeArea(), e));
+	}
+
+	/** Tab goes from field to field; a field with choices lists them, and one chosen goes in */
+	@Test
+	public void templateFieldsAndTheirChoices() throws Exception {
+		TestWindow w = window("");
+		Fx.run(()->{
+			w.stage().show();	// (the list shows only in a window on the screen)
+			w.editor().getCodeArea().appendText("if-file");
+			w.editor().getCodeArea().moveTo(w.editor().getCodeArea().getLength());
+			w.completion().show();
+		});
+		Completion c = Fx.call(()->w.completion().candidates().stream().filter(x->x.label.equals("if-file")).findFirst().get());
+		Fx.run(()->w.completion().apply(c));
+		assertEquals("if [ -e \"$file\" ]; then\n  echo \"yes\"\nfi\n", Fx.call(()->w.editor().getText()));
+		TemplateFields fields = Fx.call(()->w.editor().getTemplateFields());
+		assertTrue(Fx.call(fields::isActive));
+		assertEquals("-e", selected(w));
+		Fx.waitFor(()->fields.isShowingChoices());
+		assertEquals(19, (int) Fx.call(()->fields.list.getItems().size()));
+		assertEquals("-e", Fx.call(()->fields.list.getSelectionModel().getSelectedItem().value));
+		// Down twice and Enter: the third choice (-f), and on to the next field
+		key(w, KeyCode.DOWN, false);
+		key(w, KeyCode.DOWN, false);
+		key(w, KeyCode.ENTER, false);
+		assertEquals("if [ -f \"$file\" ]; then\n  echo \"yes\"\nfi\n", Fx.call(()->w.editor().getText()));
+		assertEquals("file", selected(w));
+		assertFalse(Fx.call(fields::isShowingChoices));
+		// typing replaces the field, and the fields after it move along
+		Fx.run(()->w.editor().getCodeArea().replaceSelection("path"));
+		key(w, KeyCode.TAB, false);
+		assertEquals("echo \"yes\"", selected(w));
+		// Shift+Tab goes back
+		key(w, KeyCode.TAB, true);
+		assertEquals("path", selected(w));
+		key(w, KeyCode.TAB, false);
+		key(w, KeyCode.TAB, false);
+		// after the last field: the end of the template, and that's all
+		assertFalse(Fx.call(fields::isActive));
+		String text = Fx.call(()->w.editor().getText());
+		assertEquals("if [ -f \"$path\" ]; then\n  echo \"yes\"\nfi\n", text);
+		assertEquals(text.length(), (int) Fx.call(()->w.editor().getCodeArea().getCaretPosition()));
+	}
+
+	/** a click on a choice puts it in; typing outside the fields stops them */
+	@Test
+	public void aClickedChoiceGoesInAndTypingElsewhereStops() throws Exception {
+		TestWindow w = window("");
+		Fx.run(()->{
+			w.stage().show();	// (the list shows only in a window on the screen)
+			w.editor().getCodeArea().appendText("if-logic");
+			w.editor().getCodeArea().moveTo(w.editor().getCodeArea().getLength());
+			w.completion().show();
+		});
+		Completion c = Fx.call(()->w.completion().candidates().stream().filter(x->x.label.equals("if-logic")).findFirst().get());
+		Fx.run(()->w.completion().apply(c));
+		TemplateFields fields = Fx.call(()->w.editor().getTemplateFields());
+		assertEquals("condition", selected(w));
+		key(w, KeyCode.TAB, false);
+		assertEquals("&&", selected(w));
+		Fx.waitFor(()->fields.isShowingChoices());
+		Fx.run(()->fields.pick(fields.list.getItems().get(1)));
+		assertTrue(Fx.call(()->w.editor().getText()).startsWith("if [ condition ] || [ other condition ]; then"));
+		assertEquals("other condition", selected(w));
+		Fx.run(()->w.editor().getCodeArea().insertText(0, "# "));
+		assertFalse(Fx.call(fields::isActive));
+	}
+
 	@Test
 	public void escapeClosesTheList() throws Exception {
 		TestWindow w = window("");

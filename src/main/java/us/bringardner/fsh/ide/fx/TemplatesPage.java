@@ -52,6 +52,7 @@ class TemplatesPage implements FxSettingsPage {
 
 	/** What a template's code can have, shown under it. */
 	static final String HINT = "${name} is a field to fill in (fields with the same name change together), "
+			+ "${|-e : exists|-f : a file} is a field with choices (the first is put in, and the editor lists them all), "
 			+ "${cursor} is where the caret goes, and $$ is a $.";
 
 	private final TemplateList templates = new TemplateList(Configuration.getInstance().getTemplates());

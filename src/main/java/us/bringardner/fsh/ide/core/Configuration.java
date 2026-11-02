@@ -340,10 +340,6 @@ public class Configuration {
 					"if ! ${command}; then\n"
 					+ "  ${echo \"failed\"}\n"
 					+ "fi\n"),
-			new Template( "if-file", "if-file: a file exists", 
-					"if [ -f \"$$${file}\" ]; then\n"
-					+ "  ${echo \"found\"}\n"
-					+ "fi\n"),
 			new Template( "if-dir", "if-dir: a directory exists", 
 					"if [ -d \"$$${dir}\" ]; then\n"
 					+ "  ${echo \"found\"}\n"
@@ -356,6 +352,169 @@ public class Configuration {
 					"if [ -n \"$$${var}\" ]; then\n"
 					+ "  ${echo \"set\"}\n"
 					+ "fi\n"),
+			new Template( "if-file", "if-file: a file test: exists, a regular file, a directory, a link, readable, writable... (choose the test)", 
+					"if [ ${|-e : exists|! -e : doesn't exist|-f : is a regular file|-d : is a directory|-L : is a symbolic link|-s : exists and isn't empty|-r : you can read it|-w : you can write it|-x : you can run it (a directory: go into it)|-p : is a named pipe (FIFO)|-S : is a socket|-c : is a character device|-b : is a block device|-u : its set-user-ID bit is set|-g : its set-group-ID bit is set|-k : its sticky bit is set|-O : you own it|-G : its group is yours|-N : it changed since it was last read} \"$$${file}\" ]; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
+			new Template( "if-files", "if-files: compare two files: newer, older, the same file (choose the test)", 
+					"if [ \"$$${file}\" ${|-nt : is newer than the other (or the other doesn't exist)|-ot : is older than the other (or doesn't exist when the other does)|-ef : is the same file as the other (a link to it)} \"$$${other}\" ]; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
+			new Template( "if-string", "if-string: compare a string: the same, a pattern, a regular expression, sorts before or after (choose the test)", 
+					"if [[ $$${var} ${|== : is the same as, or matches a pattern (* ? [abc])|!= : isn't the same as, or doesn't match a pattern|=~ : matches a regular expression ($BASH_REMATCH has the groups)|< : sorts before|> : sorts after} ${text} ]]; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
+			new Template( "if-number", "if-number: compare numbers: equal, less, greater... (choose the test)", 
+					"if [ \"$$${var}\" ${|-eq : equals|-ne : doesn't equal|-lt : is less than|-le : is less than or equal to|-gt : is greater than|-ge : is greater than or equal to} ${0} ]; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
+			new Template( "if-variable", "if-variable: a variable is set or not, even to nothing (choose the test; if-empty and if-set test its value)", 
+					"if [[ ${|-v : is set (even to nothing)|! -v : isn't set at all} ${var} ]]; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
+			new Template( "if-logic", "if-logic: two tests, and or or (choose)", 
+					"if [ ${condition} ] ${|&& : and: both are true|\\|\\| : or: either is true} [ ${other condition} ]; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
+			new Template( "if-command", "if-command: a command succeeds or fails, is available, the arguments, root, a terminal... (choose the test)", 
+					"if ${|command : a command succeeds|! command : a command fails|command -v name >/dev/null 2>&1 : a command is available|[ $# -lt 1 ] : the script has too few arguments|[ \"$EUID\" -eq 0 ] : running as root|[ -t 0 ] : input is from a terminal|[[ $- == *i* ]] : the shell is interactive|[[ -o errexit ]] : a shell option is on (set -o)|(( x > 0 )) : an arithmetic expression isn't zero}; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
+			new Template( "match", "match: a regular expression, with the captured groups", 
+					"if [[ $$${var} =~ ${regex} ]]; then\n"
+					+ "  echo \"$${BASH_REMATCH[1]}\"\n"
+					+ "fi\n"),
+			new Template( "function", "function", 
+					"${name}() {\n"
+					+ "  local ${arg}=\"$$1\"\n"
+					+ "  ${cursor}\n"
+					+ "}\n"),
+			new Template( "read-lines", "read-lines: each line of a file", 
+					"while IFS= read -r ${line}\n"
+					+ "do\n"
+					+ "  echo \"$$${line}\"\n"
+					+ "done < ${file}\n"),
+			new Template( "read-command", "read-command: each line a command prints (variables set in the loop are kept)", 
+					"while IFS= read -r ${line}\n"
+					+ "do\n"
+					+ "  echo \"$$${line}\"\n"
+					+ "done < <(${command})\n"),
+			new Template( "heredoc", "heredoc: lines of text as a command's input", 
+					"cat <<EOF\n"
+					+ "${text}\n"
+					+ "EOF\n"),
+			new Template( "subst", "subst: a command's output $(command)", "$$(${command})"),
+			new Template( "or-exit", "or-exit: stop with a message if a command fails", 
+					"${command} || { echo \"${message}\" >&2; exit 1; }"),
+			new Template( "strip-prefix", "strip-prefix ${var#prefix}", "$${${var}#${prefix}}"),
+			new Template( "strip-suffix", "strip-suffix ${var%suffix}", "$${${var}%${suffix}}"),
+			new Template( "replace", "replace ${var//find/replace}: every match", "$${${var}//${find}/${replace}}"),
+			new Template( "length", "length ${#var}", "$${#${var}}"),
+			new Template( "substring", "substring ${var:offset:length}", "$${${var}:${offset}:${length}}"),
+			new Template( "array", "array: an indexed array", "${name}=(${a b c})"),
+			new Template( "for-each", "for-each: each element of an array", 
+					"for ${item} in \"$${${array}[@]}\"\n"
+					+ "do\n"
+					+ "  echo \"$$${item}\"\n"
+					+ "done\n"),
+			new Template( "map", "map: an associative array", 
+					"declare -A ${map}\n"
+					+ "${map}[${key}]=${value}\n"),
+			new Template( "for-keys", "for-keys: each key of an associative array", 
+					"for ${key} in \"$${!${map}[@]}\"\n"
+					+ "do\n"
+					+ "  echo \"$$${key}=$${${map}[$$${key}]}\"\n"
+					+ "done\n"),
+			new Template( "args", "args: a loop over the script's options", 
+					"while [ $$# -gt 0 ]\n"
+					+ "do\n"
+					+ "  case $$1 in\n"
+					+ "    -v|--verbose) ${verbose}=1;;\n"
+					+ "    -o|--output) ${output}=\"$$2\"; shift;;\n"
+					+ "    --) shift; break;;\n"
+					+ "    -*) echo \"unknown option: $$1\" >&2; exit 1;;\n"
+					+ "    *) break;;\n"
+					+ "  esac\n"
+					+ "  shift\n"
+					+ "done\n"),
+			new Template( "getopts", "getopts: the script's single-letter options", 
+					"while getopts \"${ab:}\" ${opt}\n"
+					+ "do\n"
+					+ "  case $$${opt} in\n"
+					+ "    a) ${echo \"a\"};;\n"
+					+ "    b) echo \"b=$$OPTARG\";;\n"
+					+ "    \\?) exit 1;;\n"
+					+ "  esac\n"
+					+ "done\n"
+					+ "shift $$((OPTIND - 1))\n"),
+			new Template( "connect", "connect: connect a file system, disconnected when the script ends", 
+					"connect ${sftp} host=${host} user=${user} password=@keychain:${service/account} /${path}\n"
+					+ "trap 'disconnect /${path}' EXIT\n"),
+			new Template( "scratch", "scratch: an in-memory file system, gone when the script ends", 
+					"connect memory /${scratch}\n"
+					+ "trap 'disconnect /${scratch}' EXIT\n"),
+			new Template( "copy-across", "copy-across: copy between connected file systems", 
+					"cp -r /${from}/${path} /${to}/"),
+			new Template( "find-each", "find-each: each file find finds", 
+					"find /${path}/${dir} -name '${pattern}' | while IFS= read -r ${file}\n"
+					+ "do\n"
+					+ "  echo \"$$${file}\"\n"
+					+ "done\n"),
+			new Template( "expression", "expression $((x % 2))", "$$(( ${cursor} ))"),
+			new Template( "parameterPlusword", "parameter:+word (If parameter is null or unset, nothing is substituted, otherwise the expansion of word is substituted. The value of parameter is not used.)", 
+					"$${${parameter}:+${word}}"),
+			new Template( "parameterMinusword", "parameter:-word (If parameter is unset or null, the expansion of word is substituted. Otherwise, the value of parameter is substituted.)", 
+					"$${${parameter}:-${word}}"),
+			new Template( "parameterEqword", "parameter:=word (If parameter is unset or null, the expansion of word is assigned to parameter, and the result of the expansion is the final value of parameter. Positional parameters and special parameters may not be assigned in this way.)", 
+					"$${${parameter}:=${word}}"),
+			
+			new Template( "parameter?word", 
+					"parameter:?word (If parameter is null or unset, the shell writes the expansion of word (or a message to that effect if word is not present) to the standard error and, if it is not interactive, exits with a non-zero status. An interactive shell does not exit, but does not execute the command associated with the expansion. Otherwise, the value of parameter is substituted.)", 
+					"$${${parameter}:?${parameter is not set}}"),
+			
+			
+			new Template( "case", "case-statement", 
+					"case ${word} in\n"
+					+ "  option1 | option2 ) echo \"type1\";;\n"
+					+ "  option3 | option4 ) echo \"type2\";;\n"
+					+ "  *) echo \"an unknown type\";;\n"
+					+ "esac\n"),
+			
+			new Template( "case", "case-statement-variable", 
+					"case $$${var} in\n"
+					+ "  option1 | option2 ) echo \"$$${var} is type1\";;\n"
+					+ "  option3 | option4 ) echo \"$$${var} is type2\";;\n"
+					+ "  *) echo \"$$${var} is an unknown type\";;\n"
+					+ "esac\n"),
+			
+			new Template( "select01", "select", 
+					"select ${name} in ${list}\n"
+					+ "do\n"
+					+ "\techo you picked $$${name}\n"
+					+ "\tbreak\n"
+					+ "done\n"
+					),
+			
+			new Template( "select02", "select-variable", 
+					"select ${name} in $$${var}\n"
+					+ "do\n"
+					+ "\techo you picked $$${name}\n"
+					+ "\tbreak\n"
+					+ "done\n"
+					),
+	};
+
+	/**
+	 * Built-in templates as earlier versions had them. A saved configuration has a copy of each, so
+	 * an unchanged copy is taken out when it's read; one the user changed is theirs and stays.
+	 */
+	private static Template retiredTemplates [] = {
+
+			new Template( "if-file", "if-file: a file exists", 
+					"if [ -f \"$$${file}\" ]; then\n"
+					+ "  ${echo \"found\"}\n"
+					+ "fi\n"),
+			// the single if- tests, before they became the choices of the if- groups
 			new Template( "if-exists", "if-exists: a file or directory exists (-e)", 
 					"if [ -e \"$$${file}\" ]; then\n"
 					+ "  ${echo \"found\"}\n"
@@ -567,135 +726,6 @@ public class Configuration {
 					+ "  ${echo \"root\"}\n"
 					+ "fi\n"),
 
-			new Template( "match", "match: a regular expression, with the captured groups", 
-					"if [[ $$${var} =~ ${regex} ]]; then\n"
-					+ "  echo \"$${BASH_REMATCH[1]}\"\n"
-					+ "fi\n"),
-			new Template( "function", "function", 
-					"${name}() {\n"
-					+ "  local ${arg}=\"$$1\"\n"
-					+ "  ${cursor}\n"
-					+ "}\n"),
-			new Template( "read-lines", "read-lines: each line of a file", 
-					"while IFS= read -r ${line}\n"
-					+ "do\n"
-					+ "  echo \"$$${line}\"\n"
-					+ "done < ${file}\n"),
-			new Template( "read-command", "read-command: each line a command prints (variables set in the loop are kept)", 
-					"while IFS= read -r ${line}\n"
-					+ "do\n"
-					+ "  echo \"$$${line}\"\n"
-					+ "done < <(${command})\n"),
-			new Template( "heredoc", "heredoc: lines of text as a command's input", 
-					"cat <<EOF\n"
-					+ "${text}\n"
-					+ "EOF\n"),
-			new Template( "subst", "subst: a command's output $(command)", "$$(${command})"),
-			new Template( "or-exit", "or-exit: stop with a message if a command fails", 
-					"${command} || { echo \"${message}\" >&2; exit 1; }"),
-			new Template( "strip-prefix", "strip-prefix ${var#prefix}", "$${${var}#${prefix}}"),
-			new Template( "strip-suffix", "strip-suffix ${var%suffix}", "$${${var}%${suffix}}"),
-			new Template( "replace", "replace ${var//find/replace}: every match", "$${${var}//${find}/${replace}}"),
-			new Template( "length", "length ${#var}", "$${#${var}}"),
-			new Template( "substring", "substring ${var:offset:length}", "$${${var}:${offset}:${length}}"),
-			new Template( "array", "array: an indexed array", "${name}=(${a b c})"),
-			new Template( "for-each", "for-each: each element of an array", 
-					"for ${item} in \"$${${array}[@]}\"\n"
-					+ "do\n"
-					+ "  echo \"$$${item}\"\n"
-					+ "done\n"),
-			new Template( "map", "map: an associative array", 
-					"declare -A ${map}\n"
-					+ "${map}[${key}]=${value}\n"),
-			new Template( "for-keys", "for-keys: each key of an associative array", 
-					"for ${key} in \"$${!${map}[@]}\"\n"
-					+ "do\n"
-					+ "  echo \"$$${key}=$${${map}[$$${key}]}\"\n"
-					+ "done\n"),
-			new Template( "args", "args: a loop over the script's options", 
-					"while [ $$# -gt 0 ]\n"
-					+ "do\n"
-					+ "  case $$1 in\n"
-					+ "    -v|--verbose) ${verbose}=1;;\n"
-					+ "    -o|--output) ${output}=\"$$2\"; shift;;\n"
-					+ "    --) shift; break;;\n"
-					+ "    -*) echo \"unknown option: $$1\" >&2; exit 1;;\n"
-					+ "    *) break;;\n"
-					+ "  esac\n"
-					+ "  shift\n"
-					+ "done\n"),
-			new Template( "getopts", "getopts: the script's single-letter options", 
-					"while getopts \"${ab:}\" ${opt}\n"
-					+ "do\n"
-					+ "  case $$${opt} in\n"
-					+ "    a) ${echo \"a\"};;\n"
-					+ "    b) echo \"b=$$OPTARG\";;\n"
-					+ "    \\?) exit 1;;\n"
-					+ "  esac\n"
-					+ "done\n"
-					+ "shift $$((OPTIND - 1))\n"),
-			new Template( "connect", "connect: connect a file system, disconnected when the script ends", 
-					"connect ${sftp} host=${host} user=${user} password=@keychain:${service/account} /${path}\n"
-					+ "trap 'disconnect /${path}' EXIT\n"),
-			new Template( "scratch", "scratch: an in-memory file system, gone when the script ends", 
-					"connect memory /${scratch}\n"
-					+ "trap 'disconnect /${scratch}' EXIT\n"),
-			new Template( "copy-across", "copy-across: copy between connected file systems", 
-					"cp -r /${from}/${path} /${to}/"),
-			new Template( "find-each", "find-each: each file find finds", 
-					"find /${path}/${dir} -name '${pattern}' | while IFS= read -r ${file}\n"
-					+ "do\n"
-					+ "  echo \"$$${file}\"\n"
-					+ "done\n"),
-			new Template( "expression", "expression $((x % 2))", "$$(( ${cursor} ))"),
-			new Template( "parameterPlusword", "parameter:+word (If parameter is null or unset, nothing is substituted, otherwise the expansion of word is substituted. The value of parameter is not used.)", 
-					"$${${parameter}:+${word}}"),
-			new Template( "parameterMinusword", "parameter:-word (If parameter is unset or null, the expansion of word is substituted. Otherwise, the value of parameter is substituted.)", 
-					"$${${parameter}:-${word}}"),
-			new Template( "parameterEqword", "parameter:=word (If parameter is unset or null, the expansion of word is assigned to parameter, and the result of the expansion is the final value of parameter. Positional parameters and special parameters may not be assigned in this way.)", 
-					"$${${parameter}:=${word}}"),
-			
-			new Template( "parameter?word", 
-					"parameter:?word (If parameter is null or unset, the shell writes the expansion of word (or a message to that effect if word is not present) to the standard error and, if it is not interactive, exits with a non-zero status. An interactive shell does not exit, but does not execute the command associated with the expansion. Otherwise, the value of parameter is substituted.)", 
-					"$${${parameter}:?${parameter is not set}}"),
-			
-			
-			new Template( "case", "case-statement", 
-					"case ${word} in\n"
-					+ "  option1 | option2 ) echo \"type1\";;\n"
-					+ "  option3 | option4 ) echo \"type2\";;\n"
-					+ "  *) echo \"an unknown type\";;\n"
-					+ "esac\n"),
-			
-			new Template( "case", "case-statement-variable", 
-					"case $$${var} in\n"
-					+ "  option1 | option2 ) echo \"$$${var} is type1\";;\n"
-					+ "  option3 | option4 ) echo \"$$${var} is type2\";;\n"
-					+ "  *) echo \"$$${var} is an unknown type\";;\n"
-					+ "esac\n"),
-			
-			new Template( "select01", "select", 
-					"select ${name} in ${list}\n"
-					+ "do\n"
-					+ "\techo you picked $$${name}\n"
-					+ "\tbreak\n"
-					+ "done\n"
-					),
-			
-			new Template( "select02", "select-variable", 
-					"select ${name} in $$${var}\n"
-					+ "do\n"
-					+ "\techo you picked $$${name}\n"
-					+ "\tbreak\n"
-					+ "done\n"
-					),
-	};
-
-	/**
-	 * Built-in templates as earlier versions had them. A saved configuration has a copy of each, so
-	 * an unchanged copy is taken out when it's read; one the user changed is theirs and stays.
-	 */
-	private static Template retiredTemplates [] = {
 
 			new Template( "true", "true"),
 			new Template( "false", "false"),

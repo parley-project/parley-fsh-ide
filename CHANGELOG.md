@@ -4,17 +4,19 @@
 
 ### Added
 
-- Autocompletion templates for the tests a script makes, 52 of them, each named `if-` and what it
-  tests, its description saying which test it uses: files (`if-exists`, `if-missing`, `if-link`,
-  `if-size`, `if-readable`, `if-writable`, `if-executable`, `if-pipe`, `if-socket`, `if-char-device`,
-  `if-block-device`, `if-setuid`, `if-setgid`, `if-sticky`, `if-owned`, `if-group-owned`, `if-modified`,
-  `if-newer`, `if-older`, `if-same-file`, `if-terminal`), strings (`if-equal`, `if-not-equal`,
-  `if-before`, `if-after`, `if-like`, `if-contains`, `if-starts-with`, `if-ends-with`, `if-no-match`,
-  `if-number`, `if-yes`), variables and options (`if-defined`, `if-undefined`, `if-option`,
-  `if-interactive`), numbers (`if-eq`, `if-ne`, `if-lt`, `if-le`, `if-gt`, `if-ge`, `if-math`,
-  `if-even`), combining tests (`if-and`, `if-or`, `if-not-test`) and commands (`if-ok`, `if-status`,
-  `if-have`, `if-args`, `if-root`), beside the existing `if-file`, `if-dir`, `if-empty`, `if-set`,
-  `if-not` and `match`.
+- Autocompletion templates for the tests a script makes, one for each kind, with the test as a
+  field with choices: `if-file` (exists, a regular file, a directory, a link, readable, writable,
+  runnable, a pipe, a socket, a device, the set-user-ID, set-group-ID and sticky bits, yours, your
+  group's, changed since read, doesn't exist), `if-files` (newer, older, the same file),
+  `if-string` (==, !=, =~, <, >), `if-number` (-eq, -ne, -lt, -le, -gt, -ge), `if-variable` (set
+  or not), `if-logic` (&& or ||) and `if-command` (succeeds, fails, is available, too few
+  arguments, root, a terminal, interactive, a shell option, an arithmetic expression). `if-file`
+  takes the place of the old one (a regular file exists), which is `-f` among its choices.
+- Template fields with choices: `${|-e : exists|-f : a regular file}` puts in the first value,
+  and when the field is the one being filled in, the editor lists the choices under it, each with
+  what it means (Up and Down, Enter or a click). In the JavaFX IDE, Tab now goes from field to
+  field of a template just inserted, Shift+Tab back, as in the Swing IDE. The Templates settings
+  page's note says how to write one.
 - Watchpoints on variables, in both IDEs: the debugger stops when the script reads a variable,
   writes it (sets or unsets it), or either, and marks the line doing it, as a breakpoint does.
   The Watchpoints tab, beside Breakpoints, lists them, each with check boxes for On, Read and
@@ -91,6 +93,9 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- The Swing IDE's autocompletion offered only some of the templates that start with what's
+  typed: `if` listed the if- templates only up to `if-dir`. The completion library looks them up
+  by name but kept them sorted by description; they're sorted by name now.
 - The built-in templates insert code that runs. if and if-else had branches with only a comment (a
   syntax error); while and until tested `[ false ]` and `[ true ]`, which are always true (so while
   never ended), and now have a condition field; the for, select and case templates echoed the

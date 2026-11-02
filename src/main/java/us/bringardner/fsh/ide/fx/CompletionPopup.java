@@ -33,8 +33,9 @@ import us.bringardner.fsh.ide.core.TemplateText;
 /**
  * Autocompletion: the templates and variables that finish the word before the caret, in a
  * list under it. Typing goes on into the editor and narrows the list; Up and Down choose,
- * Enter or Tab inserts, Escape closes. (The Swing IDE uses RSyntaxTextArea's autocompletion,
- * with the same templates.)
+ * Enter or Tab inserts, Escape closes; then Tab goes from field to field of the template, and a
+ * field with choices lists them ({@link TemplateFields}). (The Swing IDE uses RSyntaxTextArea's
+ * autocompletion, with the same templates.)
  */
 public class CompletionPopup {
 
@@ -49,6 +50,8 @@ public class CompletionPopup {
 	public CompletionPopup(ScriptEditor editor, Supplier<Collection<Template>> templates) {
 		this.editor = editor;
 		this.templates = templates;
+		// while the list is up, Tab, Enter and Escape are its, not the template fields'
+		editor.getTemplateFields().setBusy(this::isActive);
 		list.setPrefSize(440, 180);
 		list.setCellFactory(l->new ListCell<>() {
 			@Override
@@ -111,10 +114,10 @@ public class CompletionPopup {
 		refresh();
 	}
 
-	/** The word before the caret. */
+	/** The word before the caret (with hyphens, for a template's name: {@link Completions#prefix(String, int, Collection)}). */
 	String prefix() {
 		CodeArea area = editor.getCodeArea();
-		return Completions.prefix(area.getText(), area.getCaretPosition());
+		return Completions.prefix(area.getText(), area.getCaretPosition(), templates.get());
 	}
 
 	List<Completion> candidates() {

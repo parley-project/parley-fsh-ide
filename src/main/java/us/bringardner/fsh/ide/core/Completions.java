@@ -71,6 +71,35 @@ public final class Completions {
 		return text.substring(start, caret);
 	}
 
+	/**
+	 * The word before caret, as completion takes it: with its hyphens ("if-fi") when a template's
+	 * name starts with that, else the word after the last one ("x-co" is "co", for the variable
+	 * count). ("" if there's none.)
+	 */
+	public static String prefix(String text, int caret, Collection<Template> templates) {
+		String word = prefix(text, caret);
+		int start = caret-word.length();
+		while( start > 0 && (isWordChar(text.charAt(start-1)) || text.charAt(start-1) == '-')) {
+			start--;
+		}
+		String hyphenated = text.substring(start, caret);
+		if( hyphenated.length() > word.length() && !hyphenated.startsWith("-") && named(hyphenated, templates)) {
+			return hyphenated;
+		}
+		return word;
+	}
+
+	/** whether a template's name starts with prefix (ignoring case) */
+	public static boolean named(String prefix, Collection<Template> templates) {
+		String p = prefix.toLowerCase(Locale.ROOT);
+		for(Template t : templates) {
+			if( t.getName() != null && t.getName().toLowerCase(Locale.ROOT).startsWith(p)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** The variables script sets, by name. */
 	public static List<String> variables(String script) {
 		TreeSet<String> names = new TreeSet<>();

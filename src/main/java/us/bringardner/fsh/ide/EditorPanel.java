@@ -17,10 +17,12 @@ import us.bringardner.fsh.ide.core.Template;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.CompileError;
 import us.bringardner.fsh.ide.core.ScriptText;
+import us.bringardner.fsh.ide.core.TemplateText;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import javax.swing.event.DocumentEvent;
@@ -57,11 +59,17 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 
 import org.fife.ui.autocomplete.AutoCompletion;
+import org.fife.ui.autocomplete.BasicCompletion;
+import org.fife.ui.autocomplete.Completion;
 import org.fife.ui.autocomplete.DefaultCompletionProvider;
+import org.fife.ui.autocomplete.ParameterChoicesProvider;
+import org.fife.ui.autocomplete.ParameterizedCompletion;
 import org.fife.ui.autocomplete.ShorthandCompletion;
 import org.fife.ui.autocomplete.TemplateCompletion;
+import org.fife.ui.autocomplete.Util;
 import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
@@ -506,22 +514,7 @@ public class EditorPanel extends JPanel {
 
 	public void createAutoComplete()  {
 
-		DefaultCompletionProvider provider = new DefaultCompletionProvider(){
-			@Override
-			protected boolean isValidChar(char ch) {
-				return Character.isLetterOrDigit(ch) || ch=='_'  || ch=='.' || ch=='#' || ch=='$' ;
-			}
-		};
-
-		
-		for(Template t : Configuration.getInstance().getTemplates()) {
-			addCompletion(provider, t);
-		}
-
-
-		for(String var : variables) {
-			provider.addCompletion(new ShorthandCompletion(provider, var+"-variable", var));
-		}
+		DefaultCompletionProvider provider = completionProvider(Configuration.getInstance().getTemplates(), variables);
 
 		
 		SwingUtilities.invokeLater(new Runnable() {
@@ -540,6 +533,116 @@ public class EditorPanel extends JPanel {
 
 	}
 
+	/**
+	 * The completions for the templates and the script's variables. The library keeps its list
+	 * sorted by what each completion shows (a template's description) but finds what matches the
+	 * typed text by name, so once they're all in, they're sorted by name: otherwise the matches stop
+	 * at the first one whose description sorts among them but whose name doesn't ("if" offered only
+	 * a few of the if- templates, up to elif's "if-elif-else").
+	 */
+	static DefaultCompletionProvider completionProvider(List<Template> templates, List<String> variables) {
+		FshCompletionProvider provider = new FshCompletionProvider();
+		for(Template t : templates) {
+			addCompletion(provider, t);
+		}
+		for(String var : variables) {
+			provider.addCompletion(new ShorthandCompletion(provider, var+"-variable", var));
+		}
+		provider.sortByName();
+		return provider;
+	}
+
+	/**
+	 * fsh's words (with $, # and .), its completions sorted by name ({@link #sortByName()}), and
+	 * the lists for template fields with choices ("${|-e : exists|-f : a regular file}"): when
+	 * such a field is the one being filled in, the library shows its choices under it.
+	 */
+	static class FshCompletionProvider extends DefaultCompletionProvider implements ParameterChoicesProvider {
+		private final Map<ParameterizedCompletion.Parameter, List<Completion>> choices = new IdentityHashMap<>();
+
+		FshCompletionProvider() {
+			setParameterChoicesProvider(this);
+		}
+
+		@Override
+		protected boolean isValidChar(char ch) {
+			return Character.isLetterOrDigit(ch) || ch=='_'  || ch=='.' || ch=='#' || ch=='$' ;
+		}
+
+		/**
+		 * The word before the caret: with its hyphens ("if-fi") when a completion's name starts with
+		 * that, else as the library takes it (after the last hyphen: "x-co" is "co").
+		 */
+		@Override
+		public String getAlreadyEnteredText(JTextComponent comp) {
+			String word = super.getAlreadyEnteredText(comp);
+			try {
+				int caret = comp.getCaretPosition();
+				int start = caret-word.length();
+				javax.swing.text.Document doc = comp.getDocument();
+				while( start > 0 ) {
+					char c = doc.getText(start-1, 1).charAt(0);
+					if( isValidChar(c) || c == '-' ) {
+						start--;
+					} else {
+						break;
+					}
+				}
+				String hyphenated = doc.getText(start, caret-start);
+				if( hyphenated.length() > word.length() && !hyphenated.startsWith("-")) {
+					for(Completion c : completions) {
+						if( Util.startsWithIgnoreCase(c.getInputText(), hyphenated)) {
+							return hyphenated;
+						}
+					}
+				}
+			} catch (javax.swing.text.BadLocationException e) {
+				// as the library takes it
+			}
+			return word;
+		}
+
+		/** sorted as the library looks them up: by name, ignoring case */
+		@SuppressWarnings("unchecked")
+		void sortByName() {
+			completions.sort(comparator);
+		}
+
+		@Override
+		public List<Completion> getParameterChoices(JTextComponent tc, ParameterizedCompletion.Parameter param) {
+			return choices.get(param);
+		}
+
+		/**
+		 * Gives tc's fields their choices from the template's code. The library makes one
+		 * parameter of each name (later fields with the name copy it), so the fields are counted
+		 * that way.
+		 */
+		void addChoices(TemplateCompletion tc, String code) {
+			TemplateText.Expansion e = TemplateText.expand(code);
+			java.util.Set<String> names = new java.util.HashSet<>();
+			int param = 0;
+			for(int i = 0; i < e.fields.size(); i++) {
+				int[] f = e.fields.get(i);
+				if( !names.add(e.text.substring(f[0], f[1]))) {
+					continue;
+				}
+				List<TemplateText.Choice> list = e.choices.get(i);
+				if( list != null && param < tc.getParamCount()) {
+					List<Completion> items = new ArrayList<>();
+					for(int n = 0; n < list.size(); n++) {
+						TemplateText.Choice c = list.get(n);
+						BasicCompletion item = new BasicCompletion(this, c.value, c.label.isEmpty() ? null : c.label);
+						item.setRelevance(list.size()-n);	// (the list is sorted by relevance: in the template's order)
+						items.add(item);
+					}
+					choices.put(tc.getParam(param), items);
+				}
+				param++;
+			}
+		}
+	}
+
 	/** Adds t to provider: a template if its code has \${...} fields, otherwise a shorthand. */
 	static void addCompletion(DefaultCompletionProvider provider, Template t) {
 		String name = t.getName();
@@ -549,7 +652,11 @@ public class EditorPanel extends JPanel {
 		if( code == null || code.isBlank()) {
 			provider.addCompletion(new ShorthandCompletion(provider,name,name,d));
 		} else if( code.indexOf("$") >= 0) {
-			provider.addCompletion(new TemplateCompletion(provider, name,d,code));
+			TemplateCompletion tc = new TemplateCompletion(provider, name, d, TemplateText.withoutChoices(code));
+			provider.addCompletion(tc);
+			if( provider instanceof FshCompletionProvider ) {
+				((FshCompletionProvider) provider).addChoices(tc, code);
+			}
 		} else {
 			provider.addCompletion(new ShorthandCompletion(provider,name,code,d));
 		}
