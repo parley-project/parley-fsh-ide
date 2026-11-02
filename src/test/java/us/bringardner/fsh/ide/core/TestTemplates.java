@@ -2,6 +2,8 @@ package us.bringardner.fsh.ide.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -85,5 +87,26 @@ public class TestTemplates {
 		assertEquals(1, now.stream().filter(t->"while-loop".equals(t.getDescription())).count(),
 				"the user's version takes the built-in's place");
 		assertTrue(now.stream().noneMatch(t->"do-statement".equals(t.getDescription())));
+	}
+
+	/** the tests a script makes (the if- templates): each one is there, and parses */
+	@Test
+	public void theTestTemplatesAreThereAndParse() {
+		String[] tests = {
+				"if-exists", "if-missing", "if-link", "if-size", "if-readable", "if-writable", "if-executable",
+				"if-pipe", "if-socket", "if-char-device", "if-block-device", "if-setuid", "if-setgid", "if-sticky",
+				"if-owned", "if-group-owned", "if-modified", "if-newer", "if-older", "if-same-file", "if-terminal",
+				"if-equal", "if-not-equal", "if-before", "if-after", "if-like", "if-contains", "if-starts-with",
+				"if-ends-with", "if-no-match", "if-number", "if-yes", "if-defined", "if-undefined", "if-option",
+				"if-interactive", "if-eq", "if-ne", "if-lt", "if-le", "if-gt", "if-ge", "if-math", "if-even", "if-and",
+				"if-or", "if-not-test", "if-ok", "if-status", "if-have", "if-args", "if-root"
+		};
+		List<Template> all = Configuration.createDefault().getTemplates();
+		for(String n : tests) {
+			Template t = all.stream().filter(x->n.equals(x.getName())).findFirst().orElse(null);
+			assertNotNull(t, n);
+			assertTrue(t.getDescription().startsWith(n + ": "), t.getDescription());
+			assertNull(TemplateList.check(t), n + " parses");
+		}
 	}
 }

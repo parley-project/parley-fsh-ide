@@ -356,6 +356,217 @@ public class Configuration {
 					"if [ -n \"$$${var}\" ]; then\n"
 					+ "  ${echo \"set\"}\n"
 					+ "fi\n"),
+			new Template( "if-exists", "if-exists: a file or directory exists (-e)", 
+					"if [ -e \"$$${file}\" ]; then\n"
+					+ "  ${echo \"found\"}\n"
+					+ "fi\n"),
+			new Template( "if-missing", "if-missing: a file or directory doesn't exist (! -e)", 
+					"if [ ! -e \"$$${file}\" ]; then\n"
+					+ "  ${echo \"missing\"}\n"
+					+ "fi\n"),
+			new Template( "if-link", "if-link: a symbolic link (-L)", 
+					"if [ -L \"$$${file}\" ]; then\n"
+					+ "  ${echo \"a link\"}\n"
+					+ "fi\n"),
+			new Template( "if-size", "if-size: a file exists and isn't empty (-s)", 
+					"if [ -s \"$$${file}\" ]; then\n"
+					+ "  ${echo \"not empty\"}\n"
+					+ "fi\n"),
+			new Template( "if-readable", "if-readable: a file you can read (-r)", 
+					"if [ -r \"$$${file}\" ]; then\n"
+					+ "  ${echo \"readable\"}\n"
+					+ "fi\n"),
+			new Template( "if-writable", "if-writable: a file you can write (-w)", 
+					"if [ -w \"$$${file}\" ]; then\n"
+					+ "  ${echo \"writable\"}\n"
+					+ "fi\n"),
+			new Template( "if-executable", "if-executable: a file you can run, or a directory you can enter (-x)", 
+					"if [ -x \"$$${file}\" ]; then\n"
+					+ "  ${echo \"executable\"}\n"
+					+ "fi\n"),
+			new Template( "if-pipe", "if-pipe: a named pipe, a FIFO (-p)", 
+					"if [ -p \"$$${file}\" ]; then\n"
+					+ "  ${echo \"a pipe\"}\n"
+					+ "fi\n"),
+			new Template( "if-socket", "if-socket: a socket (-S)", 
+					"if [ -S \"$$${file}\" ]; then\n"
+					+ "  ${echo \"a socket\"}\n"
+					+ "fi\n"),
+			new Template( "if-char-device", "if-char-device: a character device (-c)", 
+					"if [ -c \"$$${file}\" ]; then\n"
+					+ "  ${echo \"a character device\"}\n"
+					+ "fi\n"),
+			new Template( "if-block-device", "if-block-device: a block device (-b)", 
+					"if [ -b \"$$${file}\" ]; then\n"
+					+ "  ${echo \"a block device\"}\n"
+					+ "fi\n"),
+			new Template( "if-setuid", "if-setuid: a file's set-user-ID bit is set (-u)", 
+					"if [ -u \"$$${file}\" ]; then\n"
+					+ "  ${echo \"setuid\"}\n"
+					+ "fi\n"),
+			new Template( "if-setgid", "if-setgid: a file's set-group-ID bit is set (-g)", 
+					"if [ -g \"$$${file}\" ]; then\n"
+					+ "  ${echo \"setgid\"}\n"
+					+ "fi\n"),
+			new Template( "if-sticky", "if-sticky: a directory's sticky bit is set (-k)", 
+					"if [ -k \"$$${dir}\" ]; then\n"
+					+ "  ${echo \"sticky\"}\n"
+					+ "fi\n"),
+			new Template( "if-owned", "if-owned: a file you own (-O)", 
+					"if [ -O \"$$${file}\" ]; then\n"
+					+ "  ${echo \"yours\"}\n"
+					+ "fi\n"),
+			new Template( "if-group-owned", "if-group-owned: a file whose group is yours (-G)", 
+					"if [ -G \"$$${file}\" ]; then\n"
+					+ "  ${echo \"your group\"}\n"
+					+ "fi\n"),
+			new Template( "if-modified", "if-modified: a file changed since it was last read (-N)", 
+					"if [ -N \"$$${file}\" ]; then\n"
+					+ "  ${echo \"changed\"}\n"
+					+ "fi\n"),
+			new Template( "if-newer", "if-newer: one file is newer than another, or the other doesn't exist (-nt)", 
+					"if [ \"$$${file}\" -nt \"$$${other}\" ]; then\n"
+					+ "  ${echo \"newer\"}\n"
+					+ "fi\n"),
+			new Template( "if-older", "if-older: one file is older than another, or doesn't exist when the other does (-ot)", 
+					"if [ \"$$${file}\" -ot \"$$${other}\" ]; then\n"
+					+ "  ${echo \"older\"}\n"
+					+ "fi\n"),
+			new Template( "if-same-file", "if-same-file: two names for the same file (-ef)", 
+					"if [ \"$$${file}\" -ef \"$$${other}\" ]; then\n"
+					+ "  ${echo \"the same file\"}\n"
+					+ "fi\n"),
+			new Template( "if-terminal", "if-terminal: a file descriptor is a terminal (-t 0: input is from the keyboard)", 
+					"if [ -t ${0} ]; then\n"
+					+ "  ${echo \"a terminal\"}\n"
+					+ "fi\n"),
+			new Template( "if-equal", "if-equal: two strings are the same (=)", 
+					"if [ \"$$${var}\" = \"${text}\" ]; then\n"
+					+ "  ${echo \"equal\"}\n"
+					+ "fi\n"),
+			new Template( "if-not-equal", "if-not-equal: two strings are different (!=)", 
+					"if [ \"$$${var}\" != \"${text}\" ]; then\n"
+					+ "  ${echo \"different\"}\n"
+					+ "fi\n"),
+			new Template( "if-before", "if-before: a string sorts before another ([[ < ]])", 
+					"if [[ $$${var} < ${text} ]]; then\n"
+					+ "  ${echo \"before\"}\n"
+					+ "fi\n"),
+			new Template( "if-after", "if-after: a string sorts after another ([[ > ]])", 
+					"if [[ $$${var} > ${text} ]]; then\n"
+					+ "  ${echo \"after\"}\n"
+					+ "fi\n"),
+			new Template( "if-like", "if-like: a string matches a pattern, * ? [abc] ([[ == ]])", 
+					"if [[ $$${var} == ${pattern} ]]; then\n"
+					+ "  ${echo \"matches\"}\n"
+					+ "fi\n"),
+			new Template( "if-contains", "if-contains: a string contains some text ([[ == *text* ]])", 
+					"if [[ $$${var} == *\"${text}\"* ]]; then\n"
+					+ "  ${echo \"contains\"}\n"
+					+ "fi\n"),
+			new Template( "if-starts-with", "if-starts-with: a string starts with some text ([[ == text* ]])", 
+					"if [[ $$${var} == \"${text}\"* ]]; then\n"
+					+ "  ${echo \"starts with it\"}\n"
+					+ "fi\n"),
+			new Template( "if-ends-with", "if-ends-with: a string ends with some text ([[ == *text ]])", 
+					"if [[ $$${var} == *\"${text}\" ]]; then\n"
+					+ "  ${echo \"ends with it\"}\n"
+					+ "fi\n"),
+			new Template( "if-no-match", "if-no-match: a string doesn't match a regular expression ([[ ! =~ ]])", 
+					"if [[ ! $$${var} =~ ${regex} ]]; then\n"
+					+ "  ${echo \"no match\"}\n"
+					+ "fi\n"),
+			new Template( "if-number", "if-number: a string is a whole number", 
+					"if [[ $$${var} =~ ^-?[0-9]+$$ ]]; then\n"
+					+ "  ${echo \"a number\"}\n"
+					+ "fi\n"),
+			new Template( "if-yes", "if-yes: the user answers yes", 
+					"if read -p \"${Continue?} [y/N] \" ${answer} && [[ $$${answer} == [Yy]* ]]; then\n"
+					+ "  ${echo \"yes\"}\n"
+					+ "fi\n"),
+			new Template( "if-defined", "if-defined: a variable is set, even to nothing (-v)", 
+					"if [[ -v ${var} ]]; then\n"
+					+ "  ${echo \"defined\"}\n"
+					+ "fi\n"),
+			new Template( "if-undefined", "if-undefined: a variable isn't set at all (! -v)", 
+					"if [[ ! -v ${var} ]]; then\n"
+					+ "  ${echo \"undefined\"}\n"
+					+ "fi\n"),
+			new Template( "if-option", "if-option: a shell option is on, as set -o shows (-o)", 
+					"if [[ -o ${errexit} ]]; then\n"
+					+ "  ${echo \"on\"}\n"
+					+ "fi\n"),
+			new Template( "if-interactive", "if-interactive: the shell is interactive ($- has i)", 
+					"if [[ $$- == *i* ]]; then\n"
+					+ "  ${echo \"interactive\"}\n"
+					+ "fi\n"),
+			new Template( "if-eq", "if-eq: two numbers are equal (-eq)", 
+					"if [ \"$$${var}\" -eq ${0} ]; then\n"
+					+ "  ${echo \"eq\"}\n"
+					+ "fi\n"),
+			new Template( "if-ne", "if-ne: two numbers are different (-ne)", 
+					"if [ \"$$${var}\" -ne ${0} ]; then\n"
+					+ "  ${echo \"ne\"}\n"
+					+ "fi\n"),
+			new Template( "if-lt", "if-lt: a number is less than another (-lt)", 
+					"if [ \"$$${var}\" -lt ${0} ]; then\n"
+					+ "  ${echo \"lt\"}\n"
+					+ "fi\n"),
+			new Template( "if-le", "if-le: a number is less than or equal to another (-le)", 
+					"if [ \"$$${var}\" -le ${0} ]; then\n"
+					+ "  ${echo \"le\"}\n"
+					+ "fi\n"),
+			new Template( "if-gt", "if-gt: a number is greater than another (-gt)", 
+					"if [ \"$$${var}\" -gt ${0} ]; then\n"
+					+ "  ${echo \"gt\"}\n"
+					+ "fi\n"),
+			new Template( "if-ge", "if-ge: a number is greater than or equal to another (-ge)", 
+					"if [ \"$$${var}\" -ge ${0} ]; then\n"
+					+ "  ${echo \"ge\"}\n"
+					+ "fi\n"),
+			new Template( "if-math", "if-math: an arithmetic expression isn't zero (( ))", 
+					"if (( ${expression} )); then\n"
+					+ "  ${echo \"true\"}\n"
+					+ "fi\n"),
+			new Template( "if-even", "if-even: a number is even (( % ))", 
+					"if (( $$${var} % 2 == 0 )); then\n"
+					+ "  ${echo \"even\"}\n"
+					+ "fi\n"),
+			new Template( "if-and", "if-and: two tests are both true (&&)", 
+					"if [ ${condition} ] && [ ${other condition} ]; then\n"
+					+ "  ${echo \"both\"}\n"
+					+ "fi\n"),
+			new Template( "if-or", "if-or: either of two tests is true (||)", 
+					"if [ ${condition} ] || [ ${other condition} ]; then\n"
+					+ "  ${echo \"either\"}\n"
+					+ "fi\n"),
+			new Template( "if-not-test", "if-not-test: a test is false (!)", 
+					"if [ ! ${condition} ]; then\n"
+					+ "  ${echo \"false\"}\n"
+					+ "fi\n"),
+			new Template( "if-ok", "if-ok: a command succeeds", 
+					"if ${command}; then\n"
+					+ "  ${echo \"succeeded\"}\n"
+					+ "fi\n"),
+			new Template( "if-status", "if-status: the last command's exit status ($?)", 
+					"${command}\n"
+					+ "if [ $$? -ne 0 ]; then\n"
+					+ "  ${echo \"failed\"}\n"
+					+ "fi\n"),
+			new Template( "if-have", "if-have: a command is available (command -v)", 
+					"if command -v ${name} >/dev/null 2>&1; then\n"
+					+ "  ${echo \"available\"}\n"
+					+ "fi\n"),
+			new Template( "if-args", "if-args: the script has too few arguments ($#)", 
+					"if [ $$# -lt ${1} ]; then\n"
+					+ "  echo \"usage: $$0 ${file}\" >&2\n"
+					+ "  exit 1\n"
+					+ "fi\n"),
+			new Template( "if-root", "if-root: running as root ($EUID)", 
+					"if [ \"$$EUID\" -eq 0 ]; then\n"
+					+ "  ${echo \"root\"}\n"
+					+ "fi\n"),
+
 			new Template( "match", "match: a regular expression, with the captured groups", 
 					"if [[ $$${var} =~ ${regex} ]]; then\n"
 					+ "  echo \"$${BASH_REMATCH[1]}\"\n"

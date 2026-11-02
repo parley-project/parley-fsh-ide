@@ -4,6 +4,17 @@
 
 ### Added
 
+- Autocompletion templates for the tests a script makes, 52 of them, each named `if-` and what it
+  tests, its description saying which test it uses: files (`if-exists`, `if-missing`, `if-link`,
+  `if-size`, `if-readable`, `if-writable`, `if-executable`, `if-pipe`, `if-socket`, `if-char-device`,
+  `if-block-device`, `if-setuid`, `if-setgid`, `if-sticky`, `if-owned`, `if-group-owned`, `if-modified`,
+  `if-newer`, `if-older`, `if-same-file`, `if-terminal`), strings (`if-equal`, `if-not-equal`,
+  `if-before`, `if-after`, `if-like`, `if-contains`, `if-starts-with`, `if-ends-with`, `if-no-match`,
+  `if-number`, `if-yes`), variables and options (`if-defined`, `if-undefined`, `if-option`,
+  `if-interactive`), numbers (`if-eq`, `if-ne`, `if-lt`, `if-le`, `if-gt`, `if-ge`, `if-math`,
+  `if-even`), combining tests (`if-and`, `if-or`, `if-not-test`) and commands (`if-ok`, `if-status`,
+  `if-have`, `if-args`, `if-root`), beside the existing `if-file`, `if-dir`, `if-empty`, `if-set`,
+  `if-not` and `match`.
 - Watchpoints on variables, in both IDEs: the debugger stops when the script reads a variable,
   writes it (sets or unsets it), or either, and marks the line doing it, as a breakpoint does.
   The Watchpoints tab, beside Breakpoints, lists them, each with check boxes for On, Read and
