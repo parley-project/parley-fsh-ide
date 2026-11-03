@@ -992,7 +992,8 @@ public class FshIDE extends JFrame  {
 				FileSource file = FileSourceFactory.getDefaultFactory().createFileSource(current);
 				fc.setSelectedFile(file);
 			}
-			if(fc.showOpenDialog(this) == FileSourceChooserDialog.APPROVE_OPTION) {
+			// no file chosen (the window closed): nothing changes
+			if(fc.showOpenDialog(this) == FileSourceChooserDialog.APPROVE_OPTION && fc.getSelectedFile() != null) {
 				FileSource file = fc.getSelectedFile();
 				fld.setText(file.getAbsolutePath());
 			}
@@ -1559,7 +1560,8 @@ public class FshIDE extends JFrame  {
 			}
 		}
 
-		if(fc.showSaveDialog(null) == FileSourceChooserDialog.APPROVE_OPTION) {
+		// no file chosen (the window closed): nothing is saved
+		if(fc.showSaveDialog(null) == FileSourceChooserDialog.APPROVE_OPTION && fc.getSelectedFile() != null) {
 			FileSource previous = scriptFile;
 			scriptFile = fc.getSelectedFile();
 			actionSave();
@@ -1599,7 +1601,8 @@ public class FshIDE extends JFrame  {
 			}
 		}
 
-		if(fc.showOpenDialog(null) == FileSourceChooserDialog.APPROVE_OPTION) {
+		// no file chosen (the window closed): nothing opens
+		if(fc.showOpenDialog(null) == FileSourceChooserDialog.APPROVE_OPTION && fc.getSelectedFile() != null) {
 			loadFile(fc.getSelectedFile(), false);
 		}
 
