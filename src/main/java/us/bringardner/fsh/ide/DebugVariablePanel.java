@@ -326,7 +326,7 @@ public class DebugVariablePanel extends JPanel  {
 			case 1: ret = "Line "+(bp.getLine()+1);
 			break;
 
-			case 2: ret = bp.isConditional()?bp.getCondition():bp.isHitCount()?"Hitcount "+bp.getHitCount():"";
+			case 2: ret = bp.stopsText();
 			break;
 			default:
 				throw new IllegalArgumentException("Unexpected value: " + col);

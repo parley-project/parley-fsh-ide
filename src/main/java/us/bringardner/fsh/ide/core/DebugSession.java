@@ -225,19 +225,31 @@ public class DebugSession extends DebugContext {
 			return false;
 		}
 		Breakpoint bp = breakpoints.apply(line);
-		boolean ret = bp !=null && bp.isEnabled(true);
-		if( ret && bp.isConditional()) {
-			evaluating = true;
-			try {
-				// a command, such as [ $i -gt 3 ]: true if it succeeds
-				ret = Executor.test(ctx, bp.getCondition());
-			} catch (Exception e) {
-				if( bp.reportConditionError()) {
-					listener.conditionFailed(bp, line, e);
-				}
-			} finally {
-				evaluating = false;
+		if( bp == null || !bp.isEnabled(false)) {
+			return false;
+		}
+		// the condition and the hit count are each a reason to stop, apart: every time the
+		// expression is true, and the Nth time the line is reached (whatever the condition);
+		// with neither, every time
+		boolean hit = bp.countHit();
+		if( !bp.hasCondition()) {
+			return hit || !bp.hasHitCount();
+		}
+		if( hit ) {
+			return true;
+		}
+		boolean ret = true;
+		evaluating = true;
+		try {
+			// a command, such as [ $i -gt 3 ]: true if it succeeds
+			ret = Executor.test(ctx, bp.getCondition());
+		} catch (Exception e) {
+			// (it stops, so the problem is seen)
+			if( bp.reportConditionError()) {
+				listener.conditionFailed(bp, line, e);
 			}
+		} finally {
+			evaluating = false;
 		}
 		return ret;
 	}

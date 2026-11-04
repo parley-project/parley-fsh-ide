@@ -269,13 +269,8 @@ public class DebugPanel extends TabPane {
 
 	/** How a breakpoint stops: its condition, hit count, or always (with its code). */
 	static String describe(Breakpoint bp) {
-		if( bp.isConditional() && !bp.getCondition().isBlank()) {
-			return "when "+bp.getCondition();
-		}
-		if( bp.isHitCount() && bp.getHitCount() > 0 ) {
-			return "on hit "+bp.getHitCount();
-		}
-		return bp.getCode();
+		String stops = bp.stopsText();
+		return stops.isEmpty() ? bp.getCode() : stops;
 	}
 
 	/** Shows a paused script's variables; they can be edited until {@link #clearVariables()} or a new set. */

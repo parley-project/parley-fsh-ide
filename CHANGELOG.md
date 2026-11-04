@@ -119,6 +119,11 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- A breakpoint's condition and hit count are apart, each doing what it says: it stops every
+  time the expression is true, and the Nth time the line is reached whether the expression is
+  true then or not (the hit count used to be checked first, and the condition only on that one
+  time, so a breakpoint with both stopped at most once). The Breakpoints tables show both
+  ("when [ $i -gt 3 ], or on hit 5"). This is the IDEs' own debugging, not the Loupe adapter's.
 - The Swing IDE keeps the variables a debug run left in the Variables tables after it ends, as the
   JavaFX IDE does, until the next debug run (with Show Debug View on, the end of the run cleared
   them). They can't be edited then: the script is over.

@@ -117,6 +117,42 @@ public class TestDebugSession {
 		assertTrue(listener.conditionErrors.isEmpty());
 	}
 
+	/** A hit count stops the Nth time the line is reached, just that once. */
+	@Test
+	public void hitCountStopsTheNthTimeOnly() throws Exception {
+		Breakpoint bp = breakpoint(2);
+		bp.setHitCount(true);
+		bp.setHitCount(3);
+		start("for i in 1 2 3 4 5\ndo\n  x=$i\ndone\n");
+		assertEquals("3", ""+nextPause().variables().get("i"));
+		session.resume();
+		finished.get(10, TimeUnit.SECONDS);
+		assertTrue(listener.pauses.isEmpty());
+	}
+
+	/**
+	 * A condition and a hit count are apart: it stops every time the expression is true, and the
+	 * Nth time the line is reached, whether the expression is true then or not.
+	 */
+	@Test
+	public void conditionAndHitCountEachStop() throws Exception {
+		Breakpoint bp = breakpoint(2);
+		bp.setConditional(true);
+		bp.setCondition("[ $i -ge 4 ]");
+		bp.setHitCount(true);
+		bp.setHitCount(2);
+		start("for i in 1 2 3 4 5\ndo\n  x=$i\ndone\n");
+		List<String> stops = new java.util.ArrayList<>();
+		for(int k=0; k < 3; k++) {
+			stops.add(""+nextPause().variables().get("i"));
+			session.resume();
+		}
+		finished.get(10, TimeUnit.SECONDS);
+		// 2: the second time (the condition is false then); 4 and 5: the condition
+		assertEquals(List.of("2", "4", "5"), stops);
+		assertTrue(listener.pauses.isEmpty());
+	}
+
 	@Test
 	public void aBadConditionIsReportedOnce() throws Exception {
 		Breakpoint bp = breakpoint(2);

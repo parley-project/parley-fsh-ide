@@ -67,6 +67,31 @@ public class Breakpoint {
 	public void setHitCount(boolean isHitCount) {
 		this.isHitCount = isHitCount;
 	}
+	/** When it stops, for the Breakpoints tables: "when [ $i -gt 3 ]", "on hit 5", both, or "" (every time). */
+	public String stopsText() {
+		String when = hasCondition() ? "when "+condition.trim() : "";
+		String hit = hasHitCount() ? "on hit "+targetHitCount : "";
+		return when.isEmpty() || hit.isEmpty() ? when+hit : when+", or "+hit;
+	}
+
+	/** A condition is set (and not blank). */
+	public boolean hasCondition() {
+		return isConditional && condition != null && !condition.isBlank();
+	}
+
+	/** A hit count is set. */
+	public boolean hasHitCount() {
+		return isHitCount && targetHitCount > 0;
+	}
+
+	/**
+	 * The line was reached (by a run, with the breakpoint on): counts it.
+	 * @return true if this is the hit count's time (the Nth, just once); false if there's no hit count
+	 */
+	public boolean countHit() {
+		return ++actualHitCount == targetHitCount && hasHitCount();
+	}
+
 	public boolean isEnabled(boolean incHitCount) {
 		boolean ret = enabled;
 		if( enabled && incHitCount && targetHitCount>0) {
