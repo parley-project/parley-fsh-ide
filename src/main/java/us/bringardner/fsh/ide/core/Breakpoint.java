@@ -67,12 +67,16 @@ public class Breakpoint {
 	public void setHitCount(boolean isHitCount) {
 		this.isHitCount = isHitCount;
 	}
-	/** When it stops, for the Breakpoints tables: "when [ $i -gt 3 ]", "on hit 5", both, or "" (every time). */
+	/** When it stops, for the Breakpoints tables: "when [ $i -gt 3 ]", "from hit 5", both, or "" (every time). */
 	public String stopsText() {
 		String when = hasCondition() ? "when "+condition.trim() : "";
-		String hit = hasHitCount() ? "on hit "+targetHitCount : "";
-		return when.isEmpty() || hit.isEmpty() ? when+hit : when+", or "+hit;
+		String hit = hasHitCount() ? "from hit "+targetHitCount : "";
+		return when.isEmpty() || hit.isEmpty() ? when+hit : when+", "+hit;
 	}
+
+	/** What the hit count means, for the dialogs' tooltips. */
+	public static final String HIT_COUNT_HINT = "Counts the times the line is reached (only those when the expression is true, "
+			+ "if there is one) and stops on hit number N and every hit after it";
 
 	/** A condition is set (and not blank). */
 	public boolean hasCondition() {
@@ -85,20 +89,18 @@ public class Breakpoint {
 	}
 
 	/**
-	 * The line was reached (by a run, with the breakpoint on): counts it.
-	 * @return true if this is the hit count's time (the Nth, just once); false if there's no hit count
+	 * A hit: the line was reached with the breakpoint on (and its condition, if it has one, true).
+	 * Counts it, as Loupe's BreakpointTable.hit does.
+	 * @return true if it's to stop: there's no hit count, or this is hit number N or one after it
 	 */
 	public boolean countHit() {
-		return ++actualHitCount == targetHitCount && hasHitCount();
+		actualHitCount++;
+		return !hasHitCount() || actualHitCount >= targetHitCount;
 	}
 
+	/** @param incHitCount not used any more: a hit is counted by {@link #countHit()} */
 	public boolean isEnabled(boolean incHitCount) {
-		boolean ret = enabled;
-		if( enabled && incHitCount && targetHitCount>0) {
-			ret = ++actualHitCount == targetHitCount;
-		}
-		
-		return ret;
+		return enabled;
 	}
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;

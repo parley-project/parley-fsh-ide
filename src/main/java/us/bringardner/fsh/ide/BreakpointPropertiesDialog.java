@@ -29,15 +29,16 @@ import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 
 public class BreakpointPropertiesDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 	private final JPanel contentPanel = new JPanel();
-	private JTextField hitCountTextField;
+	/** the hit number (1 or more, as the JavaFX dialog's spinner) */
+	private JSpinner hitCountTextField;
 	private boolean cancel;
 	private JTextArea conditionalTextArea;
 	private JCheckBox enabledCheckBox;
@@ -79,21 +80,21 @@ public class BreakpointPropertiesDialog extends JDialog {
 		enabledCheckBox.setBounds(6, 6, 128, 23);
 		contentPanel.add(enabledCheckBox);
 
-		hitCountCheckBox = new JCheckBox("Hit Count");
+		hitCountCheckBox = new JCheckBox("Stop from hit number");
+		hitCountCheckBox.setToolTipText(Breakpoint.HIT_COUNT_HINT);
 		hitCountCheckBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				hitCountTextField.setVisible(hitCountCheckBox.isSelected());
 			}
 		});
-		hitCountCheckBox.setBounds(6, 42, 128, 23);
+		hitCountCheckBox.setBounds(6, 42, 180, 23);
 		contentPanel.add(hitCountCheckBox);
 
-		hitCountTextField = new JTextField();
-		hitCountTextField.setHorizontalAlignment(SwingConstants.RIGHT);
+		hitCountTextField = new JSpinner(new SpinnerNumberModel(1, 1, 1_000_000, 1));
+		hitCountTextField.setToolTipText(Breakpoint.HIT_COUNT_HINT);
 		hitCountTextField.setVisible(false);
-		hitCountTextField.setBounds(113, 41, 56, 26);
+		hitCountTextField.setBounds(190, 41, 84, 26);
 		contentPanel.add(hitCountTextField);
-		hitCountTextField.setColumns(10);
 
 		conditionalCheckBox = new JCheckBox("Stop when the expression is true");
 		conditionalCheckBox.addActionListener(new ActionListener() {
@@ -193,7 +194,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 		cancel = false;
 		enabledCheckBox.setSelected(bp.isEnabled(false));
 		hitCountCheckBox.setSelected(bp.isHitCount());
-		hitCountTextField.setText(""+bp.getHitCount());
+		hitCountTextField.setValue(Math.max(1, bp.getHitCount()));
 		hitCountTextField.setVisible(bp.isHitCount());
 		conditionalCheckBox.setSelected(bp.isConditional());
 		conditionalTextArea.setText(bp.getCondition());
@@ -205,7 +206,13 @@ public class BreakpointPropertiesDialog extends JDialog {
 			bp.setEnabled(enabledCheckBox.isSelected());
 			bp.setHitCount(hitCountCheckBox.isSelected());
 			if(hitCountCheckBox.isSelected() ) {
-				bp.setHitCount(Integer.parseInt(hitCountTextField.getText().trim()));
+				try {
+					// (what was typed, if it wasn't committed with Enter)
+					hitCountTextField.commitEdit();
+				} catch (java.text.ParseException e) {
+					// not a number: the last good one stays
+				}
+				bp.setHitCount((Integer) hitCountTextField.getValue());
 			} else {
 				bp.setHitCount(-1);
 			}

@@ -117,40 +117,39 @@ public class TestDebugSession {
 		assertTrue(listener.conditionErrors.isEmpty());
 	}
 
-	/** A hit count stops the Nth time the line is reached, just that once. */
+	/** A hit count: the line's Nth hit and every one after it (as Loupe's). */
 	@Test
-	public void hitCountStopsTheNthTimeOnly() throws Exception {
+	public void hitCountStopsFromTheNthHitOn() throws Exception {
 		Breakpoint bp = breakpoint(2);
 		bp.setHitCount(true);
 		bp.setHitCount(3);
 		start("for i in 1 2 3 4 5\ndo\n  x=$i\ndone\n");
-		assertEquals("3", ""+nextPause().variables().get("i"));
-		session.resume();
-		finished.get(10, TimeUnit.SECONDS);
-		assertTrue(listener.pauses.isEmpty());
+		assertEquals(List.of("3", "4", "5"), stops(3));
 	}
 
-	/**
-	 * A condition and a hit count are apart: it stops every time the expression is true, and the
-	 * Nth time the line is reached, whether the expression is true then or not.
-	 */
+	/** A condition and a hit count: only the hits where the expression is true count (as Loupe's). */
 	@Test
-	public void conditionAndHitCountEachStop() throws Exception {
+	public void theHitCountCountsOnlyWhenTheConditionIsTrue() throws Exception {
 		Breakpoint bp = breakpoint(2);
 		bp.setConditional(true);
-		bp.setCondition("[ $i -ge 4 ]");
+		bp.setCondition("[ $i -ge 2 ]");
 		bp.setHitCount(true);
 		bp.setHitCount(2);
 		start("for i in 1 2 3 4 5\ndo\n  x=$i\ndone\n");
-		List<String> stops = new java.util.ArrayList<>();
-		for(int k=0; k < 3; k++) {
-			stops.add(""+nextPause().variables().get("i"));
+		// i=1: false, not counted; i=2: hit 1; i=3: hit 2, stops; 4 and 5 after it
+		assertEquals(List.of("3", "4", "5"), stops(3));
+	}
+
+	/** i at each of the next n stops, resuming after each; then the run ends with no more */
+	private List<String> stops(int n) throws Exception {
+		List<String> ret = new java.util.ArrayList<>();
+		for(int k=0; k < n; k++) {
+			ret.add(""+nextPause().variables().get("i"));
 			session.resume();
 		}
 		finished.get(10, TimeUnit.SECONDS);
-		// 2: the second time (the condition is false then); 4 and 5: the condition
-		assertEquals(List.of("2", "4", "5"), stops);
 		assertTrue(listener.pauses.isEmpty());
+		return ret;
 	}
 
 	@Test

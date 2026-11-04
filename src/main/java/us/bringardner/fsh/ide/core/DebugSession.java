@@ -228,30 +228,28 @@ public class DebugSession extends DebugContext {
 		if( bp == null || !bp.isEnabled(false)) {
 			return false;
 		}
-		// the condition and the hit count are each a reason to stop, apart: every time the
-		// expression is true, and the Nth time the line is reached (whatever the condition);
-		// with neither, every time
-		boolean hit = bp.countHit();
-		if( !bp.hasCondition()) {
-			return hit || !bp.hasHitCount();
+		// as Loupe (fsh-loupe's FshBackend and parley-loupe's BreakpointTable) and the Debug
+		// Adapter Protocol: the condition first; only a hit where it's true counts; then the
+		// hit count (stop on hit number N and every one after)
+		if( bp.hasCondition() && !conditionHolds(bp, line, ctx)) {
+			return false;
 		}
-		if( hit ) {
-			return true;
-		}
-		boolean ret = true;
+		return bp.countHit();
+	}
+
+	/** True if the condition (a command, such as [ $i -gt 3 ]) succeeds; an error is true, as Loupe's, reported once a run. */
+	private boolean conditionHolds(Breakpoint bp, int line, ShellContext ctx) {
 		evaluating = true;
 		try {
-			// a command, such as [ $i -gt 3 ]: true if it succeeds
-			ret = Executor.test(ctx, bp.getCondition());
+			return Executor.test(ctx, bp.getCondition());
 		} catch (Exception e) {
-			// (it stops, so the problem is seen)
 			if( bp.reportConditionError()) {
 				listener.conditionFailed(bp, line, e);
 			}
+			return true;
 		} finally {
 			evaluating = false;
 		}
-		return ret;
 	}
 
 	@Override

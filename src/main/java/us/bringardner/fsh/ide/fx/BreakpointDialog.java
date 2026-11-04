@@ -35,7 +35,7 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 	final CheckBox enabled = new CheckBox("Enabled");
 	final CheckBox conditional = new CheckBox("Stop when the expression is true:");
 	final TextField condition = new TextField();
-	final CheckBox hitCount = new CheckBox("Stop only on hit number:");
+	final CheckBox hitCount = new CheckBox("Stop from hit number:");
 	final Spinner<Integer> hits = new Spinner<>(1, 1_000_000, 1);
 
 	public BreakpointDialog(Breakpoint bp) {
@@ -50,6 +50,8 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 		hitCount.setSelected(bp.isHitCount());
 		hits.getValueFactory().setValue(Math.max(1, bp.getHitCount()));
 		hits.setEditable(true);
+		hitCount.setTooltip(new javafx.scene.control.Tooltip(Breakpoint.HIT_COUNT_HINT));
+		hits.setTooltip(new javafx.scene.control.Tooltip(Breakpoint.HIT_COUNT_HINT));
 		hits.disableProperty().bind(hitCount.selectedProperty().not());
 
 		GridPane grid = new GridPane();

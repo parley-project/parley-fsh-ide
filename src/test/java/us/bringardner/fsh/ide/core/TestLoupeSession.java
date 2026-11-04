@@ -128,6 +128,27 @@ public class TestLoupeSession {
 		}
 	}
 
+	/**
+	 * A condition and a hit count stop where the IDE's own debugger does
+	 * (TestDebugSession.theHitCountCountsOnlyWhenTheConditionIsTrue): the two must not differ.
+	 */
+	@Test
+	public void conditionAndHitCountAsTheIdesDebugger() throws Exception {
+		session = LoupeSession.inProcess(listener);
+		Breakpoint bp = breakpoint(2);
+		bp.setConditional(true);
+		bp.setCondition("[ $i -ge 2 ]");
+		bp.setHitCount(true);
+		bp.setHitCount(2);
+		session.start("for i in 1 2 3 4 5\ndo\n  x=$i\ndone\n", "demo.fsh", List.of(), List.of(bp));
+		List<String> stops = new java.util.ArrayList<>();
+		for(String s = next(); s.startsWith("paused"); s = next()) {
+			stops.add(""+variables.poll().get("i"));
+			session.resume().get(10, TimeUnit.SECONDS);
+		}
+		assertEquals(List.of("3", "4", "5"), stops);
+	}
+
 	@Test
 	public void terminateEndsAStoppedScript() throws Exception {
 		session = LoupeSession.inProcess(listener);
