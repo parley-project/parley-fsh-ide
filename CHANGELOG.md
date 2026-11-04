@@ -137,6 +137,8 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- The Swing IDE's stdout and stderr browse buttons open a Save dialog, where a new file can be
+  named, as the JavaFX IDE's do (they only let you pick a file that was already there).
 - The IDEs' own debugger takes a breakpoint's condition and hit count as Loupe does (and the Debug
   Adapter Protocol): the condition first, and only a hit where it's true counts; the hit count
   then stops on hit number N and every hit after it (it stopped on the Nth hit only, and checked
