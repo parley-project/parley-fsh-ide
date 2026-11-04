@@ -236,6 +236,8 @@
 						<option>-XX:-MaxFDLimit</option>
 						<option>-Djava.library.path={native}</option>
 						<option>17+:--enable-native-access=ALL-UNNAMED</option>
+						<!-- (JavaFX 17's renderer uses sun.misc.Unsafe, which JDK 24 warns about) -->
+						<option>23+:--sun-misc-unsafe-memory-access=allow</option>
 						<option>macos:-Xdock:name={app}</option>
 					</options>
 					<!-- (fsh's keyboard library and fshexec, from fsh's native jar) -->
