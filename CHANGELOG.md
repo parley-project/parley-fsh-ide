@@ -9,6 +9,7 @@
   completion the editor already gave). The Find dialog finds as the JavaFX find bar does
   (`core.TextSearch`): forward or back, case, whole words, regular expressions (Replace fills in
   `$1`...) and wrapping alike; a match is selected in the editor, and Replace All is undone as one.
+  The dialog has a Find Previous button beside Find.
 - Autocompletion templates for the tests a script makes, one for each kind, with the test as a
   field with choices: `if-file` (exists, a regular file, a directory, a link, readable, writable,
   runnable, a pipe, a socket, a device, the set-user-ID, set-group-ID and sticky bits, yours, your

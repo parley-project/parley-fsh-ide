@@ -89,7 +89,7 @@ public class FindDialog extends JDialog {
 	 */
 	public FindDialog() {
 		//setIconImage(EditorPanel.getOpenScadImage());
-		setBounds(100, 100, 331, 442);
+		setBounds(100, 100, 331, 476);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -169,13 +169,22 @@ public class FindDialog extends JDialog {
 		btnFind.setBounds(37, 292, 81, 23);
 		contentPanel.add(btnFind);
 
+		JButton btnFindPrevious = new JButton("Find Previous");
+		btnFindPrevious.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				find(false);
+			}
+		});
+		btnFindPrevious.setBounds(136, 292, 121, 23);
+		contentPanel.add(btnFindPrevious);
+
 		btnReplaceFind = new JButton("Replace / Find");
 		btnReplaceFind.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				replace(true);
 			}
 		});
-		btnReplaceFind.setBounds(136, 292, 101, 23);
+		btnReplaceFind.setBounds(136, 326, 121, 23);
 		contentPanel.add(btnReplaceFind);
 
 		btnReplace = new JButton("Replace");
@@ -193,7 +202,7 @@ public class FindDialog extends JDialog {
 				replaceAll();
 			}
 		});
-		btnReplaceAll.setBounds(136, 326, 101, 23);
+		btnReplaceAll.setBounds(136, 360, 121, 23);
 		contentPanel.add(btnReplaceAll);
 
 		resultLabel = new JLabel("");
