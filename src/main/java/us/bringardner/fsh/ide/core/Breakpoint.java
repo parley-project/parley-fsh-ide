@@ -31,6 +31,9 @@ public class Breakpoint {
 	/** How a breakpoint is changed, in either IDE's Breakpoints tab (its tooltip, its rows', its Edit... button's). */
 	public static final String EDIT_HINT = "Double-click a breakpoint (or select it and click Edit...) to give it a condition or a hit count, or to delete it";
 
+	/** An example condition, shown in an empty condition box in either IDE's breakpoint dialog. */
+	public static final String CONDITION_EXAMPLE = "[ $i -gt 3 ]";
+
 	public Breakpoint() {
 		synchronized (Breakpoint.class) {
 			id = ++instanceCount;	

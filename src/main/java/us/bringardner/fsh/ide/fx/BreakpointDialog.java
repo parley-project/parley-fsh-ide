@@ -33,7 +33,7 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 
 	private final Breakpoint bp;
 	final CheckBox enabled = new CheckBox("Enabled");
-	final CheckBox conditional = new CheckBox("Stop only when this command succeeds:");
+	final CheckBox conditional = new CheckBox("Stop when the expression is true:");
 	final TextField condition = new TextField();
 	final CheckBox hitCount = new CheckBox("Stop only on hit number:");
 	final Spinner<Integer> hits = new Spinner<>(1, 1_000_000, 1);
@@ -44,7 +44,7 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 		enabled.setSelected(bp.isEnabled(false));
 		conditional.setSelected(bp.isConditional());
 		condition.setText(bp.getCondition());
-		condition.setPromptText("[ $i -gt 3 ]");
+		condition.setPromptText(Breakpoint.CONDITION_EXAMPLE);
 		condition.setPrefColumnCount(24);
 		condition.disableProperty().bind(conditional.selectedProperty().not());
 		hitCount.setSelected(bp.isHitCount());

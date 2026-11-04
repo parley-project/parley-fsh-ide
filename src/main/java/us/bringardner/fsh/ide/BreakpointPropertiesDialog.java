@@ -95,17 +95,32 @@ public class BreakpointPropertiesDialog extends JDialog {
 		contentPanel.add(hitCountTextField);
 		hitCountTextField.setColumns(10);
 
-		conditionalCheckBox = new JCheckBox("Conditional");
+		conditionalCheckBox = new JCheckBox("Stop when the expression is true");
 		conditionalCheckBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				conditionalTextArea.setVisible(conditionalCheckBox.isSelected());
 			}
 		});
-		conditionalCheckBox.setBounds(6, 75, 128, 23);
+		conditionalCheckBox.setBounds(6, 75, 268, 23);
 		contentPanel.add(conditionalCheckBox);
 
-		conditionalTextArea = new JTextArea();
-		conditionalTextArea.setBounds(6, 110, 173, 71);
+		conditionalTextArea = new JTextArea() {
+			private static final long serialVersionUID = 1L;
+
+			/** an example, in grey, while the box is empty (as the JavaFX dialog's prompt) */
+			@Override
+			protected void paintComponent(java.awt.Graphics g) {
+				super.paintComponent(g);
+				if( getText().isEmpty()) {
+					java.awt.Insets in = getInsets();
+					g.setColor(java.awt.Color.GRAY);
+					g.setFont(getFont());
+					g.drawString(Breakpoint.CONDITION_EXAMPLE, in.left+2, in.top+g.getFontMetrics().getAscent());
+				}
+			}
+		};
+		conditionalTextArea.setToolTipText("A command, as for if: the breakpoint stops when it succeeds (e.g. "+Breakpoint.CONDITION_EXAMPLE+")");
+		conditionalTextArea.setBounds(6, 110, 268, 71);
 		conditionalTextArea.setVisible(false);
 		contentPanel.add(conditionalTextArea);
 

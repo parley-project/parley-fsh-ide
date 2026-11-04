@@ -58,6 +58,9 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
   Swing IDE's breakpoint and error icons (a breakpoint that's off is faded).
 - The breakpoint dialog's buttons say Delete, Cancel and OK, in both IDEs (the Swing IDE's had
   only a trash can, a cancel and a smile icon).
+- The breakpoint dialog's condition is "Stop when the expression is true", in both IDEs (it was
+  "Conditional" and "Stop only when this command succeeds"), and the Swing dialog's empty
+  condition box shows an example, `[ $i -gt 3 ]`, as the JavaFX one does.
 - The console matches the script editor above it: the same background, text, caret and selection
   colors, following the theme (it was white in light themes). Errors stay red; in the JavaFX IDE,
   prompts are in the comment color. In both IDEs.
