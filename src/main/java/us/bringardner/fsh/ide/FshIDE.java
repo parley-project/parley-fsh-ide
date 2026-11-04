@@ -1481,8 +1481,8 @@ public class FshIDE extends JFrame  {
 			logBatcher.clear();
 			logView.setText("");
 			outputTextArea.clear();
-			// what environment scripts get, once, in the Log tab
-			us.bringardner.fsh.ide.core.ShellEnvironment.logOnce(logBatcher::add);
+			// what environment scripts get, at the top of the Log tab
+			us.bringardner.fsh.ide.core.ShellEnvironment.logStatus(logBatcher::add);
 			if( state == IdeRunstate.Debugging) {
 				debugControlPanel.setVisible(true);
 				// a new debug run: the last one's variables go

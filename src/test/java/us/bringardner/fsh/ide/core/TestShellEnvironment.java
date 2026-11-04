@@ -38,25 +38,24 @@ public class TestShellEnvironment {
 		assertThrows(IllegalArgumentException.class, ()->ShellEnvironment.parse("no marker"));
 	}
 
-	/** What the IDE says: once in a run's console, and in full in Help > Script Environment.... */
+	/** What the IDE says: in each run's Log tab, and in full in Help > Script Environment.... */
 	@Test
 	public void saysWhatItDid() {
 		try {
 			ShellEnvironment.setForTests(null);
-			// never started (as in a test): nothing to say in a console
-			assertEquals(null, ShellEnvironment.statusOnce());
+			// never started (as in a test): nothing for the Log tab
+			java.util.concurrent.BlockingQueue<String> none = new java.util.concurrent.LinkedBlockingQueue<>();
+			ShellEnvironment.logStatus(none::add);
+			assertEquals(null, assertDoesNotThrow(()->none.poll(1, java.util.concurrent.TimeUnit.SECONDS)));
 			ShellEnvironment.setForTests(Map.of("PATH", "/a/bin:/b/bin", "FSH_ENV", "/x/env.fsh", "WHO", "tony"));
-			String once = ShellEnvironment.statusOnce();
-			assertTrue(once.startsWith("Scripts run with the environment of the login shell"), once);
-			assertEquals(null, ShellEnvironment.statusOnce());
-			// the Log tab's line, once
-			ShellEnvironment.setForTests(Map.of("PATH", "/a/bin:/b/bin", "FSH_ENV", "/x/env.fsh", "WHO", "tony"));
+			assertTrue(ShellEnvironment.status().startsWith("Scripts run with the environment of the login shell"), ShellEnvironment.status());
+			// the Log tab's line, on every run
 			java.util.concurrent.BlockingQueue<String> log = new java.util.concurrent.LinkedBlockingQueue<>();
-			ShellEnvironment.logOnce(log::add);
-			String line = assertDoesNotThrow(()->log.poll(10, java.util.concurrent.TimeUnit.SECONDS));
-			assertTrue(line != null && line.startsWith("fsh-ide: Scripts run with the environment of the login shell"), line);
-			ShellEnvironment.logOnce(log::add);
-			assertEquals(null, assertDoesNotThrow(()->log.poll(1, java.util.concurrent.TimeUnit.SECONDS)));
+			for(int run=0; run < 2; run++) {
+				ShellEnvironment.logStatus(log::add);
+				String line = assertDoesNotThrow(()->log.poll(10, java.util.concurrent.TimeUnit.SECONDS));
+				assertTrue(line != null && line.startsWith("fsh-ide: Scripts run with the environment of the login shell"), line);
+			}
 			String report = ShellEnvironment.report();
 			assertTrue(report.contains("FSH_ENV: /x/env.fsh"), report);
 			assertTrue(report.contains("PATH, in the order it's searched:\n  /a/bin\n  /b/bin\n"), report);

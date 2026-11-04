@@ -60,8 +60,6 @@ public final class ShellEnvironment {
 	private static volatile String status = "Not got: the IDE didn't ask for it.";
 	/** the shell run, or null */
 	private static volatile String shellRun;
-	/** status() has been shown in a console */
-	private static volatile boolean shown;
 
 	private ShellEnvironment() {
 	}
@@ -114,26 +112,17 @@ public final class ShellEnvironment {
 	}
 
 	/**
-	 * The status, the first time it's asked for (for the IDE's Log tab, as a run starts: once, so
-	 * the user sees what environment scripts get); null after, and if it wasn't started.
+	 * Puts the status in log (the IDE's Log tab, as a run starts: every run, in every window), as
+	 * a line; nothing if it wasn't started. On a thread of its own, since it may wait for the
+	 * login shell.
 	 */
-	public static synchronized String statusOnce() {
-		if( shown || capture == null ) {
-			return null;
+	public static void logStatus(Consumer<String> log) {
+		if( capture == null ) {
+			return;
 		}
-		shown = true;
-		// (waits for it, if the shell is still running)
-		forScripts();
-		return status;
-	}
-
-	/**
-	 * Puts the status in log (the IDE's Log tab), the first time (see statusOnce), as a line:
-	 * on a thread of its own, since it may wait for the login shell.
-	 */
-	public static void logOnce(Consumer<String> log) {
 		new Thread(()->{
-			String s = statusOnce();
+			forScripts();
+			String s = status;
 			if( s != null ) {
 				log.accept("fsh-ide: "+s+" (Help > Script Environment... says more)\n");
 			}
@@ -193,7 +182,6 @@ public final class ShellEnvironment {
 	static synchronized void setForTests(Map<String,String> env) {
 		capture = env == null ? null : CompletableFuture.completedFuture(env);
 		problem = null;
-		shown = false;
 		shellRun = null;
 		status = env == null ? "Not got: the IDE didn't ask for it." : "Scripts run with the environment of the login shell (a test's): "+env.size()+" variables.";
 	}
