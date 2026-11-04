@@ -242,7 +242,8 @@ public class SpellDictionaryCachedDichoDisk extends SpellDictionaryDichoDisk {
     // ------------------------------------------------------------------------
     private static class CacheObject implements Serializable { // robert: static
 
-        private List<String>    suggestions=null;
+        private static final long serialVersionUID = 1L;
+		private List<String>    suggestions=null;
         private long    refTime=0;
 
         public CacheObject(List<String> list){

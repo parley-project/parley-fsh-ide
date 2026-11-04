@@ -22,7 +22,22 @@ import us.bringardner.parley.brand.ParleyBrand;
  */
 public class FshIdeFx {
 
+	/**
+	 * JavaFX's own logger. Kept here so the filter stays on it: java.util.logging holds its loggers
+	 * weakly, and one made again would not have it.
+	 */
+	private static final java.util.logging.Logger JAVAFX_LOG = java.util.logging.Logger.getLogger("javafx");
+
+	/**
+	 * Leaves out JavaFX's "Unsupported JavaFX configuration" warning, which it logs at startup
+	 * because it is on the class path (see above), not the module path. Its other messages stay.
+	 */
+	static void quietClassPathWarning() {
+		JAVAFX_LOG.setFilter(r -> r.getMessage() == null || !r.getMessage().startsWith("Unsupported JavaFX configuration"));
+	}
+
 	public static void main(String[] args) {
+		quietClassPathWarning();
 		// the theme and font chosen in Settings... (both IDEs keep their preferences in the same place)
 		us.bringardner.fx.dialog.SettingsDialog.load(Preferences.userRoot().node(IdeWindow.PREFERENCES_NODE));
 		Platform.setImplicitExit(true);

@@ -166,7 +166,7 @@ public class GenericTransformator implements Transformator {
       String tmp = String.valueOf(alphabet[i]);
       String code = transform(tmp);
       if (!letters.containsKey(code)) {
-        letters.put(code, new Character(alphabet[i]));
+        letters.put(code, alphabet[i]);
       }
     }
 
