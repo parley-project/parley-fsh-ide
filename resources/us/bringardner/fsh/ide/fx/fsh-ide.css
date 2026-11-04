@@ -26,14 +26,6 @@
 
 /* debugging */
 .script-editor .current-line { -fx-background-color: #d9f2d9; }
-.script-editor .error-marker {
-	-fx-text-fill: white;
-	-fx-background-color: #d32f2f;
-	-fx-background-radius: 7;
-	-fx-font-size: 10px;
-	-fx-font-weight: bold;
-	-fx-padding: 0 4 0 4;
-}
 
 /* spelling and folding */
 .script-editor .misspelled {
@@ -76,7 +68,6 @@
 .theme-dark .console .error  { -fx-fill: #E06C5A; }
 .theme-dark .console .prompt { -fx-fill: #A39B85; }
 .theme-dark .script-editor .current-line { -fx-background-color: #33401C; }
-.theme-dark .script-editor .error-marker { -fx-background-color: #B23A2A; }
 .theme-dark .script-editor .misspelled { -rtfx-underline-color: #E06C5A; }
 .theme-dark .script-editor .fold-toggle { -fx-text-fill: #876D29; }
 .theme-dark .script-editor .fold-toggle:hover { -fx-text-fill: #D0AA42; }

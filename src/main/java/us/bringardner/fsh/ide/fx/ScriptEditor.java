@@ -38,11 +38,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
 import us.bringardner.fsh.ide.core.Breakpoint;
 import us.bringardner.fsh.ide.core.CompileError;
@@ -100,6 +100,10 @@ public class ScriptEditor extends StackPane {
 
 	// ---- the gutter
 
+	/** the Swing IDE's gutter icons */
+	private static final javafx.scene.image.Image BREAKPOINT = FxIcons.image("breakpoint.png");
+	private static final javafx.scene.image.Image ERROR = FxIcons.image("error.png");
+
 	private Node gutter(int line) {
 		if( isCollapsed(line)) {
 			// folded away: RichTextFX hides the line's text but not its gutter, so give it none
@@ -107,21 +111,20 @@ public class ScriptEditor extends StackPane {
 		}
 		// a breakpoint or error, then where the script is paused, each in its own slot
 		StackPane marker = new StackPane();
-		marker.setMinWidth(14);
-		marker.setPrefWidth(14);
+		marker.setMinWidth(16);
+		marker.setPrefWidth(16);
 		marker.setAlignment(Pos.CENTER);
 		Breakpoint bp = breakpoints.get(line);
 		if( bp != null ) {
-			Circle c = new Circle(5);
-			boolean on = bp.isEnabled(false);
-			c.setFill(on ? Color.web("#d93636") : Color.TRANSPARENT);
-			c.setStroke(Color.web("#a32020"));
-			c.getStyleClass().add("breakpoint-marker");
-			marker.getChildren().add(c);
+			// the Swing IDE's breakpoint icon; faded when the breakpoint is off
+			ImageView b = new ImageView(BREAKPOINT);
+			b.setOpacity(bp.isEnabled(false) ? 1 : 0.35);
+			b.getStyleClass().add("breakpoint-marker");
+			marker.getChildren().add(b);
 		}
 		String error = errors.get(line);
 		if( error != null ) {
-			Label x = new Label("!");
+			ImageView x = new ImageView(ERROR);
 			x.getStyleClass().add("error-marker");
 			Tooltip.install(marker, new Tooltip(error));
 			marker.getChildren().add(x);
