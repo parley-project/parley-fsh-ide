@@ -474,6 +474,8 @@ public class FshIDE extends JFrame  {
 	private DebugControlPanel debugControlPanel;
 
 	private JButton debugButton;
+	/** Stop, as the JavaFX IDE's: stops what is running or being debugged; disabled otherwise */
+	private final JButton stopButton = new JButton("");
 
 	private DebugVariablePanel debugVariablePanel;
 
@@ -741,9 +743,14 @@ public class FshIDE extends JFrame  {
 
 
 		executeButton = new JButton("");
-		executeButton.setSelectedIcon(new ImageIcon(FshIDE.class.getResource("/img/terminate.png")));
 		executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/run.png")));
 		executePanel.add(executeButton);
+
+		stopButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/terminate.png")));
+		stopButton.setToolTipText("Stop");
+		stopButton.addActionListener(e->actionStop());
+		executePanel.add(stopButton);
+		updateRunButtons();
 
 		scriptArgPanel = new JPanel();
 		menuPanel.add(scriptArgPanel);
@@ -1013,8 +1020,6 @@ public class FshIDE extends JFrame  {
 
 		switch (runState) {
 		case Idel:
-			debugButton.setVisible(false);
-			executeButton.setVisible(false);
 			editorPane.setHighlightCurrentLine(false);
 			debugControlPanel.setVisible(true);
 			debugSplitPane.setVisible(true);
@@ -1369,6 +1374,22 @@ public class FshIDE extends JFrame  {
 
 	}
 
+	/**
+	 * Debug, Run and Stop, as in the JavaFX IDE: Debug and Run while nothing runs, Stop while a
+	 * script runs or is being debugged.
+	 */
+	private void updateRunButtons() {
+		boolean running = runState != IdeRunstate.Idel;
+		debugButton.setEnabled(!running);
+		executeButton.setEnabled(!running);
+		stopButton.setEnabled(running);
+	}
+
+	/** for the tests: [Debug, Run, Stop] enabled */
+	boolean[] runButtonsEnabled() {
+		return new boolean[] {debugButton.isEnabled(), executeButton.isEnabled(), stopButton.isEnabled()};
+	}
+
 	private void stopTask () {
 		if( SwingUtilities.isEventDispatchThread()) {
 			ScriptRun run = currentRun;
@@ -1398,12 +1419,10 @@ public class FshIDE extends JFrame  {
 			}
 
 			scriptArgPanel.setVisible(true);
-			executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/run.png")));		
 			horizontalStrut.setVisible(true);
-			debugButton.setVisible(true);
-			executeButton.setVisible(true);
 			debugControlPanel.setVisible(false);
 			runState = IdeRunstate.Idel;
+			updateRunButtons();
 			debugSession.setActive(false);
 			editorPane.setHighlightCurrentLine(false);
 			actionShowDebugView();
@@ -1424,8 +1443,6 @@ public class FshIDE extends JFrame  {
 				return;
 			}
 
-			executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/Stop.png")));
-
 			scriptArgPanel.setVisible(false);
 			logBatcher.clear();
 			logView.setText("");
@@ -1445,6 +1462,7 @@ public class FshIDE extends JFrame  {
 					.debug(debugSession)
 					.stackSize(stackSize);
 			runState = state;
+			updateRunButtons();
 			currentRun.start();
 		} else {
 			SwingUtilities.invokeLater(()->startTask(state));

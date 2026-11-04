@@ -37,6 +37,9 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Changed
 
+- The Swing IDE's Stop is the JavaFX IDE's: a Stop button after Run, enabled while a script runs
+  or is being debugged, stops it. Run no longer turns into a stop button while a script runs, and
+  Debug and Run stay in the toolbar (disabled) while debugging instead of disappearing.
 - Show Debug View is in the View menu, under Show Outline, in both IDEs (it was in the Run
   menu), and the Swing IDE's toolbar no longer has a Debug View check box.
 - The JavaFX IDE uses the Swing IDE's icons: its Run, Debug, Stop, Resume, Step Over, Step Into
