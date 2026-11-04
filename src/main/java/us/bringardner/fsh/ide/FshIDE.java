@@ -63,7 +63,6 @@ import java.util.prefs.Preferences;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -475,10 +474,13 @@ public class FshIDE extends JFrame  {
 	private DebugControlPanel debugControlPanel;
 
 	private JButton debugButton;
+	/** Stop, as the JavaFX IDE's: stops what is running or being debugged; disabled otherwise */
+	private final JButton stopButton = new JButton("");
 
 	private DebugVariablePanel debugVariablePanel;
 
-	private JCheckBox showDebugViewCheckBox;
+	/** View > Show Debug View */
+	private final JCheckBoxMenuItem showDebugViewItem = new JCheckBoxMenuItem("Show Debug View");
 
 	private JSplitPane debugSplitPane;
 
@@ -720,13 +722,7 @@ public class FshIDE extends JFrame  {
 		autoExecuteCheckItem.setSelected(false);
 		profileCheckItem = new JCheckBoxMenuItem("Profile");
 
-		showDebugViewCheckBox = new JCheckBox("Debug View");
-		showDebugViewCheckBox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionShowDebugView();
-			}
-		});
-		menuPanel.add(showDebugViewCheckBox);
+		showDebugViewItem.addActionListener(e->actionShowDebugView());
 
 		JPanel executePanel = new JPanel();
 		menuPanel.add(executePanel);
@@ -747,9 +743,14 @@ public class FshIDE extends JFrame  {
 
 
 		executeButton = new JButton("");
-		executeButton.setSelectedIcon(new ImageIcon(FshIDE.class.getResource("/img/terminate.png")));
 		executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/run.png")));
 		executePanel.add(executeButton);
+
+		stopButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/terminate.png")));
+		stopButton.setToolTipText("Stop");
+		stopButton.addActionListener(e->actionStop());
+		executePanel.add(stopButton);
+		updateRunButtons();
 
 		scriptArgPanel = new JPanel();
 		menuPanel.add(scriptArgPanel);
@@ -866,8 +867,8 @@ public class FshIDE extends JFrame  {
 		// a variable's right-click menu in the outline: watch it (before or while debugging)
 		outlinePanel.setOnWatchVariable(name->{
 			// the debug view shows, with its Watchpoints tab
-			if( !showDebugViewCheckBox.isSelected()) {
-				showDebugViewCheckBox.setSelected(true);
+			if( !showDebugViewItem.isSelected()) {
+				showDebugViewItem.setSelected(true);
 				actionShowDebugView();
 			}
 			debugVariablePanel.addWatchpoint(name);
@@ -1005,7 +1006,7 @@ public class FshIDE extends JFrame  {
 
 	protected void actionShowDebugView() {
 		if( runState == IdeRunstate.Idel) {
-			boolean b = showDebugViewCheckBox.isSelected();
+			boolean b = showDebugViewItem.isSelected();
 			if( b ) {
 				debugVariablePanel.setContext(editorPane, null);
 			}
@@ -1019,8 +1020,6 @@ public class FshIDE extends JFrame  {
 
 		switch (runState) {
 		case Idel:
-			debugButton.setVisible(false);
-			executeButton.setVisible(false);
 			editorPane.setHighlightCurrentLine(false);
 			debugControlPanel.setVisible(true);
 			debugSplitPane.setVisible(true);
@@ -1122,11 +1121,6 @@ public class FshIDE extends JFrame  {
 		run.add(useSelectedCodeCheckItem);
 		run.add(autoExecuteCheckItem);
 		run.add(profileCheckItem);
-		run.addSeparator();
-		// the same setting as the toolbar's Debug View check box
-		JCheckBoxMenuItem debugView = new JCheckBoxMenuItem("Show Debug View");
-		debugView.setModel(showDebugViewCheckBox.getModel());
-		run.add(debugView);
 
 		menus.install(this, run);
 	}
@@ -1223,6 +1217,7 @@ public class FshIDE extends JFrame  {
 			}
 		});
 		view.add(showOutline);
+		view.add(showDebugViewItem);
 		view.addSeparator();
 		int fold = shortcut | java.awt.event.InputEvent.ALT_DOWN_MASK;
 		int all = fold | java.awt.event.InputEvent.SHIFT_DOWN_MASK;
@@ -1384,6 +1379,22 @@ public class FshIDE extends JFrame  {
 
 	}
 
+	/**
+	 * Debug, Run and Stop, as in the JavaFX IDE: Debug and Run while nothing runs, Stop while a
+	 * script runs or is being debugged.
+	 */
+	private void updateRunButtons() {
+		boolean running = runState != IdeRunstate.Idel;
+		debugButton.setEnabled(!running);
+		executeButton.setEnabled(!running);
+		stopButton.setEnabled(running);
+	}
+
+	/** for the tests: [Debug, Run, Stop] enabled */
+	boolean[] runButtonsEnabled() {
+		return new boolean[] {debugButton.isEnabled(), executeButton.isEnabled(), stopButton.isEnabled()};
+	}
+
 	private void stopTask () {
 		if( SwingUtilities.isEventDispatchThread()) {
 			ScriptRun run = currentRun;
@@ -1413,12 +1424,10 @@ public class FshIDE extends JFrame  {
 			}
 
 			scriptArgPanel.setVisible(true);
-			executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/run.png")));		
 			horizontalStrut.setVisible(true);
-			debugButton.setVisible(true);
-			executeButton.setVisible(true);
 			debugControlPanel.setVisible(false);
 			runState = IdeRunstate.Idel;
+			updateRunButtons();
 			debugSession.setActive(false);
 			editorPane.setHighlightCurrentLine(false);
 			actionShowDebugView();
@@ -1439,8 +1448,6 @@ public class FshIDE extends JFrame  {
 				return;
 			}
 
-			executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/Stop.png")));
-
 			scriptArgPanel.setVisible(false);
 			logBatcher.clear();
 			logView.setText("");
@@ -1460,6 +1467,7 @@ public class FshIDE extends JFrame  {
 					.debug(debugSession)
 					.stackSize(stackSize);
 			runState = state;
+			updateRunButtons();
 			currentRun.start();
 		} else {
 			SwingUtilities.invokeLater(()->startTask(state));

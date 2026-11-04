@@ -43,8 +43,6 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -103,13 +101,16 @@ public class IdeWindow {
 	private final Label status = new Label();
 	private final Menu recentMenu = new Menu("Open Recent");
 	private final CheckMenuItem useSelection = new CheckMenuItem("Run Selected Code Only");
-	private final Button runButton = new Button("\u25b6 Run");
-	private final Button debugButton = new Button("Debug");
-	private final Button stopButton = new Button("\u25a0 Stop");
-	private final Button resumeButton = new Button("Resume");
-	private final Button stepOverButton = new Button("Step Over");
-	private final Button stepIntoButton = new Button("Step Into");
-	private final Button suspendButton = new Button("Suspend");
+	// the Swing IDE's icons, with what each does as its tooltip
+	private final Button runButton = FxIcons.iconOnly(new Button(), "run.png", "Run");
+	private final Button debugButton = FxIcons.iconOnly(new Button(), "debug.png", "Debug");
+	private final Button stopButton = FxIcons.iconOnly(new Button(), "terminate.png", "Stop");
+	private final Button resumeButton = FxIcons.iconOnly(new Button(), "resume.png", "Resume (F8)");
+	private final Button stepOverButton = FxIcons.iconOnly(new Button(), "step_over.png", "Step Over (F6)");
+	private final Button stepIntoButton = FxIcons.iconOnly(new Button(), "step_into.png", "Step Into (F5)");
+	private final Button suspendButton = FxIcons.iconOnly(new Button(), "suspend.png", "Suspend: stop at the next statement");
+	/** the debug controls, shown only while debugging */
+	private final HBox debugControls = new HBox(6);
 	private final MenuItem runItem = new MenuItem("Run");
 	private final MenuItem debugItem = new MenuItem("Debug");
 	private final MenuItem stopItem = new MenuItem("Stop");
@@ -345,7 +346,7 @@ public class IdeWindow {
 				item("Smaller Text", "Shortcut+MINUS", this::smallerText),
 				item("Reset Text Size", "Shortcut+DIGIT0", this::resetSize),
 				item("Editor Font...", null, this::actionEditorFont), new SeparatorMenuItem(),
-				showOutline, new SeparatorMenuItem(),
+				showOutline, showDebugPanel, new SeparatorMenuItem(),
 				// folding on [ and ], with Alt (Option): + and - are the text size
 				item("Fold", "Shortcut+Alt+OPEN_BRACKET", editor::foldAtCaret),
 				item("Unfold", "Shortcut+Alt+CLOSE_BRACKET", editor::unfoldAtCaret),
@@ -370,7 +371,7 @@ public class IdeWindow {
 				resumeItem, stepOverItem, stepIntoItem, suspendItem, new SeparatorMenuItem(),
 				item("Toggle Breakpoint", "Shortcut+B", ()->editor.toggleBreakpoint(editor.getCaretLine())),
 				new SeparatorMenuItem(), useSelection, useAdapter, new SeparatorMenuItem(),
-				item("Clear Console", "Shortcut+K", console::clear), showDebugPanel);
+				item("Clear Console", "Shortcut+K", console::clear));
 
 		return menus.build(stage, run);
 	}
@@ -426,28 +427,25 @@ public class IdeWindow {
 
 	private javafx.scene.layout.FlowPane toolbar() {
 		runButton.setOnAction(e->run());
-		debugButton.setGraphic(new ImageView(new Image(IdeWindow.class.getResource("/img/debug.png").toExternalForm())));
 		debugButton.setOnAction(e->debug());
 		stopButton.setOnAction(e->stop());
 		resumeButton.setOnAction(e->resumeScript());
 		stepOverButton.setOnAction(e->stepOverScript());
 		stepIntoButton.setOnAction(e->stepIntoScript());
 		suspendButton.setOnAction(e->suspendScript());
-		resumeButton.setTooltip(new Tooltip("Resume (F8)"));
-		stepOverButton.setTooltip(new Tooltip("Step Over (F6)"));
-		stepIntoButton.setTooltip(new Tooltip("Step Into (F5)"));
-		suspendButton.setTooltip(new Tooltip("Stop at the next statement"));
 		arguments.setPromptText("Script arguments");
 		arguments.setPrefColumnCount(18);
-		// the run controls, then the script's settings; they wrap to a second row when the window is narrow
-		HBox controls = new HBox(6, runButton, debugButton, stopButton, resumeButton, stepOverButton, stepIntoButton, suspendButton);
+		// in the Swing IDE's order: Debug and Run (and Stop), the script's settings, then the debug
+		// controls (Resume, Suspend, Step Into, Step Over); they wrap to a second row when the window is narrow
+		HBox controls = new HBox(6, debugButton, runButton, stopButton);
 		HBox settings = new HBox(6, new Label("Arguments:"), arguments,
 				redirect("stdin", stdIn, false), redirect("stdout", stdOut, true), redirect("stderr", stdErr, true));
-		for(HBox b : new HBox[] {controls, settings}) {
+		debugControls.getChildren().setAll(resumeButton, suspendButton, stepIntoButton, stepOverButton);
+		for(HBox b : new HBox[] {controls, settings, debugControls}) {
 			b.setStyle("-fx-alignment: center-left;");
 			keepWidth(b);
 		}
-		javafx.scene.layout.FlowPane bar = new javafx.scene.layout.FlowPane(14, 4, controls, settings);
+		javafx.scene.layout.FlowPane bar = new javafx.scene.layout.FlowPane(14, 4, controls, settings, debugControls);
 		bar.setPadding(new Insets(4, 6, 4, 6));
 		return bar;
 	}
@@ -468,8 +466,7 @@ public class IdeWindow {
 		field.setPromptText("console");
 		field.setPrefColumnCount(8);
 		field.setTooltip(new Tooltip("A file for "+name+"; empty for the console"));
-		Button browse = new Button("...");
-		browse.setTooltip(new Tooltip("Choose a file for "+name));
+		Button browse = FxIcons.iconOnly(new Button(), output ? "redirect_out.png" : "redirect_in.png", "Choose a file for "+name);
 		browse.setOnAction(e->{
 			FileSourceChooser fc = new FileSourceChooser();
 			fc.setTitle(name);
@@ -486,7 +483,8 @@ public class IdeWindow {
 				field.setText(chosen.getAbsolutePath());
 			}
 		});
-		HBox box = new HBox(2, new Label(name+":"), field, browse);
+		// (the button before the field, as in the Swing IDE)
+		HBox box = new HBox(2, new Label(name+":"), browse, field);
 		box.setStyle("-fx-alignment: center-left;");
 		return box;
 	}
@@ -1117,7 +1115,7 @@ public class IdeWindow {
 		suspendButton.setDisable(!running || !debugging || paused);
 		suspendItem.setDisable(suspendButton.isDisable());
 		// the debug controls only show while debugging
-		for(javafx.scene.Node n : new javafx.scene.Node[] {resumeButton, stepOverButton, stepIntoButton, suspendButton}) {
+		for(javafx.scene.Node n : new javafx.scene.Node[] {debugControls, resumeButton, stepOverButton, stepIntoButton, suspendButton}) {
 			n.setVisible(running && debugging);
 			n.setManaged(running && debugging);
 		}

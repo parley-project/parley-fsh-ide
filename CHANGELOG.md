@@ -43,6 +43,17 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Changed
 
+- The Swing IDE's Stop is the JavaFX IDE's: a Stop button after Run, enabled while a script runs
+  or is being debugged, stops it. Run no longer turns into a stop button while a script runs, and
+  Debug and Run stay in the toolbar (disabled) while debugging instead of disappearing.
+- Show Debug View is in the View menu, under Show Outline, in both IDEs (it was in the Run
+  menu), and the Swing IDE's toolbar no longer has a Debug View check box.
+- The JavaFX IDE uses the Swing IDE's icons: its Run, Debug, Stop, Resume, Step Over, Step Into
+  and Suspend buttons show only the icon, with what each does as its tooltip, in the Swing IDE's
+  order (Debug, Run, Stop, the script's settings, then Resume, Suspend, Step Into, Step Over);
+  the redirect buttons have the redirect icons, before their fields; breakpoints and syntax errors in the margin are the
+  Swing IDE's breakpoint and error icons (a breakpoint that's off is faded); and the breakpoint
+  dialog's Delete, Cancel and OK buttons are its trash can, cancel and smile icons.
 - The console matches the script editor above it: the same background, text, caret and selection
   colors, following the theme (it was white in light themes). Errors stay red; in the JavaFX IDE,
   prompts are in the comment color. In both IDEs.
