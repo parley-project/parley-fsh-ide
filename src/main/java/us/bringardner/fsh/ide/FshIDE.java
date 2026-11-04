@@ -780,7 +780,7 @@ public class FshIDE extends JFrame  {
 		btnNewButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_in.png")));
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				actionBrowse(stdInTextField);
+				actionBrowse(stdInTextField, false);
 			}
 		});
 		panel.add(btnNewButton);
@@ -797,7 +797,7 @@ public class FshIDE extends JFrame  {
 		btnNewButton_1.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_out.png")));
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				actionBrowse(stdOutTextField);
+				actionBrowse(stdOutTextField, true);
 			}
 		});
 		panel_1.add(btnNewButton_1);
@@ -814,7 +814,7 @@ public class FshIDE extends JFrame  {
 		btnNewButton_1_1.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_out.png")));
 		btnNewButton_1_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				actionBrowse(stdErrTextField);
+				actionBrowse(stdErrTextField, true);
 			}
 		});
 		panel_1_1.add(btnNewButton_1_1);
@@ -996,7 +996,11 @@ public class FshIDE extends JFrame  {
 
 
 
-	protected void actionBrowse(JTextField fld) {
+	/**
+	 * A redirect's browse button: an existing file to read (stdin), or (output: stdout, stderr) a
+	 * file to write, which may be a new one, as in the JavaFX IDE.
+	 */
+	protected void actionBrowse(JTextField fld, boolean output) {
 		try {
 
 			String current = fld.getText().trim();
@@ -1006,7 +1010,8 @@ public class FshIDE extends JFrame  {
 				fc.setSelectedFile(file);
 			}
 			// no file chosen (the window closed): nothing changes
-			if(fc.showOpenDialog(this) == FileSourceChooserDialog.APPROVE_OPTION && fc.getSelectedFile() != null) {
+			int chosen = output ? fc.showSaveDialog(this) : fc.showOpenDialog(this);
+			if(chosen == FileSourceChooserDialog.APPROVE_OPTION && fc.getSelectedFile() != null) {
 				FileSource file = fc.getSelectedFile();
 				fld.setText(file.getAbsolutePath());
 			}
