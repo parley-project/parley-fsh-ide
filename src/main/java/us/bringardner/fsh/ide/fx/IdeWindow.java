@@ -346,7 +346,7 @@ public class IdeWindow {
 				item("Smaller Text", "Shortcut+MINUS", this::smallerText),
 				item("Reset Text Size", "Shortcut+DIGIT0", this::resetSize),
 				item("Editor Font...", null, this::actionEditorFont), new SeparatorMenuItem(),
-				showOutline, new SeparatorMenuItem(),
+				showOutline, showDebugPanel, new SeparatorMenuItem(),
 				// folding on [ and ], with Alt (Option): + and - are the text size
 				item("Fold", "Shortcut+Alt+OPEN_BRACKET", editor::foldAtCaret),
 				item("Unfold", "Shortcut+Alt+CLOSE_BRACKET", editor::unfoldAtCaret),
@@ -371,7 +371,7 @@ public class IdeWindow {
 				resumeItem, stepOverItem, stepIntoItem, suspendItem, new SeparatorMenuItem(),
 				item("Toggle Breakpoint", "Shortcut+B", ()->editor.toggleBreakpoint(editor.getCaretLine())),
 				new SeparatorMenuItem(), useSelection, useAdapter, new SeparatorMenuItem(),
-				item("Clear Console", "Shortcut+K", console::clear), showDebugPanel);
+				item("Clear Console", "Shortcut+K", console::clear));
 
 		return menus.build(stage, run);
 	}

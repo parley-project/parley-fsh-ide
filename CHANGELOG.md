@@ -37,6 +37,8 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Changed
 
+- Show Debug View is in the View menu, under Show Outline, in both IDEs (it was in the Run
+  menu), and the Swing IDE's toolbar no longer has a Debug View check box.
 - The JavaFX IDE uses the Swing IDE's icons: its Run, Debug, Stop, Resume, Step Over, Step Into
   and Suspend buttons show only the icon, with what each does as its tooltip, in the Swing IDE's
   order (Debug, Run, Stop, the script's settings, then Resume, Suspend, Step Into, Step Over);

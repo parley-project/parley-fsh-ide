@@ -63,7 +63,6 @@ import java.util.prefs.Preferences;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -478,7 +477,8 @@ public class FshIDE extends JFrame  {
 
 	private DebugVariablePanel debugVariablePanel;
 
-	private JCheckBox showDebugViewCheckBox;
+	/** View > Show Debug View */
+	private final JCheckBoxMenuItem showDebugViewItem = new JCheckBoxMenuItem("Show Debug View");
 
 	private JSplitPane debugSplitPane;
 
@@ -720,13 +720,7 @@ public class FshIDE extends JFrame  {
 		autoExecuteCheckItem.setSelected(false);
 		profileCheckItem = new JCheckBoxMenuItem("Profile");
 
-		showDebugViewCheckBox = new JCheckBox("Debug View");
-		showDebugViewCheckBox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionShowDebugView();
-			}
-		});
-		menuPanel.add(showDebugViewCheckBox);
+		showDebugViewItem.addActionListener(e->actionShowDebugView());
 
 		JPanel executePanel = new JPanel();
 		menuPanel.add(executePanel);
@@ -866,8 +860,8 @@ public class FshIDE extends JFrame  {
 		// a variable's right-click menu in the outline: watch it (before or while debugging)
 		outlinePanel.setOnWatchVariable(name->{
 			// the debug view shows, with its Watchpoints tab
-			if( !showDebugViewCheckBox.isSelected()) {
-				showDebugViewCheckBox.setSelected(true);
+			if( !showDebugViewItem.isSelected()) {
+				showDebugViewItem.setSelected(true);
 				actionShowDebugView();
 			}
 			debugVariablePanel.addWatchpoint(name);
@@ -1005,7 +999,7 @@ public class FshIDE extends JFrame  {
 
 	protected void actionShowDebugView() {
 		if( runState == IdeRunstate.Idel) {
-			boolean b = showDebugViewCheckBox.isSelected();
+			boolean b = showDebugViewItem.isSelected();
 			if( b ) {
 				debugVariablePanel.setContext(editorPane, null);
 			}
@@ -1117,11 +1111,6 @@ public class FshIDE extends JFrame  {
 		run.add(useSelectedCodeCheckItem);
 		run.add(autoExecuteCheckItem);
 		run.add(profileCheckItem);
-		run.addSeparator();
-		// the same setting as the toolbar's Debug View check box
-		JCheckBoxMenuItem debugView = new JCheckBoxMenuItem("Show Debug View");
-		debugView.setModel(showDebugViewCheckBox.getModel());
-		run.add(debugView);
 
 		menus.install(this, run);
 	}
@@ -1218,6 +1207,7 @@ public class FshIDE extends JFrame  {
 			}
 		});
 		view.add(showOutline);
+		view.add(showDebugViewItem);
 		view.addSeparator();
 		int fold = shortcut | java.awt.event.InputEvent.ALT_DOWN_MASK;
 		int all = fold | java.awt.event.InputEvent.SHIFT_DOWN_MASK;
