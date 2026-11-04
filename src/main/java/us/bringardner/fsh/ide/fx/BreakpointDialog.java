@@ -23,6 +23,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Window;
 import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.ide.core.BreakpointHelp;
 
 /** A breakpoint's properties: on or off, a condition, a hit count; or delete it. */
 public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
@@ -33,9 +34,9 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 
 	private final Breakpoint bp;
 	final CheckBox enabled = new CheckBox("Enabled");
-	final CheckBox conditional = new CheckBox("Stop only when this command succeeds:");
+	final CheckBox conditional = new CheckBox("Stop when the expression is true:");
 	final TextField condition = new TextField();
-	final CheckBox hitCount = new CheckBox("Stop only on hit number:");
+	final CheckBox hitCount = new CheckBox("Stop from hit number:");
 	final Spinner<Integer> hits = new Spinner<>(1, 1_000_000, 1);
 
 	public BreakpointDialog(Breakpoint bp) {
@@ -44,19 +45,29 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 		enabled.setSelected(bp.isEnabled(false));
 		conditional.setSelected(bp.isConditional());
 		condition.setText(bp.getCondition());
-		condition.setPromptText("[ $i -gt 3 ]");
+		condition.setPromptText(Breakpoint.CONDITION_EXAMPLE);
 		condition.setPrefColumnCount(24);
 		condition.disableProperty().bind(conditional.selectedProperty().not());
 		hitCount.setSelected(bp.isHitCount());
 		hits.getValueFactory().setValue(Math.max(1, bp.getHitCount()));
 		hits.setEditable(true);
+		hitCount.setTooltip(new javafx.scene.control.Tooltip(Breakpoint.HIT_COUNT_HINT));
+		hits.setTooltip(new javafx.scene.control.Tooltip(Breakpoint.HIT_COUNT_HINT));
 		hits.disableProperty().bind(hitCount.selectedProperty().not());
 
 		GridPane grid = new GridPane();
 		grid.setHgap(8);
 		grid.setVgap(8);
 		grid.setPadding(new Insets(10));
-		grid.add(new Label(bp.getCode()), 0, 0, 2, 1);
+		// the line's code, and the info button: how the condition and the hit count stop it
+		javafx.scene.control.Button info = FxIcons.iconOnly(new javafx.scene.control.Button(), "info.png", BreakpointHelp.TITLE);
+		info.setOnAction(e->showHelp());
+		javafx.scene.layout.Region gap = new javafx.scene.layout.Region();
+		javafx.scene.layout.HBox.setHgrow(gap, javafx.scene.layout.Priority.ALWAYS);
+		javafx.scene.layout.HBox top = new javafx.scene.layout.HBox(8, new Label(bp.getCode()), gap, info);
+		top.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+		grid.add(top, 0, 0, 2, 1);
+		infoButton = info;
 		grid.add(enabled, 0, 1, 2, 1);
 		grid.add(conditional, 0, 2);
 		grid.add(condition, 1, 2);
@@ -64,10 +75,6 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 		grid.add(hits, 1, 3);
 		getDialogPane().setContent(grid);
 		getDialogPane().getButtonTypes().addAll(DELETE, ButtonType.CANCEL, ButtonType.OK);
-		// the Swing IDE's icons for them
-		FxIcons.iconOnly((javafx.scene.control.Button) getDialogPane().lookupButton(ButtonType.OK), "smile20x20.png", "OK");
-		FxIcons.iconOnly((javafx.scene.control.Button) getDialogPane().lookupButton(ButtonType.CANCEL), "cancel.png", "Cancel");
-		FxIcons.iconOnly((javafx.scene.control.Button) getDialogPane().lookupButton(DELETE), "trashcan-red-20x22.png", "Delete");
 		setResultConverter(b->{
 			if( b == ButtonType.OK ) {
 				apply();
@@ -75,6 +82,36 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 			}
 			return b == DELETE ? Result.DELETE : Result.CANCELED;
 		});
+	}
+
+	/** the info button (for the tests) */
+	javafx.scene.control.Button infoButton;
+
+	/**
+	 * The info button: how a breakpoint's condition and hit count stop it, as the Debug Adapter
+	 * Protocol says, with the specification's reference (and a link that opens it).
+	 */
+	static void showHelp() {
+		javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+		a.setTitle(BreakpointHelp.TITLE);
+		a.setHeaderText(BreakpointHelp.TITLE);
+		a.setGraphic(new javafx.scene.image.ImageView(FxIcons.image("info@2x.png")));
+		javafx.scene.control.TextArea text = new javafx.scene.control.TextArea(BreakpointHelp.TEXT);
+		text.setEditable(false);
+		text.setWrapText(true);
+		text.setPrefColumnCount(60);
+		text.setPrefRowCount(22);
+		javafx.scene.control.Hyperlink link = new javafx.scene.control.Hyperlink("Open the Specification");
+		link.setOnAction(e->new Thread(()->{
+			try {
+				java.awt.Desktop.getDesktop().browse(new java.net.URI(BreakpointHelp.SPEC_URL));
+			} catch (Exception ex) {
+				// (the reference is in the text)
+			}
+		}, "open-spec").start());
+		a.getDialogPane().setContent(new javafx.scene.layout.VBox(6, text, link));
+		a.setResizable(true);
+		a.showAndWait();
 	}
 
 	/** Puts what's chosen into the breakpoint. */

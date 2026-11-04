@@ -28,6 +28,12 @@ public class Breakpoint {
 	private volatile boolean conditionErrorReported=false;
 	
 	
+	/** How a breakpoint is changed, in either IDE's Breakpoints tab (its tooltip, its rows', its Edit... button's). */
+	public static final String EDIT_HINT = "Double-click a breakpoint (or select it and click Edit...) to give it a condition or a hit count, or to delete it";
+
+	/** An example condition, shown in an empty condition box in either IDE's breakpoint dialog. */
+	public static final String CONDITION_EXAMPLE = "[ $i -gt 3 ]";
+
 	public Breakpoint() {
 		synchronized (Breakpoint.class) {
 			id = ++instanceCount;	
@@ -61,13 +67,40 @@ public class Breakpoint {
 	public void setHitCount(boolean isHitCount) {
 		this.isHitCount = isHitCount;
 	}
+	/** When it stops, for the Breakpoints tables: "when [ $i -gt 3 ]", "from hit 5", both, or "" (every time). */
+	public String stopsText() {
+		String when = hasCondition() ? "when "+condition.trim() : "";
+		String hit = hasHitCount() ? "from hit "+targetHitCount : "";
+		return when.isEmpty() || hit.isEmpty() ? when+hit : when+", "+hit;
+	}
+
+	/** What the hit count means, for the dialogs' tooltips. */
+	public static final String HIT_COUNT_HINT = "Counts the times the line is reached (only those when the expression is true, "
+			+ "if there is one) and stops on hit number N and every hit after it";
+
+	/** A condition is set (and not blank). */
+	public boolean hasCondition() {
+		return isConditional && condition != null && !condition.isBlank();
+	}
+
+	/** A hit count is set. */
+	public boolean hasHitCount() {
+		return isHitCount && targetHitCount > 0;
+	}
+
+	/**
+	 * A hit: the line was reached with the breakpoint on (and its condition, if it has one, true).
+	 * Counts it, as Loupe's BreakpointTable.hit does.
+	 * @return true if it's to stop: there's no hit count, or this is hit number N or one after it
+	 */
+	public boolean countHit() {
+		actualHitCount++;
+		return !hasHitCount() || actualHitCount >= targetHitCount;
+	}
+
+	/** @param incHitCount not used any more: a hit is counted by {@link #countHit()} */
 	public boolean isEnabled(boolean incHitCount) {
-		boolean ret = enabled;
-		if( enabled && incHitCount && targetHitCount>0) {
-			ret = ++actualHitCount == targetHitCount;
-		}
-		
-		return ret;
+		return enabled;
 	}
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;

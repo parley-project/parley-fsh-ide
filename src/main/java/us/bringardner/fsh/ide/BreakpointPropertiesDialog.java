@@ -14,6 +14,7 @@ package us.bringardner.fsh.ide;
 
 import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.ide.core.BreakpointHelp;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -24,21 +25,21 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.border.EmptyBorder;
 
 public class BreakpointPropertiesDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 	private final JPanel contentPanel = new JPanel();
-	private JTextField hitCountTextField;
+	/** the hit number (1 or more, as the JavaFX dialog's spinner) */
+	private JSpinner hitCountTextField;
 	private boolean cancel;
 	private JTextArea conditionalTextArea;
 	private JCheckBox enabledCheckBox;
@@ -69,7 +70,8 @@ public class BreakpointPropertiesDialog extends JDialog {
 	 * Create the dialog.
 	 */
 	public BreakpointPropertiesDialog() {
-		setBounds(100, 100, 211, 249);
+		// (wide enough for OK, Delete and Cancel in a row)
+		setBounds(100, 100, 290, 249);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -79,43 +81,67 @@ public class BreakpointPropertiesDialog extends JDialog {
 		enabledCheckBox.setBounds(6, 6, 128, 23);
 		contentPanel.add(enabledCheckBox);
 
-		hitCountCheckBox = new JCheckBox("Hit Count");
+		// how the condition and the hit count stop it (the Debug Adapter Protocol's rules)
+		JButton infoButton = new JButton(new javax.swing.ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/info.png")));
+		infoButton.setToolTipText(BreakpointHelp.TITLE);
+		infoButton.setBounds(246, 4, 28, 26);
+		infoButton.addActionListener(e->showHelp(this));
+		contentPanel.add(infoButton);
+
+		hitCountCheckBox = new JCheckBox("Stop from hit number");
+		hitCountCheckBox.setToolTipText(Breakpoint.HIT_COUNT_HINT);
 		hitCountCheckBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				hitCountTextField.setVisible(hitCountCheckBox.isSelected());
 			}
 		});
-		hitCountCheckBox.setBounds(6, 42, 128, 23);
+		hitCountCheckBox.setBounds(6, 42, 180, 23);
 		contentPanel.add(hitCountCheckBox);
 
-		hitCountTextField = new JTextField();
-		hitCountTextField.setHorizontalAlignment(SwingConstants.RIGHT);
+		hitCountTextField = new JSpinner(new SpinnerNumberModel(1, 1, 1_000_000, 1));
+		hitCountTextField.setToolTipText(Breakpoint.HIT_COUNT_HINT);
 		hitCountTextField.setVisible(false);
-		hitCountTextField.setBounds(113, 41, 56, 26);
+		hitCountTextField.setBounds(190, 41, 84, 26);
 		contentPanel.add(hitCountTextField);
-		hitCountTextField.setColumns(10);
 
-		conditionalCheckBox = new JCheckBox("Conditional");
+		conditionalCheckBox = new JCheckBox("Stop when the expression is true");
 		conditionalCheckBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				conditionalTextArea.setVisible(conditionalCheckBox.isSelected());
+				setConditionEnabled(conditionalCheckBox.isSelected());
 			}
 		});
-		conditionalCheckBox.setBounds(6, 75, 128, 23);
+		conditionalCheckBox.setBounds(6, 75, 268, 23);
 		contentPanel.add(conditionalCheckBox);
 
-		conditionalTextArea = new JTextArea();
-		conditionalTextArea.setBounds(6, 110, 173, 71);
-		conditionalTextArea.setVisible(false);
+		conditionalTextArea = new JTextArea() {
+			private static final long serialVersionUID = 1L;
+
+			/** an example, in grey, while the box is empty (as the JavaFX dialog's prompt) */
+			@Override
+			protected void paintComponent(java.awt.Graphics g) {
+				super.paintComponent(g);
+				if( getText().isEmpty()) {
+					java.awt.Insets in = getInsets();
+					g.setColor(java.awt.Color.GRAY);
+					g.setFont(getFont());
+					g.drawString(Breakpoint.CONDITION_EXAMPLE, in.left+2, in.top+g.getFontMetrics().getAscent());
+				}
+			}
+		};
+		conditionalTextArea.setToolTipText("A command, as for if: the breakpoint stops when it succeeds (e.g. "+Breakpoint.CONDITION_EXAMPLE+")");
+		conditionalTextArea.setBounds(6, 110, 268, 71);
+		// always shown, as in the JavaFX dialog; it can be typed in when the box above is checked
+		setConditionEnabled(false);
+		conditionalTextArea.setLineWrap(true);
+		conditionalTextArea.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.LIGHT_GRAY));
 		contentPanel.add(conditionalTextArea);
 
 		JPanel buttonPane = new JPanel();
 		buttonPane.setLayout(new FlowLayout(FlowLayout.CENTER));
 		getContentPane().add(buttonPane, BorderLayout.SOUTH);
 
-		JButton okButton = new JButton("");
+		JButton okButton = new JButton("OK");
 		okButton.setToolTipText("Save");
-		okButton.setIcon(new ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/smile20x20.png")));
 		okButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dispose();
@@ -125,9 +151,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 		getRootPane().setDefaultButton(okButton);
 
 
-		JButton cancelButton = new JButton("");
-		cancelButton.setToolTipText("Cancel");
-		cancelButton.setIcon(new ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/cancel.png")));
+		JButton cancelButton = new JButton("Cancel");
 		cancelButton.addActionListener(new ActionListener() {
 			
 
@@ -140,16 +164,13 @@ public class BreakpointPropertiesDialog extends JDialog {
 		horizontalStrut = Box.createHorizontalStrut(20);
 		buttonPane.add(horizontalStrut);
 		
-		deleteButton = new JButton("");
-		deleteButton.setToolTipText("Delete");
+		deleteButton = new JButton("Delete");
 		deleteButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				delete = true;
 				dispose();
 			}
 		});
-		deleteButton.setIcon(new ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/trashcan-red-20x22.png")));
-		deleteButton.setSelectedIcon(null);
 		buttonPane.add(deleteButton);
 		
 		Component horizontalStrut_1 = Box.createHorizontalStrut(20);
@@ -184,11 +205,11 @@ public class BreakpointPropertiesDialog extends JDialog {
 		cancel = false;
 		enabledCheckBox.setSelected(bp.isEnabled(false));
 		hitCountCheckBox.setSelected(bp.isHitCount());
-		hitCountTextField.setText(""+bp.getHitCount());
+		hitCountTextField.setValue(Math.max(1, bp.getHitCount()));
 		hitCountTextField.setVisible(bp.isHitCount());
 		conditionalCheckBox.setSelected(bp.isConditional());
 		conditionalTextArea.setText(bp.getCondition());
-		conditionalTextArea.setVisible(bp.isConditional());
+		setConditionEnabled(bp.isConditional());
 		setModal(true);
 		setLocation(x, y);
 		setVisible(true);
@@ -196,7 +217,13 @@ public class BreakpointPropertiesDialog extends JDialog {
 			bp.setEnabled(enabledCheckBox.isSelected());
 			bp.setHitCount(hitCountCheckBox.isSelected());
 			if(hitCountCheckBox.isSelected() ) {
-				bp.setHitCount(Integer.parseInt(hitCountTextField.getText().trim()));
+				try {
+					// (what was typed, if it wasn't committed with Enter)
+					hitCountTextField.commitEdit();
+				} catch (java.text.ParseException e) {
+					// not a number: the last good one stays
+				}
+				bp.setHitCount((Integer) hitCountTextField.getValue());
 			} else {
 				bp.setHitCount(-1);
 			}
@@ -205,5 +232,34 @@ public class BreakpointPropertiesDialog extends JDialog {
 		}
 		
 		return !cancel;
+	}
+
+	/** The condition box can be typed in, or (greyed, as the JavaFX dialog's) not. */
+	private void setConditionEnabled(boolean on) {
+		conditionalTextArea.setEnabled(on);
+		conditionalTextArea.setBackground(on ? java.awt.Color.WHITE : new java.awt.Color(0xEEEEEE));
+	}
+
+	/**
+	 * The info button: how a breakpoint's condition and hit count stop it, as the Debug Adapter
+	 * Protocol says, with the specification's reference (and a button that opens it).
+	 */
+	static void showHelp(java.awt.Component parent) {
+		javax.swing.JTextArea text = new javax.swing.JTextArea(BreakpointHelp.TEXT, 24, 60);
+		text.setEditable(false);
+		text.setLineWrap(true);
+		text.setWrapStyleWord(true);
+		text.setCaretPosition(0);
+		Object[] options = {"Open the Specification", "OK"};
+		int choice = javax.swing.JOptionPane.showOptionDialog(parent, new javax.swing.JScrollPane(text), BreakpointHelp.TITLE,
+				javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.INFORMATION_MESSAGE,
+				new javax.swing.ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/info@2x.png")), options, options[1]);
+		if( choice == 0 ) {
+			try {
+				java.awt.Desktop.getDesktop().browse(new java.net.URI(BreakpointHelp.SPEC_URL));
+			} catch (Exception e) {
+				javax.swing.JOptionPane.showMessageDialog(parent, "Couldn't open "+BreakpointHelp.SPEC_URL+"\n"+e.getMessage());
+			}
+		}
 	}
 }

@@ -225,21 +225,31 @@ public class DebugSession extends DebugContext {
 			return false;
 		}
 		Breakpoint bp = breakpoints.apply(line);
-		boolean ret = bp !=null && bp.isEnabled(true);
-		if( ret && bp.isConditional()) {
-			evaluating = true;
-			try {
-				// a command, such as [ $i -gt 3 ]: true if it succeeds
-				ret = Executor.test(ctx, bp.getCondition());
-			} catch (Exception e) {
-				if( bp.reportConditionError()) {
-					listener.conditionFailed(bp, line, e);
-				}
-			} finally {
-				evaluating = false;
-			}
+		if( bp == null || !bp.isEnabled(false)) {
+			return false;
 		}
-		return ret;
+		// as Loupe (fsh-loupe's FshBackend and parley-loupe's BreakpointTable) and the Debug
+		// Adapter Protocol: the condition first; only a hit where it's true counts; then the
+		// hit count (stop on hit number N and every one after)
+		if( bp.hasCondition() && !conditionHolds(bp, line, ctx)) {
+			return false;
+		}
+		return bp.countHit();
+	}
+
+	/** True if the condition (a command, such as [ $i -gt 3 ]) succeeds; an error is true, as Loupe's, reported once a run. */
+	private boolean conditionHolds(Breakpoint bp, int line, ShellContext ctx) {
+		evaluating = true;
+		try {
+			return Executor.test(ctx, bp.getCondition());
+		} catch (Exception e) {
+			if( bp.reportConditionError()) {
+				listener.conditionFailed(bp, line, e);
+			}
+			return true;
+		} finally {
+			evaluating = false;
+		}
 	}
 
 	@Override

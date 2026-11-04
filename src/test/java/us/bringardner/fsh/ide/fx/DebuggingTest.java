@@ -184,6 +184,30 @@ public class DebuggingTest {
 		assertTrue(Fx.call(()->w.debugPanel().breakpoints().isEmpty()));
 	}
 
+	/** The Breakpoints tab's Edit... button: the dialog a double-click opens, for the selected one. */
+	@Test
+	public void editButtonOpensTheSelectedBreakpointsDialog() throws Exception {
+		TestWindow w = window("echo a\necho b\n");
+		Breakpoint bp = Fx.call(()->w.editor().addBreakpoint(1));
+		assertTrue(Fx.call(()->w.debugPanel().editBreakpointButton().isDisabled()));
+		assertEquals(Breakpoint.EDIT_HINT, Fx.call(()->w.debugPanel().editBreakpointButton().getTooltip().getText()));
+		Fx.run(()->w.debugPanel().breakpointTable().getSelectionModel().select(bp));
+		assertFalse(Fx.call(()->w.debugPanel().editBreakpointButton().isDisabled()));
+		w.dialogResult = BreakpointDialog.Result.DELETE;
+		Fx.run(()->w.debugPanel().editBreakpointButton().fire());
+		assertTrue(Fx.call(()->w.editor().getBreakpoints().isEmpty()));
+	}
+
+	/** The breakpoint dialog's info button, and what it tells: the spec's rules and its reference. */
+	@Test
+	public void theBreakpointDialogHasAnInfoButton() throws Exception {
+		TestWindow w = window("echo a\n");
+		Breakpoint bp = Fx.call(()->w.editor().addBreakpoint(0));
+		assertTrue(Fx.call(()->new BreakpointDialog(bp).infoButton.getGraphic() != null));
+		assertTrue(us.bringardner.fsh.ide.core.BreakpointHelp.TEXT.contains(us.bringardner.fsh.ide.core.BreakpointHelp.SPEC_URL));
+		assertTrue(us.bringardner.fsh.ide.core.BreakpointHelp.TEXT.contains("hitCondition should be evaluated only if the condition is met"));
+	}
+
 	@Test
 	public void syntaxErrorsAreMarked() throws Exception {
 		TestWindow w = window("echo a\n");

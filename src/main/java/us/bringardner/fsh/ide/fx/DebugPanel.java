@@ -80,6 +80,9 @@ public class DebugPanel extends TabPane {
 	private Consumer<Variable> onEditVariable = v->{};
 	private Consumer<Breakpoint> onBreakpointChanged = b->{};
 	private Consumer<Breakpoint> onEditBreakpoint = b->{};
+	/** what the Breakpoints tab, its rows and its Edit... button say a breakpoint can be (as the Swing IDE's) */
+	static final String EDIT_BREAKPOINT_HINT = Breakpoint.EDIT_HINT;
+	private final javafx.scene.control.Button editBreakpoint = new javafx.scene.control.Button("Edit...");
 
 	/** Asks for a watchpoint: the variable (filled in) and Read / Write. Empty if canceled. */
 	interface WatchpointAsker {
@@ -127,8 +130,23 @@ public class DebugPanel extends TabPane {
 					onEditBreakpoint.accept(row.getItem());
 				}
 			});
+			// (only on a row with a breakpoint)
+			javafx.scene.control.Tooltip hint = new javafx.scene.control.Tooltip(EDIT_BREAKPOINT_HINT);
+			row.itemProperty().addListener((o, was, is)->row.setTooltip(is == null ? null : hint));
 			return row;
 		});
+		// the dialog a double-click opens, for the selected breakpoint: so the table shows it can be changed
+		editBreakpoint.setTooltip(new javafx.scene.control.Tooltip(EDIT_BREAKPOINT_HINT));
+		editBreakpoint.disableProperty().bind(breakpointTable.getSelectionModel().selectedItemProperty().isNull());
+		editBreakpoint.setOnAction(e->{
+			Breakpoint bp = breakpointTable.getSelectionModel().getSelectedItem();
+			if( bp != null ) {
+				onEditBreakpoint.accept(bp);
+			}
+		});
+		HBox breakpointButtons = new HBox(8, editBreakpoint);
+		breakpointButtons.setPadding(new Insets(4));
+		BorderPane breakpointPane = new BorderPane(breakpointTable, breakpointButtons, null, null, null);
 
 		// watchpoints
 		watchpointTable.getColumns().add(checkColumn("On", Watchpoint::isEnabled, Watchpoint::setEnabled, 36));
@@ -169,7 +187,8 @@ public class DebugPanel extends TabPane {
 		user.setTooltip(new javafx.scene.control.Tooltip("The script's own variables, its loop variables and $1, $2 ..."));
 		Tab fsh = new Tab("fsh Variables", fshVariables.pane);
 		fsh.setTooltip(new javafx.scene.control.Tooltip("The shell's own variables, the environment's, and $0"));
-		Tab bps = new Tab("Breakpoints", breakpointTable);
+		Tab bps = new Tab("Breakpoints", breakpointPane);
+		bps.setTooltip(new javafx.scene.control.Tooltip(EDIT_BREAKPOINT_HINT));
 		watches = new Tab("Watchpoints", watchPane);
 		watches.setTooltip(new javafx.scene.control.Tooltip("Stop when the script reads or writes a variable"));
 		Tab logTab = new Tab("Log", log);
@@ -250,13 +269,8 @@ public class DebugPanel extends TabPane {
 
 	/** How a breakpoint stops: its condition, hit count, or always (with its code). */
 	static String describe(Breakpoint bp) {
-		if( bp.isConditional() && !bp.getCondition().isBlank()) {
-			return "when "+bp.getCondition();
-		}
-		if( bp.isHitCount() && bp.getHitCount() > 0 ) {
-			return "on hit "+bp.getHitCount();
-		}
-		return bp.getCode();
+		String stops = bp.stopsText();
+		return stops.isEmpty() ? bp.getCode() : stops;
 	}
 
 	/** Shows a paused script's variables; they can be edited until {@link #clearVariables()} or a new set. */
@@ -438,6 +452,10 @@ public class DebugPanel extends TabPane {
 
 	/** Called when a breakpoint is switched on or off here. */
 	public void setOnBreakpointChanged(Consumer<Breakpoint> handler) { onBreakpointChanged = handler; }
+
+	// for tests
+	javafx.scene.control.Button editBreakpointButton() { return editBreakpoint; }
+	TableView<Breakpoint> breakpointTable() { return breakpointTable; }
 
 	/** Called when a breakpoint is double-clicked. */
 	public void setOnEditBreakpoint(Consumer<Breakpoint> handler) { onEditBreakpoint = handler; }

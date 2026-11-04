@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import java.util.Set;
@@ -69,6 +70,24 @@ public class TestEditorBreakpoints {
 			// a line typed below it doesn't move it
 			doc.insertString(doc.getLength(), "echo e\n", null);
 			assertSame(bp, editor.getBreakpoint(2));
+		});
+	}
+
+	/** The Breakpoints tab shows a breakpoint can be changed: its tooltip, and Edit... once one is selected. */
+	@Test
+	public void theBreakpointsTabHasAnEditButton() throws Exception {
+		onEdt(()->{
+			EditorPanel editor = new EditorPanel();
+			editor.setText("echo a\necho b\n", null);
+			editor.addBreakpoint(1);
+			DebugVariablePanel panel = new DebugVariablePanel();
+			panel.setContext(editor, null);
+			assertEquals(1, panel.breakpointsTable().getRowCount());
+			assertEquals(Breakpoint.EDIT_HINT, panel.breakpointsTable().getToolTipText());
+			assertEquals(Breakpoint.EDIT_HINT, panel.editBreakpointButton().getToolTipText());
+			assertTrue(!panel.editBreakpointButton().isEnabled());
+			panel.breakpointsTable().setRowSelectionInterval(0, 0);
+			assertTrue(panel.editBreakpointButton().isEnabled());
 		});
 	}
 

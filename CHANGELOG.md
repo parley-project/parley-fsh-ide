@@ -4,6 +4,14 @@
 
 ### Added
 
+- The breakpoint dialog, in both IDEs, has an info button (a new info icon) that tells how the
+  condition and the hit count stop a breakpoint: what the Debug Adapter Protocol specification
+  says (SourceBreakpoint), what it means here, and the specification's reference, with a button
+  or link that opens it. The Swing dialog's condition box is always shown, as the JavaFX one's
+  (greyed until its check box is checked).
+- The Breakpoints tab, in both IDEs, shows that a breakpoint can be changed: an Edit... button
+  (for the selected breakpoint) opens the dialog a double-click does, to give it a condition or a
+  hit count or delete it, and the tab and its breakpoints say so in their tooltips.
 - The Swing IDE's Edit menu has what the JavaFX IDE's has: Find Previous (Cmd+Shift+G), Replace...
   (Cmd+Alt+F: the Find dialog with the cursor in Replace) and Complete (Ctrl+Space, the
   completion the editor already gave). The Find dialog finds as the JavaFX find bar does
@@ -52,8 +60,12 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
   and Suspend buttons show only the icon, with what each does as its tooltip, in the Swing IDE's
   order (Debug, Run, Stop, the script's settings, then Resume, Suspend, Step Into, Step Over);
   the redirect buttons have the redirect icons, before their fields; breakpoints and syntax errors in the margin are the
-  Swing IDE's breakpoint and error icons (a breakpoint that's off is faded); and the breakpoint
-  dialog's Delete, Cancel and OK buttons are its trash can, cancel and smile icons.
+  Swing IDE's breakpoint and error icons (a breakpoint that's off is faded).
+- The breakpoint dialog's buttons say Delete, Cancel and OK, in both IDEs (the Swing IDE's had
+  only a trash can, a cancel and a smile icon).
+- The breakpoint dialog's condition is "Stop when the expression is true", in both IDEs (it was
+  "Conditional" and "Stop only when this command succeeds"), and the Swing dialog's empty
+  condition box shows an example, `[ $i -gt 3 ]`, as the JavaFX one does.
 - The console matches the script editor above it: the same background, text, caret and selection
   colors, following the theme (it was white in light themes). Errors stay red; in the JavaFX IDE,
   prompts are in the comment color. In both IDEs.
@@ -112,6 +124,16 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- The IDEs' own debugger takes a breakpoint's condition and hit count as Loupe does (and the Debug
+  Adapter Protocol): the condition first, and only a hit where it's true counts; the hit count
+  then stops on hit number N and every hit after it (it stopped on the Nth hit only, and checked
+  the condition only then, so with both it stopped at most once). The dialogs say "Stop from hit
+  number" (it was "Hit Count" and "Stop only on hit number"), with a tooltip saying what's
+  counted; the Breakpoints tables show "when [ $i -gt 3 ], from hit 5". The Swing dialog's hit
+  number is a spinner, as the JavaFX one's: OK with no number, or not a number, failed.
+- The Swing IDE keeps the variables a debug run left in the Variables tables after it ends, as the
+  JavaFX IDE does, until the next debug run (with Show Debug View on, the end of the run cleared
+  them). They can't be edited then: the script is over.
 - The Swing IDE's Find dialog: Selected Lines searches the lines that were selected (it searched
   the selection, and marked matches at the wrong place), a match at the start of the script can
   be replaced, Wrap Search wraps, the label says "Case Sensitive", and closing the dialog with its
