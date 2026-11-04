@@ -41,6 +41,12 @@ public class FshIdeFx {
 		// the environment the scripts run with: a terminal's (see ShellEnvironment), got now, in the background
 		us.bringardner.fsh.ide.core.ShellEnvironment.start(problem->Platform.runLater(()->{
 			javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, problem);
+			// (over an IDE window, so it isn't behind another application's)
+			for(javafx.stage.Window w : javafx.stage.Window.getWindows()) {
+				if( w.isShowing() && a.getOwner() == null ) {
+					a.initOwner(w);
+				}
+			}
 			a.setTitle(IdeWindow.APP_NAME);
 			a.setHeaderText(null);
 			a.show();

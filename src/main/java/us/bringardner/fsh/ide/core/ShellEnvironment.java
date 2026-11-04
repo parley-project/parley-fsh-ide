@@ -56,6 +56,12 @@ public final class ShellEnvironment {
 
 	private static volatile CompletableFuture<Map<String,String>> capture;
 	private static volatile String problem;
+	/** what was done, in a sentence (see status()) */
+	private static volatile String status = "Not got: the IDE didn't ask for it.";
+	/** the shell run, or null */
+	private static volatile String shellRun;
+	/** status() has been shown in a console */
+	private static volatile boolean shown;
 
 	private ShellEnvironment() {
 	}
@@ -68,7 +74,13 @@ public final class ShellEnvironment {
 		if( capture != null ) {
 			return;
 		}
-		if( File.separatorChar == '\\' || System.getenv("SHLVL") != null ) {
+		if( File.separatorChar == '\\' ) {
+			status = "Not needed on Windows: scripts run with the IDE's own environment, which every program shares.";
+			capture = CompletableFuture.completedFuture(Map.of());
+			return;
+		}
+		if( System.getenv("SHLVL") != null ) {
+			status = "Not needed: the IDE was started from a shell (SHLVL is set), so scripts run with its environment.";
 			capture = CompletableFuture.completedFuture(Map.of());
 			return;
 		}
@@ -77,18 +89,70 @@ public final class ShellEnvironment {
 			shell = new File("/bin/zsh").canExecute() ? "/bin/zsh" : "/bin/sh";
 		}
 		String sh = shell;
+		shellRun = sh;
+		status = "Getting the environment of the login shell ("+sh+" -l -i)...";
 		capture = CompletableFuture.supplyAsync(()->{
 			try {
-				return capture(sh, TIMEOUT_SECONDS);
+				Map<String,String> env = capture(sh, TIMEOUT_SECONDS);
+				status = "Scripts run with the environment of the login shell ("+sh+" -l -i): "+env.size()+" variables.";
+				return env;
 			} catch (Exception e) {
 				problem = "Couldn't get the environment of the login shell ("+sh+"): "+e.getMessage()
 						+". Scripts run with the IDE's own environment.";
+				status = problem;
 				if( onProblem != null ) {
 					onProblem.accept(problem);
 				}
 				return Map.of();
 			}
 		});
+	}
+
+	/** What was done, in a sentence: used the login shell's environment, not needed (and why), or failed (and why). */
+	public static String status() {
+		return status;
+	}
+
+	/**
+	 * The status, the first time it's asked for (for a run's console: once, so the user sees what
+	 * environment scripts get); null after.
+	 */
+	public static synchronized String statusOnce() {
+		if( shown || capture == null ) {
+			return null;
+		}
+		shown = true;
+		// (waits for it, if the shell is still running)
+		forScripts();
+		return status;
+	}
+
+	/** Help > Script Environment...: the status, the shell, and the variables scripts get. */
+	public static String report() {
+		Map<String,String> env = forScripts();
+		StringBuilder b = new StringBuilder(status).append("\n\n");
+		if( shellRun != null ) {
+			b.append("Shell: ").append(shellRun).append(" -l -i -c (").append(READER).append("=1 while it runs)\n");
+		}
+		String fshEnv = env.containsKey("FSH_ENV") ? env.get("FSH_ENV") : System.getenv("FSH_ENV");
+		b.append("FSH_ENV: ").append(fshEnv == null || fshEnv.isEmpty() ? "not set (no startup file for scripts)" : fshEnv).append("\n\n");
+		Map<String,String> all = new java.util.TreeMap<>(System.getenv());
+		all.putAll(env);
+		b.append(env.isEmpty() ? "The variables scripts get (the IDE's own):\n" : "The variables scripts get:\n");
+		String path = all.get("PATH");
+		if( path != null ) {
+			b.append("\nPATH, in the order it's searched:\n");
+			for(String dir : path.split(File.pathSeparator)) {
+				b.append("  ").append(dir).append("\n");
+			}
+		}
+		b.append("\n");
+		for(Map.Entry<String,String> e : all.entrySet()) {
+			if( !e.getKey().equals("PATH")) {
+				b.append(e.getKey()).append('=').append(e.getValue()).append("\n");
+			}
+		}
+		return b.toString();
 	}
 
 	/** Why the environment couldn't be had, or null. */
@@ -116,6 +180,9 @@ public final class ShellEnvironment {
 	static synchronized void setForTests(Map<String,String> env) {
 		capture = env == null ? null : CompletableFuture.completedFuture(env);
 		problem = null;
+		shown = false;
+		shellRun = null;
+		status = env == null ? "Not got: the IDE didn't ask for it." : "Scripts run with the environment of the login shell (a test's): "+env.size()+" variables.";
 	}
 
 	/** Runs shell as a login, interactive shell and returns the environment it has. */

@@ -200,8 +200,12 @@ public final class LoupeSession implements Closeable {
 		args.put("source", code);
 		args.put("name", name);
 		args.put("args", arguments);
-		// the environment a terminal would give it (see ShellEnvironment)
+		// the environment a terminal would give it (see ShellEnvironment), and, once, what it is
 		Map<String,String> env = ShellEnvironment.forScripts();
+		String status = ShellEnvironment.statusOnce();
+		if( status != null ) {
+			listener.output("stderr", "fsh-ide: "+status+" (Help > Script Environment... says more)\n");
+		}
 		if( !env.isEmpty()) {
 			args.put("env", env);
 		}

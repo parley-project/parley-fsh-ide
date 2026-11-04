@@ -183,6 +183,11 @@ public class ScriptRun {
 		Exception error = null;
 		try {
 			if( !code.isBlank()) {
+				// what environment scripts get, once (in the IDE's console, not a redirect's file)
+				String status = ShellEnvironment.statusOnce();
+				if( status != null ) {
+					err.println("fsh-ide: "+status+" (Help > Script Environment... says more)");
+				}
 				Console console = createConsole();
 				FshList args = new FshList();
 				args.add(new Argument(scriptName));

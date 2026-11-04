@@ -37,6 +37,26 @@ public class TestShellEnvironment {
 		assertThrows(IllegalArgumentException.class, ()->ShellEnvironment.parse("no marker"));
 	}
 
+	/** What the IDE says: once in a run's console, and in full in Help > Script Environment.... */
+	@Test
+	public void saysWhatItDid() {
+		try {
+			ShellEnvironment.setForTests(null);
+			// never started (as in a test): nothing to say in a console
+			assertEquals(null, ShellEnvironment.statusOnce());
+			ShellEnvironment.setForTests(Map.of("PATH", "/a/bin:/b/bin", "FSH_ENV", "/x/env.fsh", "WHO", "tony"));
+			String once = ShellEnvironment.statusOnce();
+			assertTrue(once.startsWith("Scripts run with the environment of the login shell"), once);
+			assertEquals(null, ShellEnvironment.statusOnce());
+			String report = ShellEnvironment.report();
+			assertTrue(report.contains("FSH_ENV: /x/env.fsh"), report);
+			assertTrue(report.contains("PATH, in the order it's searched:\n  /a/bin\n  /b/bin\n"), report);
+			assertTrue(report.contains("WHO=tony"), report);
+		} finally {
+			ShellEnvironment.setForTests(null);
+		}
+	}
+
 	/** bash as a login shell: what its profile exports is in the environment, what it prints isn't. */
 	@DisabledOnOs(OS.WINDOWS)
 	@Test

@@ -373,7 +373,31 @@ public class IdeWindow {
 				new SeparatorMenuItem(), useSelection, useAdapter, new SeparatorMenuItem(),
 				item("Clear Console", "Shortcut+K", console::clear));
 
+		// what environment scripts get (see ShellEnvironment)
+		menus.help.getItems().add(item("Script Environment...", null, this::showScriptEnvironment));
+
 		return menus.build(stage, run);
+	}
+
+	/** Help > Script Environment...: what environment scripts run with, and why. */
+	void showScriptEnvironment() {
+		// (it may wait for the login shell)
+		new Thread(()->{
+			String report = us.bringardner.fsh.ide.core.ShellEnvironment.report();
+			Platform.runLater(()->{
+				javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+				a.initOwner(stage);
+				a.setTitle("Script Environment");
+				a.setHeaderText("Script Environment");
+				javafx.scene.control.TextArea text = new javafx.scene.control.TextArea(report);
+				text.setEditable(false);
+				text.setPrefColumnCount(80);
+				text.setPrefRowCount(28);
+				a.getDialogPane().setContent(text);
+				a.setResizable(true);
+				a.show();
+			});
+		}, "script-environment").start();
 	}
 
 	/** The application's name: the macOS application menu and Help > About show it. */
