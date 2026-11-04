@@ -28,6 +28,9 @@ public class Breakpoint {
 	private volatile boolean conditionErrorReported=false;
 	
 	
+	/** How a breakpoint is changed, in either IDE's Breakpoints tab (its tooltip, its rows', its Edit... button's). */
+	public static final String EDIT_HINT = "Double-click a breakpoint (or select it and click Edit...) to give it a condition or a hit count, or to delete it";
+
 	public Breakpoint() {
 		synchronized (Breakpoint.class) {
 			id = ++instanceCount;	

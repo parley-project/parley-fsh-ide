@@ -278,6 +278,27 @@ public class DebugVariablePanel extends JPanel  {
 		}
 	}
 
+	/** what the Breakpoints tab, its table and its Edit... button say a breakpoint can be */
+	static final String EDIT_BREAKPOINT_HINT = Breakpoint.EDIT_HINT;
+	private JTable breakpointsTable;
+	private final JButton editBreakpointButton = new JButton("Edit...");
+
+	/** The breakpoint's dialog (Edit... or a double-click), at x, y on the screen. */
+	private void editBreakpoint(int row, int x, int y) {
+		if( row < 0 || row >= breakpoints.size()) {
+			return;
+		}
+		Breakpoint bp = breakpoints.get(row);
+		BreakpointPropertiesDialog d = new BreakpointPropertiesDialog();
+		d.showDialog(bp, breakpointsTable, x, y);
+		if( d.isDelete()) {
+			// the editor's breakpoint listener refreshes this table
+			editorPane.removeBreakpoint(bp);
+		} else {
+			breakpointsTableModel.fireTableDataChanged();
+		}
+	}
+
 	private String [] breakpointsColumnNames = {"Enabled","Line",""};
 	private List<Breakpoint> breakpoints = new ArrayList<>();
 	private DefaultTableModel breakpointsTableModel = new DefaultTableModel() {
@@ -422,24 +443,17 @@ public class DebugVariablePanel extends JPanel  {
 		JScrollPane breakpointsScrollPane = new JScrollPane();
 		JPanel panel = new JPanel();
 
-		tabbedPane.addTab("Breakpoints", null, panel, null);
+		tabbedPane.addTab("Breakpoints", null, panel, EDIT_BREAKPOINT_HINT);
 		panel.setLayout(new BorderLayout(0, 0));
 
 		JTable btable = new JTable(breakpointsTableModel);
+		breakpointsTable = btable;
+		btable.setToolTipText(EDIT_BREAKPOINT_HINT);
 		btable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if( e.getClickCount() == 2) {
-					int row = btable.getSelectedRow();
-					Breakpoint bp = breakpoints.get(row);
-					BreakpointPropertiesDialog d = new BreakpointPropertiesDialog();
-					d.showDialog(bp, btable, e.getXOnScreen(), e.getYOnScreen());
-					if( d.isDelete()) {
-						// the editor's breakpoint listener refreshes this table
-						editorPane.removeBreakpoint(bp);
-					} else {
-						breakpointsTableModel.fireTableDataChanged();
-					}
+				if( e.getClickCount() == 2 && btable.getSelectedRow() >= 0 ) {
+					editBreakpoint(btable.getSelectedRow(), e.getXOnScreen(), e.getYOnScreen());
 				}
 			}
 		});
@@ -448,6 +462,16 @@ public class DebugVariablePanel extends JPanel  {
 
 		JPanel panel_1 = new JPanel();
 		panel.add(panel_1, BorderLayout.NORTH);
+
+		// the dialog a double-click opens, for the selected breakpoint: so the table shows it can be changed
+		editBreakpointButton.setToolTipText(EDIT_BREAKPOINT_HINT);
+		editBreakpointButton.setEnabled(false);
+		btable.getSelectionModel().addListSelectionListener(e->editBreakpointButton.setEnabled(btable.getSelectedRow() >= 0));
+		editBreakpointButton.addActionListener(e->{
+			java.awt.Point p = editBreakpointButton.getLocationOnScreen();
+			editBreakpoint(btable.getSelectedRow(), p.x, p.y+editBreakpointButton.getHeight());
+		});
+		panel_1.add(editBreakpointButton);
 
 		JButton btnNewButton = new JButton("Enable All");
 		btnNewButton.addActionListener(new ActionListener() {
@@ -687,4 +711,6 @@ public class DebugVariablePanel extends JPanel  {
 	JTable userTable() { return userVariables.table; }
 	JTable fshTable() { return fshVariables.table; }
 	JTable watchpointsTable() { return watchpointsTable; }
+	JTable breakpointsTable() { return breakpointsTable; }
+	JButton editBreakpointButton() { return editBreakpointButton; }
 }

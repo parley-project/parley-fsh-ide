@@ -4,6 +4,9 @@
 
 ### Added
 
+- The Breakpoints tab, in both IDEs, shows that a breakpoint can be changed: an Edit... button
+  (for the selected breakpoint) opens the dialog a double-click does, to give it a condition or a
+  hit count or delete it, and the tab and its breakpoints say so in their tooltips.
 - The Swing IDE's Edit menu has what the JavaFX IDE's has: Find Previous (Cmd+Shift+G), Replace...
   (Cmd+Alt+F: the Find dialog with the cursor in Replace) and Complete (Ctrl+Space, the
   completion the editor already gave). The Find dialog finds as the JavaFX find bar does
