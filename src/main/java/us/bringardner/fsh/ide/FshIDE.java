@@ -332,6 +332,13 @@ public class FshIDE extends JFrame  {
 	 * Launch the application.
 	 */
 	public static void main(String [] args) {
+		// the environment the scripts run with: a terminal's (see ShellEnvironment), got now, in the background
+		us.bringardner.fsh.ide.core.ShellEnvironment.start(problem->SwingUtilities.invokeLater(()->{
+			JOptionPane pane = new JOptionPane(problem, JOptionPane.WARNING_MESSAGE);
+			javax.swing.JDialog d = pane.createDialog(null, APP_NAME);
+			d.setModal(false);
+			d.setVisible(true);
+		}));
 		// on macOS each window's menus at the top of the screen, under the application's name
 		StandardMenus.useScreenMenuBar(APP_NAME);
 		// A GraalVM native image has no java.home, and AWT needs one (font configuration): use the
@@ -467,7 +474,6 @@ public class FshIDE extends JFrame  {
 
 	private JCheckBoxMenuItem autoExecuteCheckItem;
 
-	private JCheckBoxMenuItem profileCheckItem;
 
 	private Component horizontalStrut;
 
@@ -720,7 +726,6 @@ public class FshIDE extends JFrame  {
 		useSelectedCodeCheckItem.setSelected(true);
 		autoExecuteCheckItem = new JCheckBoxMenuItem("Run When Opened");
 		autoExecuteCheckItem.setSelected(false);
-		profileCheckItem = new JCheckBoxMenuItem("Profile");
 
 		showDebugViewItem.addActionListener(e->actionShowDebugView());
 
@@ -1121,7 +1126,6 @@ public class FshIDE extends JFrame  {
 		run.addSeparator();
 		run.add(useSelectedCodeCheckItem);
 		run.add(autoExecuteCheckItem);
-		run.add(profileCheckItem);
 
 		menus.install(this, run);
 	}

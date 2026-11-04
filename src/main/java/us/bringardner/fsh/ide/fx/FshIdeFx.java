@@ -38,6 +38,13 @@ public class FshIdeFx {
 
 	public static void main(String[] args) {
 		quietClassPathWarning();
+		// the environment the scripts run with: a terminal's (see ShellEnvironment), got now, in the background
+		us.bringardner.fsh.ide.core.ShellEnvironment.start(problem->Platform.runLater(()->{
+			javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, problem);
+			a.setTitle(IdeWindow.APP_NAME);
+			a.setHeaderText(null);
+			a.show();
+		}));
 		// the theme and font chosen in Settings... (both IDEs keep their preferences in the same place)
 		us.bringardner.fx.dialog.SettingsDialog.load(Preferences.userRoot().node(IdeWindow.PREFERENCES_NODE));
 		Platform.setImplicitExit(true);

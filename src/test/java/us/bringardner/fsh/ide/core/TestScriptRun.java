@@ -84,6 +84,25 @@ public class TestScriptRun {
 		return out.toString(StandardCharsets.UTF_8);
 	}
 
+	/**
+	 * The environment a terminal would give (ShellEnvironment): the script and its programs have
+	 * it; and FSH_ENV's file runs first, as for fsh script.
+	 */
+	@Test
+	public void runsWithTheShellEnvironmentAndFshEnv() throws Exception {
+		Path rc = dir.resolve("env.fsh");
+		Files.writeString(rc, "greet() { echo \"hello $WHO\"; }\n");
+		ShellEnvironment.setForTests(java.util.Map.of("WHO", "tony", "FSH_ENV", rc.toString()));
+		try {
+			CompletableFuture<Result> result = new CompletableFuture<>();
+			Result r = runToEnd(run("greet\nsh -c 'echo child $WHO'\n", result), result);
+			assertNull(r.error());
+			assertEquals("hello tony\nchild tony\n", out());
+		} finally {
+			ShellEnvironment.setForTests(null);
+		}
+	}
+
 	@Test
 	public void runsWithArguments() throws Exception {
 		CompletableFuture<Result> result = new CompletableFuture<>();

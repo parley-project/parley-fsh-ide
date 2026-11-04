@@ -190,6 +190,17 @@ public class ScriptRun {
 					args.add( new Argument(a));
 				}
 				console.setPositionalParameters(true, args);
+				// the startup file a script has, as fsh script: FSH_ENV's (before the debugger is
+				// on: it doesn't stop in it)
+				try {
+					console.runStartupFiles(us.bringardner.fsh.Invocation.parse());
+				} catch (us.bringardner.fsh.Invocation.Bad e) {
+					// (no words: nothing to be wrong)
+				}
+				if( debug != null ) {
+					debug.setCurrentState(RunState.Running);
+					console.setDebugContext(debug);
+				}
 				sc = new ShellContext(console);
 
 				// (with cancel's lock: a cancel before this sees no job, and the job doesn't start)
@@ -224,6 +235,10 @@ public class ScriptRun {
 
 	private Console createConsole() throws IOException {
 		Console console = new Console();
+		// the environment a terminal would give it (see ShellEnvironment)
+		for(java.util.Map.Entry<String,String> e : ShellEnvironment.forScripts().entrySet()) {
+			console.setEnvironmentVariable(e.getKey(), e.getValue());
+		}
 		console.setStdIn(in);
 		console.setStdOut(out);
 		console.setStdErr(err);
@@ -245,10 +260,6 @@ public class ScriptRun {
 			PrintStream ferr = new PrintStream(file.getOutputStream(), true, StandardCharsets.UTF_8);
 			opened.add(ferr);
 			console.setStdErr(ferr);
-		}
-		if( debug != null ) {
-			debug.setCurrentState(RunState.Running);
-			console.setDebugContext(debug);
 		}
 		return console;
 	}

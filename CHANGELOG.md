@@ -4,6 +4,16 @@
 
 ### Added
 
+- Scripts run with the environment a terminal would give them, in both IDEs and through Loupe.
+  An IDE opened from the Finder or the Dock (or some Linux desktops) gets a small environment, not
+  the one a terminal's login shell makes from your startup files, so a script that found its
+  programs in a terminal didn't in the IDE. As JetBrains' IDEs and VS Code do, the IDE runs your
+  `$SHELL` once as it starts (`-l -i -c`, in the background, for up to 15 seconds) and runs scripts
+  with the environment variables it has: only exported variables, not aliases or functions, as a
+  script from a terminal has. `FSH_IDE_ENVIRONMENT_READER` is set while it runs, for a startup file
+  to skip what needs a terminal. If it fails the IDE says so, and scripts run with its own. Not on
+  Windows, nor when the IDE was started from a shell.
+- As `fsh script` does, a script runs the file `FSH_ENV` names first (not in the debugger).
 - The breakpoint dialog, in both IDEs, has an info button (a new info icon) that tells how the
   condition and the hit count stop a breakpoint: what the Debug Adapter Protocol specification
   says (SourceBreakpoint), what it means here, and the specification's reference, with a button
@@ -51,6 +61,7 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Changed
 
+- The Swing IDE's Run menu has no Profile item: it did nothing.
 - The Swing IDE's Stop is the JavaFX IDE's: a Stop button after Run, enabled while a script runs
   or is being debugged, stops it. Run no longer turns into a stop button while a script runs, and
   Debug and Run stay in the toolbar (disabled) while debugging instead of disappearing.
