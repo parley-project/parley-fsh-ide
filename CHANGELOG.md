@@ -112,6 +112,9 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- The Swing IDE keeps the variables a debug run left in the Variables tables after it ends, as the
+  JavaFX IDE does, until the next debug run (with Show Debug View on, the end of the run cleared
+  them). They can't be edited then: the script is over.
 - The Swing IDE's Find dialog: Selected Lines searches the lines that were selected (it searched
   the selection, and marked matches at the wrong place), a match at the start of the script can
   be replaced, Wrap Search wraps, the label says "Case Sensitive", and closing the dialog with its

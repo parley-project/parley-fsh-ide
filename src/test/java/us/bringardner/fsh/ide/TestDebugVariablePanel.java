@@ -59,6 +59,23 @@ public class TestDebugVariablePanel {
 		});
 	}
 
+	/** After a debug run: the variables as the script left them, with no context (it's over). */
+	@Test
+	public void aFinishedScriptsVariablesStay() throws Exception {
+		SwingUtilities.invokeAndWait(()->{
+			ShellContext ctx = new ShellContext(new Console());
+			ctx.setVariable("count", "3");
+			DebugVariablePanel panel = new DebugVariablePanel();
+			panel.setContext(null, null, ctx.getVariables());
+			assertTrue(names(panel.userTable()).contains("count"), names(panel.userTable()).toString());
+			assertTrue(names(panel.fshTable()).contains("$0"), names(panel.fshTable()).toString());
+			// until they're cleared, for the next run
+			panel.setContext(null, null);
+			assertEquals(0, panel.userTable().getModel().getRowCount());
+			assertEquals(0, panel.fshTable().getModel().getRowCount());
+		});
+	}
+
 	@Test
 	public void aLongValueMakesTheTableWiderThanTheTab() throws Exception {
 		SwingUtilities.invokeAndWait(()->{

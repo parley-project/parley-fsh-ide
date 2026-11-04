@@ -1008,7 +1008,8 @@ public class FshIDE extends JFrame  {
 		if( runState == IdeRunstate.Idel) {
 			boolean b = showDebugViewItem.isSelected();
 			if( b ) {
-				debugVariablePanel.setContext(editorPane, null);
+				// (the variables a debug run left stay, as in the JavaFX IDE, until the next one)
+				debugVariablePanel.refreshBreakpoints();
 			}
 			debugSplitPane.setVisible(b);		
 			centerSplitPane.resetToPreferredSizes();
@@ -1454,6 +1455,8 @@ public class FshIDE extends JFrame  {
 			outputTextArea.clear();
 			if( state == IdeRunstate.Debugging) {
 				debugControlPanel.setVisible(true);
+				// a new debug run: the last one's variables go
+				debugVariablePanel.setContext(editorPane, null);
 			}
 			boolean selection = useSelectedCodeCheckItem.isSelected() && code.selectedCode != null;
 			// a selection runs on its own lines, so its line numbers are the script's
@@ -1481,9 +1484,10 @@ public class FshIDE extends JFrame  {
 		}
 		logBatcher.add("exitCode = "+exitCode+"\n");
 		if( ctx != null && debugSession.isActive()) {
-			// the variables as the script left them
+			// the variables as the script left them, kept in the tables after the run (as in the
+			// JavaFX IDE); without its context, since the script is over, so they can't be edited
 			Map<String,Object> vars = ctx.getVariables();
-			SwingUtilities.invokeLater(()->debugVariablePanel.setContext(editorPane, ctx, vars));
+			SwingUtilities.invokeLater(()->debugVariablePanel.setContext(editorPane, null, vars));
 		}
 		SwingUtilities.invokeLater(()->{
 			if( currentRun == run ) {

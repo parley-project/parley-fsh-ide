@@ -643,7 +643,8 @@ public class DebugVariablePanel extends JPanel  {
 	}
 
 	private void createNodes() {
-		Map<String,Object> vars = ctx == null ? null : variableSnapshot;
+		// (a finished script's have no context: shown, but not to be edited)
+		Map<String,Object> vars = variableSnapshot;
 		userVariables.setRows(DebugVariables.list(vars, true, false));
 		fshVariables.setRows(DebugVariables.list(vars, true, true));
 		refreshBreakpoints();
