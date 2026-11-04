@@ -14,6 +14,7 @@ package us.bringardner.fsh.ide;
 
 import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.ide.core.BreakpointHelp;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -80,6 +81,13 @@ public class BreakpointPropertiesDialog extends JDialog {
 		enabledCheckBox.setBounds(6, 6, 128, 23);
 		contentPanel.add(enabledCheckBox);
 
+		// how the condition and the hit count stop it (the Debug Adapter Protocol's rules)
+		JButton infoButton = new JButton(new javax.swing.ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/info.png")));
+		infoButton.setToolTipText(BreakpointHelp.TITLE);
+		infoButton.setBounds(246, 4, 28, 26);
+		infoButton.addActionListener(e->showHelp(this));
+		contentPanel.add(infoButton);
+
 		hitCountCheckBox = new JCheckBox("Stop from hit number");
 		hitCountCheckBox.setToolTipText(Breakpoint.HIT_COUNT_HINT);
 		hitCountCheckBox.addActionListener(new ActionListener() {
@@ -99,7 +107,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 		conditionalCheckBox = new JCheckBox("Stop when the expression is true");
 		conditionalCheckBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				conditionalTextArea.setVisible(conditionalCheckBox.isSelected());
+				setConditionEnabled(conditionalCheckBox.isSelected());
 			}
 		});
 		conditionalCheckBox.setBounds(6, 75, 268, 23);
@@ -122,7 +130,10 @@ public class BreakpointPropertiesDialog extends JDialog {
 		};
 		conditionalTextArea.setToolTipText("A command, as for if: the breakpoint stops when it succeeds (e.g. "+Breakpoint.CONDITION_EXAMPLE+")");
 		conditionalTextArea.setBounds(6, 110, 268, 71);
-		conditionalTextArea.setVisible(false);
+		// always shown, as in the JavaFX dialog; it can be typed in when the box above is checked
+		setConditionEnabled(false);
+		conditionalTextArea.setLineWrap(true);
+		conditionalTextArea.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.LIGHT_GRAY));
 		contentPanel.add(conditionalTextArea);
 
 		JPanel buttonPane = new JPanel();
@@ -198,7 +209,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 		hitCountTextField.setVisible(bp.isHitCount());
 		conditionalCheckBox.setSelected(bp.isConditional());
 		conditionalTextArea.setText(bp.getCondition());
-		conditionalTextArea.setVisible(bp.isConditional());
+		setConditionEnabled(bp.isConditional());
 		setModal(true);
 		setLocation(x, y);
 		setVisible(true);
@@ -221,5 +232,34 @@ public class BreakpointPropertiesDialog extends JDialog {
 		}
 		
 		return !cancel;
+	}
+
+	/** The condition box can be typed in, or (greyed, as the JavaFX dialog's) not. */
+	private void setConditionEnabled(boolean on) {
+		conditionalTextArea.setEnabled(on);
+		conditionalTextArea.setBackground(on ? java.awt.Color.WHITE : new java.awt.Color(0xEEEEEE));
+	}
+
+	/**
+	 * The info button: how a breakpoint's condition and hit count stop it, as the Debug Adapter
+	 * Protocol says, with the specification's reference (and a button that opens it).
+	 */
+	static void showHelp(java.awt.Component parent) {
+		javax.swing.JTextArea text = new javax.swing.JTextArea(BreakpointHelp.TEXT, 24, 60);
+		text.setEditable(false);
+		text.setLineWrap(true);
+		text.setWrapStyleWord(true);
+		text.setCaretPosition(0);
+		Object[] options = {"Open the Specification", "OK"};
+		int choice = javax.swing.JOptionPane.showOptionDialog(parent, new javax.swing.JScrollPane(text), BreakpointHelp.TITLE,
+				javax.swing.JOptionPane.DEFAULT_OPTION, javax.swing.JOptionPane.INFORMATION_MESSAGE,
+				new javax.swing.ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/info@2x.png")), options, options[1]);
+		if( choice == 0 ) {
+			try {
+				java.awt.Desktop.getDesktop().browse(new java.net.URI(BreakpointHelp.SPEC_URL));
+			} catch (Exception e) {
+				javax.swing.JOptionPane.showMessageDialog(parent, "Couldn't open "+BreakpointHelp.SPEC_URL+"\n"+e.getMessage());
+			}
+		}
 	}
 }

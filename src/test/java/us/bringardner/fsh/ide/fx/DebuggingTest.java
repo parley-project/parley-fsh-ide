@@ -198,6 +198,16 @@ public class DebuggingTest {
 		assertTrue(Fx.call(()->w.editor().getBreakpoints().isEmpty()));
 	}
 
+	/** The breakpoint dialog's info button, and what it tells: the spec's rules and its reference. */
+	@Test
+	public void theBreakpointDialogHasAnInfoButton() throws Exception {
+		TestWindow w = window("echo a\n");
+		Breakpoint bp = Fx.call(()->w.editor().addBreakpoint(0));
+		assertTrue(Fx.call(()->new BreakpointDialog(bp).infoButton.getGraphic() != null));
+		assertTrue(us.bringardner.fsh.ide.core.BreakpointHelp.TEXT.contains(us.bringardner.fsh.ide.core.BreakpointHelp.SPEC_URL));
+		assertTrue(us.bringardner.fsh.ide.core.BreakpointHelp.TEXT.contains("hitCondition should be evaluated only if the condition is met"));
+	}
+
 	@Test
 	public void syntaxErrorsAreMarked() throws Exception {
 		TestWindow w = window("echo a\n");

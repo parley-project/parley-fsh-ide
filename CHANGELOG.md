@@ -4,6 +4,11 @@
 
 ### Added
 
+- The breakpoint dialog, in both IDEs, has an info button (a new info icon) that tells how the
+  condition and the hit count stop a breakpoint: what the Debug Adapter Protocol specification
+  says (SourceBreakpoint), what it means here, and the specification's reference, with a button
+  or link that opens it. The Swing dialog's condition box is always shown, as the JavaFX one's
+  (greyed until its check box is checked).
 - The Breakpoints tab, in both IDEs, shows that a breakpoint can be changed: an Edit... button
   (for the selected breakpoint) opens the dialog a double-click does, to give it a condition or a
   hit count or delete it, and the tab and its breakpoints say so in their tooltips.
