@@ -12,7 +12,7 @@
   with the environment variables it has: only exported variables, not aliases or functions, as a
   script from a terminal has. `FSH_IDE_ENVIRONMENT_READER` is set while it runs, for a startup file
   to skip what needs a terminal. If it fails the IDE says so, and scripts run with its own. Not on
-  Windows, nor when the IDE was started from a shell. The first run's console says which
+  Windows, nor when the IDE was started from a shell. The first run's Log tab says which
   environment scripts got, and Help > Script Environment... shows it: what was done (or why not),
   the shell, FSH_ENV, PATH in the order it's searched, and every variable.
 - As `fsh script` does, a script runs the file `FSH_ENV` names first (not in the debugger).

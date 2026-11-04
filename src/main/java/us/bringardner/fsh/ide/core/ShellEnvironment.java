@@ -114,8 +114,8 @@ public final class ShellEnvironment {
 	}
 
 	/**
-	 * The status, the first time it's asked for (for a run's console: once, so the user sees what
-	 * environment scripts get); null after.
+	 * The status, the first time it's asked for (for the IDE's Log tab, as a run starts: once, so
+	 * the user sees what environment scripts get); null after, and if it wasn't started.
 	 */
 	public static synchronized String statusOnce() {
 		if( shown || capture == null ) {
@@ -125,6 +125,19 @@ public final class ShellEnvironment {
 		// (waits for it, if the shell is still running)
 		forScripts();
 		return status;
+	}
+
+	/**
+	 * Puts the status in log (the IDE's Log tab), the first time (see statusOnce), as a line:
+	 * on a thread of its own, since it may wait for the login shell.
+	 */
+	public static void logOnce(Consumer<String> log) {
+		new Thread(()->{
+			String s = statusOnce();
+			if( s != null ) {
+				log.accept("fsh-ide: "+s+" (Help > Script Environment... says more)\n");
+			}
+		}, "script-environment-status").start();
 	}
 
 	/** Help > Script Environment...: the status, the shell, and the variables scripts get. */

@@ -1,5 +1,6 @@
 package us.bringardner.fsh.ide.core;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -48,6 +49,14 @@ public class TestShellEnvironment {
 			String once = ShellEnvironment.statusOnce();
 			assertTrue(once.startsWith("Scripts run with the environment of the login shell"), once);
 			assertEquals(null, ShellEnvironment.statusOnce());
+			// the Log tab's line, once
+			ShellEnvironment.setForTests(Map.of("PATH", "/a/bin:/b/bin", "FSH_ENV", "/x/env.fsh", "WHO", "tony"));
+			java.util.concurrent.BlockingQueue<String> log = new java.util.concurrent.LinkedBlockingQueue<>();
+			ShellEnvironment.logOnce(log::add);
+			String line = assertDoesNotThrow(()->log.poll(10, java.util.concurrent.TimeUnit.SECONDS));
+			assertTrue(line != null && line.startsWith("fsh-ide: Scripts run with the environment of the login shell"), line);
+			ShellEnvironment.logOnce(log::add);
+			assertEquals(null, assertDoesNotThrow(()->log.poll(1, java.util.concurrent.TimeUnit.SECONDS)));
 			String report = ShellEnvironment.report();
 			assertTrue(report.contains("FSH_ENV: /x/env.fsh"), report);
 			assertTrue(report.contains("PATH, in the order it's searched:\n  /a/bin\n  /b/bin\n"), report);

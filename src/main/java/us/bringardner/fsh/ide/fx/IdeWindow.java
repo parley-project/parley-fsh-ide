@@ -912,6 +912,8 @@ public class IdeWindow {
 		String selected = ScriptText.clean(editor.getSelectedText());
 		boolean selection = useSelection.isSelected() && selected != null;
 		console.clear();
+		// what environment scripts get, once, in the Log tab (after a debug run's clearing of it)
+		Platform.runLater(()->us.bringardner.fsh.ide.core.ShellEnvironment.logOnce(log::add));
 		if( debug && useAdapter.isSelected()) {
 			startWithAdapter(selection ? ScriptText.atLine(selected, editor.getSelectionStartLine()) : all);
 			return;
