@@ -332,6 +332,20 @@ public class FshIDE extends JFrame  {
 	 * Launch the application.
 	 */
 	public static void main(String [] args) {
+		// the environment the scripts run with: a terminal's (see ShellEnvironment), got now, in the background
+		us.bringardner.fsh.ide.core.ShellEnvironment.start(problem->SwingUtilities.invokeLater(()->{
+			JOptionPane pane = new JOptionPane(problem, JOptionPane.WARNING_MESSAGE);
+			// (over an IDE window, so it isn't behind another application's)
+			java.awt.Frame owner = null;
+			for(java.awt.Frame f : java.awt.Frame.getFrames()) {
+				if( f.isShowing() && f instanceof FshIDE ) {
+					owner = f;
+				}
+			}
+			javax.swing.JDialog d = pane.createDialog(owner, APP_NAME);
+			d.setModal(false);
+			d.setVisible(true);
+		}));
 		// on macOS each window's menus at the top of the screen, under the application's name
 		StandardMenus.useScreenMenuBar(APP_NAME);
 		// A GraalVM native image has no java.home, and AWT needs one (font configuration): use the
@@ -467,7 +481,6 @@ public class FshIDE extends JFrame  {
 
 	private JCheckBoxMenuItem autoExecuteCheckItem;
 
-	private JCheckBoxMenuItem profileCheckItem;
 
 	private Component horizontalStrut;
 
@@ -720,7 +733,6 @@ public class FshIDE extends JFrame  {
 		useSelectedCodeCheckItem.setSelected(true);
 		autoExecuteCheckItem = new JCheckBoxMenuItem("Run When Opened");
 		autoExecuteCheckItem.setSelected(false);
-		profileCheckItem = new JCheckBoxMenuItem("Profile");
 
 		showDebugViewItem.addActionListener(e->actionShowDebugView());
 
@@ -1121,7 +1133,9 @@ public class FshIDE extends JFrame  {
 		run.addSeparator();
 		run.add(useSelectedCodeCheckItem);
 		run.add(autoExecuteCheckItem);
-		run.add(profileCheckItem);
+
+		// what environment scripts get (see ShellEnvironment)
+		menus.help.add(StandardMenus.item("Script Environment...", ()->showScriptEnvironment(this)));
 
 		menus.install(this, run);
 	}
@@ -1170,6 +1184,20 @@ public class FshIDE extends JFrame  {
 	 * the standard size (⌘0), or another fixed-width font. The menu items show the keys; TextSizeKeys
 	 * handles them.
 	 */
+	/** Help > Script Environment...: what environment scripts run with, and why. */
+	static void showScriptEnvironment(java.awt.Component parent) {
+		// (it may wait for the login shell)
+		new Thread(()->{
+			String report = us.bringardner.fsh.ide.core.ShellEnvironment.report();
+			SwingUtilities.invokeLater(()->{
+				JTextArea text = new JTextArea(report, 28, 80);
+				text.setEditable(false);
+				text.setCaretPosition(0);
+				JOptionPane.showMessageDialog(parent, new JScrollPane(text), "Script Environment", JOptionPane.INFORMATION_MESSAGE);
+			});
+		}, "script-environment").start();
+	}
+
 	/**
 	 * Edit > Check Spelling, as the JavaFX IDE's: on unless it was switched off (prefs remembers
 	 * it), and switching it turns the text area's spell checking on or off.
@@ -1453,6 +1481,8 @@ public class FshIDE extends JFrame  {
 			logBatcher.clear();
 			logView.setText("");
 			outputTextArea.clear();
+			// what environment scripts get, at the top of the Log tab
+			us.bringardner.fsh.ide.core.ShellEnvironment.logStatus(logBatcher::add);
 			if( state == IdeRunstate.Debugging) {
 				debugControlPanel.setVisible(true);
 				// a new debug run: the last one's variables go

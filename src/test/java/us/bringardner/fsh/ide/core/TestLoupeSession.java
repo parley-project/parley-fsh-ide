@@ -149,6 +149,26 @@ public class TestLoupeSession {
 		assertEquals(List.of("3", "4", "5"), stops);
 	}
 
+	/** Through Loupe too: the shell environment, and FSH_ENV's file first. */
+	@Test
+	public void runsWithTheShellEnvironmentAndFshEnv() throws Exception {
+		java.nio.file.Path rc = java.nio.file.Files.createTempFile("fsh-env", ".fsh");
+		try {
+			java.nio.file.Files.writeString(rc, "greet() { echo \"hello $WHO\"; }\n");
+			ShellEnvironment.setForTests(Map.of("WHO", "tony", "FSH_ENV", rc.toString()));
+			session = LoupeSession.inProcess(listener);
+			session.start("greet\nsh -c 'echo child $WHO'\n", "env.fsh", List.of(), List.of());
+			assertEquals("finished 0", next());
+			synchronized (output) {
+				assertTrue(output.toString().contains("stdout:hello tony"), output.toString());
+				assertTrue(output.toString().contains("child tony"), output.toString());
+			}
+		} finally {
+			ShellEnvironment.setForTests(null);
+			java.nio.file.Files.deleteIfExists(rc);
+		}
+	}
+
 	@Test
 	public void terminateEndsAStoppedScript() throws Exception {
 		session = LoupeSession.inProcess(listener);

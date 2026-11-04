@@ -200,6 +200,11 @@ public final class LoupeSession implements Closeable {
 		args.put("source", code);
 		args.put("name", name);
 		args.put("args", arguments);
+		// the environment a terminal would give it (see ShellEnvironment)
+		Map<String,String> env = ShellEnvironment.forScripts();
+		if( !env.isEmpty()) {
+			args.put("env", env);
+		}
 		request(Loupe.LAUNCH, null, new LaunchParams().setTarget(TARGET).setArgs(args).setStartPaused(true).toJson());
 		syncBreakpoints(breakpoints);
 		request(Loupe.RESUME, TARGET, Map.of());

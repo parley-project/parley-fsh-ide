@@ -152,6 +152,29 @@ public class TestDebugSession {
 		return ret;
 	}
 
+	/** FSH_ENV's file runs before the debugger is on: a breakpoint's line number in it doesn't stop. */
+	@Test
+	public void theDebuggerDoesntStopInFshEnvsFile() throws Exception {
+		java.nio.file.Path rc = java.nio.file.Files.createTempFile("fsh-env", ".fsh");
+		try {
+			java.nio.file.Files.writeString(rc, "a=1\nb=2\nc=3\n");
+			us.bringardner.fsh.ide.core.ShellEnvironment.setForTests(Map.of("FSH_ENV", rc.toString()));
+			breakpoint(1);
+			start("x=1\necho $c\n");
+			RecordingListener.Pause p = nextPause();
+			// the script's line 1 (echo $c), with the file's variables set
+			assertEquals(1, p.line());
+			assertEquals("1", ""+p.variables().get("x"));
+			assertEquals("3", ""+p.variables().get("c"));
+			session.resume();
+			finished.get(10, TimeUnit.SECONDS);
+			assertTrue(listener.pauses.isEmpty());
+		} finally {
+			us.bringardner.fsh.ide.core.ShellEnvironment.setForTests(null);
+			java.nio.file.Files.deleteIfExists(rc);
+		}
+	}
+
 	@Test
 	public void aBadConditionIsReportedOnce() throws Exception {
 		Breakpoint bp = breakpoint(2);
