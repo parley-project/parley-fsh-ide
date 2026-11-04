@@ -24,7 +24,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -69,7 +68,8 @@ public class BreakpointPropertiesDialog extends JDialog {
 	 * Create the dialog.
 	 */
 	public BreakpointPropertiesDialog() {
-		setBounds(100, 100, 211, 249);
+		// (wide enough for OK, Delete and Cancel in a row)
+		setBounds(100, 100, 290, 249);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -113,9 +113,8 @@ public class BreakpointPropertiesDialog extends JDialog {
 		buttonPane.setLayout(new FlowLayout(FlowLayout.CENTER));
 		getContentPane().add(buttonPane, BorderLayout.SOUTH);
 
-		JButton okButton = new JButton("");
+		JButton okButton = new JButton("OK");
 		okButton.setToolTipText("Save");
-		okButton.setIcon(new ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/smile20x20.png")));
 		okButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dispose();
@@ -125,9 +124,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 		getRootPane().setDefaultButton(okButton);
 
 
-		JButton cancelButton = new JButton("");
-		cancelButton.setToolTipText("Cancel");
-		cancelButton.setIcon(new ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/cancel.png")));
+		JButton cancelButton = new JButton("Cancel");
 		cancelButton.addActionListener(new ActionListener() {
 			
 
@@ -140,16 +137,13 @@ public class BreakpointPropertiesDialog extends JDialog {
 		horizontalStrut = Box.createHorizontalStrut(20);
 		buttonPane.add(horizontalStrut);
 		
-		deleteButton = new JButton("");
-		deleteButton.setToolTipText("Delete");
+		deleteButton = new JButton("Delete");
 		deleteButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				delete = true;
 				dispose();
 			}
 		});
-		deleteButton.setIcon(new ImageIcon(BreakpointPropertiesDialog.class.getResource("/img/trashcan-red-20x22.png")));
-		deleteButton.setSelectedIcon(null);
 		buttonPane.add(deleteButton);
 		
 		Component horizontalStrut_1 = Box.createHorizontalStrut(20);

@@ -55,8 +55,9 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
   and Suspend buttons show only the icon, with what each does as its tooltip, in the Swing IDE's
   order (Debug, Run, Stop, the script's settings, then Resume, Suspend, Step Into, Step Over);
   the redirect buttons have the redirect icons, before their fields; breakpoints and syntax errors in the margin are the
-  Swing IDE's breakpoint and error icons (a breakpoint that's off is faded); and the breakpoint
-  dialog's Delete, Cancel and OK buttons are its trash can, cancel and smile icons.
+  Swing IDE's breakpoint and error icons (a breakpoint that's off is faded).
+- The breakpoint dialog's buttons say Delete, Cancel and OK, in both IDEs (the Swing IDE's had
+  only a trash can, a cancel and a smile icon).
 - The console matches the script editor above it: the same background, text, caret and selection
   colors, following the theme (it was white in light themes). Errors stay red; in the JavaFX IDE,
   prompts are in the comment color. In both IDEs.

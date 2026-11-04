@@ -64,10 +64,6 @@ public class BreakpointDialog extends Dialog<BreakpointDialog.Result> {
 		grid.add(hits, 1, 3);
 		getDialogPane().setContent(grid);
 		getDialogPane().getButtonTypes().addAll(DELETE, ButtonType.CANCEL, ButtonType.OK);
-		// the Swing IDE's icons for them
-		FxIcons.iconOnly((javafx.scene.control.Button) getDialogPane().lookupButton(ButtonType.OK), "smile20x20.png", "OK");
-		FxIcons.iconOnly((javafx.scene.control.Button) getDialogPane().lookupButton(ButtonType.CANCEL), "cancel.png", "Cancel");
-		FxIcons.iconOnly((javafx.scene.control.Button) getDialogPane().lookupButton(DELETE), "trashcan-red-20x22.png", "Delete");
 		setResultConverter(b->{
 			if( b == ButtonType.OK ) {
 				apply();
