@@ -4,6 +4,11 @@
 
 ### Added
 
+- The Swing IDE's Edit menu has what the JavaFX IDE's has: Find Previous (Cmd+Shift+G), Replace...
+  (Cmd+Alt+F: the Find dialog with the cursor in Replace) and Complete (Ctrl+Space, the
+  completion the editor already gave). The Find dialog finds as the JavaFX find bar does
+  (`core.TextSearch`): forward or back, case, whole words, regular expressions (Replace fills in
+  `$1`...) and wrapping alike; a match is selected in the editor, and Replace All is undone as one.
 - Autocompletion templates for the tests a script makes, one for each kind, with the test as a
   field with choices: `if-file` (exists, a regular file, a directory, a link, readable, writable,
   runnable, a pipe, a socket, a device, the set-user-ID, set-group-ID and sticky bits, yours, your
@@ -95,6 +100,10 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- The Swing IDE's Find dialog: Selected Lines searches the lines that were selected (it searched
+  the selection, and marked matches at the wrong place), a match at the start of the script can
+  be replaced, Wrap Search wraps, the label says "Case Sensitive", and closing the dialog with its
+  window's close button clears what it marked.
 - JavaFX IDE: Down past the last completion in view selected one out of sight; the list scrolls
   with the selection now (Up too), and the list of a template field's choices does the same.
 - The Swing IDE's autocompletion offered only some of the templates that start with what's

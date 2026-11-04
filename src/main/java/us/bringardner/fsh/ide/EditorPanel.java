@@ -452,20 +452,43 @@ public class EditorPanel extends JPanel {
 
 	/** Edit > Find...: the find dialog, on this editor. */
 	public void showFind() {
+		showFind(false);
+	}
+
+	/** Edit > Replace...: the find dialog, with the cursor in its Replace box. */
+	public void showReplace() {
+		showFind(true);
+	}
+
+	private void showFind(boolean replace) {
 		if( findDialog == null ) {
 			findDialog = new FindDialog();
 		}
-		if( !findDialog.isVisible()) {
-			findDialog.showDialog(editorPane);
-		}
+		findDialog.showDialog(editorPane, replace);
 	}
 
 	/** Edit > Find Next: the next match of what was last looked for (or the find dialog, the first time). */
 	public void findNext() {
+		find(true);
+	}
+
+	/** Edit > Find Previous: the match before the selection (or the find dialog, the first time). */
+	public void findPrevious() {
+		find(false);
+	}
+
+	private void find(boolean forward) {
 		if( findDialog == null ) {
 			showFind();
 		} else {
-			findDialog.find();
+			findDialog.find(forward);
+		}
+	}
+
+	/** Edit > Complete: the completions (templates and the script's variables) for the word at the caret. */
+	public void complete() {
+		if( autoComplete != null ) {
+			autoComplete.doCompletion();
 		}
 	}
 

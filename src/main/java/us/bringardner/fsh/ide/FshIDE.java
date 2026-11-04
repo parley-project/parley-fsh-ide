@@ -1102,7 +1102,12 @@ public class FshIDE extends JFrame  {
 		edit.addSeparator();
 		edit.add(StandardMenus.item("Find...", KeyEvent.VK_F, editorPane::showFind));
 		edit.add(StandardMenus.item("Find Next", KeyEvent.VK_G, editorPane::findNext));
+		edit.add(StandardMenus.item("Find Previous", StandardMenus.keys(KeyEvent.VK_G, shift), editorPane::findPrevious));
+		edit.add(StandardMenus.item("Replace...", StandardMenus.keys(KeyEvent.VK_F, java.awt.event.InputEvent.ALT_DOWN_MASK), editorPane::showReplace));
 		edit.add(StandardMenus.item("Go to Line...", KeyEvent.VK_L, editorPane::goToLine));
+		edit.addSeparator();
+		// (the key is the completion library's own, on the editor: the menu shows it)
+		edit.add(StandardMenus.item("Complete", org.fife.ui.autocomplete.AutoCompletion.getDefaultTriggerKey(), editorPane::complete));
 		edit.addSeparator();
 		edit.add(spellingItem(editorPane.getTextArea(), prefs));
 
