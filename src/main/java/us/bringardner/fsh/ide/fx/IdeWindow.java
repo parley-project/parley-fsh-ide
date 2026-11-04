@@ -109,6 +109,8 @@ public class IdeWindow {
 	private final Button stepOverButton = FxIcons.iconOnly(new Button(), "step_over.png", "Step Over (F6)");
 	private final Button stepIntoButton = FxIcons.iconOnly(new Button(), "step_into.png", "Step Into (F5)");
 	private final Button suspendButton = FxIcons.iconOnly(new Button(), "suspend.png", "Suspend: stop at the next statement");
+	/** the debug controls, shown only while debugging */
+	private final HBox debugControls = new HBox(6);
 	private final MenuItem runItem = new MenuItem("Run");
 	private final MenuItem debugItem = new MenuItem("Debug");
 	private final MenuItem stopItem = new MenuItem("Stop");
@@ -433,15 +435,17 @@ public class IdeWindow {
 		suspendButton.setOnAction(e->suspendScript());
 		arguments.setPromptText("Script arguments");
 		arguments.setPrefColumnCount(18);
-		// the run controls, then the script's settings; they wrap to a second row when the window is narrow
-		HBox controls = new HBox(6, runButton, debugButton, stopButton, resumeButton, stepOverButton, stepIntoButton, suspendButton);
+		// in the Swing IDE's order: Debug and Run (and Stop), the script's settings, then the debug
+		// controls (Resume, Suspend, Step Into, Step Over); they wrap to a second row when the window is narrow
+		HBox controls = new HBox(6, debugButton, runButton, stopButton);
 		HBox settings = new HBox(6, new Label("Arguments:"), arguments,
 				redirect("stdin", stdIn, false), redirect("stdout", stdOut, true), redirect("stderr", stdErr, true));
-		for(HBox b : new HBox[] {controls, settings}) {
+		debugControls.getChildren().setAll(resumeButton, suspendButton, stepIntoButton, stepOverButton);
+		for(HBox b : new HBox[] {controls, settings, debugControls}) {
 			b.setStyle("-fx-alignment: center-left;");
 			keepWidth(b);
 		}
-		javafx.scene.layout.FlowPane bar = new javafx.scene.layout.FlowPane(14, 4, controls, settings);
+		javafx.scene.layout.FlowPane bar = new javafx.scene.layout.FlowPane(14, 4, controls, settings, debugControls);
 		bar.setPadding(new Insets(4, 6, 4, 6));
 		return bar;
 	}
@@ -479,7 +483,8 @@ public class IdeWindow {
 				field.setText(chosen.getAbsolutePath());
 			}
 		});
-		HBox box = new HBox(2, new Label(name+":"), field, browse);
+		// (the button before the field, as in the Swing IDE)
+		HBox box = new HBox(2, new Label(name+":"), browse, field);
 		box.setStyle("-fx-alignment: center-left;");
 		return box;
 	}
@@ -1110,7 +1115,7 @@ public class IdeWindow {
 		suspendButton.setDisable(!running || !debugging || paused);
 		suspendItem.setDisable(suspendButton.isDisable());
 		// the debug controls only show while debugging
-		for(javafx.scene.Node n : new javafx.scene.Node[] {resumeButton, stepOverButton, stepIntoButton, suspendButton}) {
+		for(javafx.scene.Node n : new javafx.scene.Node[] {debugControls, resumeButton, stepOverButton, stepIntoButton, suspendButton}) {
 			n.setVisible(running && debugging);
 			n.setManaged(running && debugging);
 		}
