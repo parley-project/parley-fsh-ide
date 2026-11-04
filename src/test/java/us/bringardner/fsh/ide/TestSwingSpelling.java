@@ -1,6 +1,7 @@
 package us.bringardner.fsh.ide;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
@@ -115,6 +117,52 @@ public class TestSwingSpelling {
 		assertEquals(List.of(), flagged(parser, area));
 		parser.setChecking(true);
 		assertEquals(3, flagged(parser, area).size());
+	}
+
+	/** Edit > Check Spelling switches the text area's checking, and the setting is kept for next time. */
+	@Test
+	public void theEditMenuSwitchesCheckingAndRemembersIt() throws Exception {
+		java.util.prefs.Preferences prefs = new MemoryPreferences();
+		FshIDETextArea area = area(SCRIPT);
+		JCheckBoxMenuItem item = FshIDE.spellingItem(area, prefs);
+		assertEquals("Check Spelling", item.getText());
+		// on at first
+		assertTrue(item.isSelected());
+		assertTrue(area.isSpellChecking());
+
+		item.doClick();
+		assertFalse(item.isSelected());
+		assertFalse(area.isSpellChecking());
+		assertFalse(prefs.getBoolean(FshIDE.PREF_SPELLING, true));
+
+		// a new window starts as it was left
+		FshIDETextArea next = area(SCRIPT);
+		JCheckBoxMenuItem nextItem = FshIDE.spellingItem(next, prefs);
+		assertFalse(nextItem.isSelected());
+		assertFalse(next.isSpellChecking());
+
+		nextItem.doClick();
+		assertTrue(next.isSpellChecking());
+		assertTrue(prefs.getBoolean(FshIDE.PREF_SPELLING, false));
+	}
+
+	/** Preferences kept in memory, so the test does not change the user's own. */
+	private static final class MemoryPreferences extends java.util.prefs.AbstractPreferences {
+		private final java.util.Map<String, String> values = new java.util.HashMap<>();
+
+		MemoryPreferences() {
+			super(null, "");
+		}
+
+		@Override protected void putSpi(String key, String value) { values.put(key, value); }
+		@Override protected String getSpi(String key) { return values.get(key); }
+		@Override protected void removeSpi(String key) { values.remove(key); }
+		@Override protected void removeNodeSpi() { }
+		@Override protected String[] keysSpi() { return values.keySet().toArray(new String[0]); }
+		@Override protected String[] childrenNamesSpi() { return new String[0]; }
+		@Override protected java.util.prefs.AbstractPreferences childSpi(String name) { throw new UnsupportedOperationException(); }
+		@Override protected void syncSpi() { }
+		@Override protected void flushSpi() { }
 	}
 
 	/** The popup menu on a misspelled word has the suggestions, Ignore and Add first, then the usual items. */

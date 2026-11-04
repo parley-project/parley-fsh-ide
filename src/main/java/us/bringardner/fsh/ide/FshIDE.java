@@ -225,7 +225,7 @@ public class FshIDE extends JFrame  {
 	private static final long serialVersionUID = 1L;
 
 	private static final String PREF_RECENT_LIST = "RecentList";
-	private static final String PREF_SPELLING = "Spelling";
+	static final String PREF_SPELLING = "Spelling";
 
 	private static final String KEY_SCREEN_LOCATION = "Location";
 
@@ -1103,6 +1103,8 @@ public class FshIDE extends JFrame  {
 		edit.add(StandardMenus.item("Find...", KeyEvent.VK_F, editorPane::showFind));
 		edit.add(StandardMenus.item("Find Next", KeyEvent.VK_G, editorPane::findNext));
 		edit.add(StandardMenus.item("Go to Line...", KeyEvent.VK_L, editorPane::goToLine));
+		edit.addSeparator();
+		edit.add(spellingItem(editorPane.getTextArea(), prefs));
 
 		fillViewMenu(menus.view);
 
@@ -1168,6 +1170,21 @@ public class FshIDE extends JFrame  {
 	 * the standard size (⌘0), or another fixed-width font. The menu items show the keys; TextSizeKeys
 	 * handles them.
 	 */
+	/**
+	 * Edit > Check Spelling, as the JavaFX IDE's: on unless it was switched off (prefs remembers
+	 * it), and switching it turns the text area's spell checking on or off.
+	 */
+	static JCheckBoxMenuItem spellingItem(FshIDETextArea area, Preferences prefs) {
+		JCheckBoxMenuItem ret = new JCheckBoxMenuItem("Check Spelling", prefs.getBoolean(PREF_SPELLING, true));
+		area.setSpellChecking(ret.isSelected());
+		ret.addActionListener(e->{
+			boolean on = ret.isSelected();
+			area.setSpellChecking(on);
+			prefs.putBoolean(PREF_SPELLING, on);
+		});
+		return ret;
+	}
+
 	private void fillViewMenu(JMenu view) {
 		int shortcut = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 		JMenuItem bigger = new JMenuItem("Bigger Text");
