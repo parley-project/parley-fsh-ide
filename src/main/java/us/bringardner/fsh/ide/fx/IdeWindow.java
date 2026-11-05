@@ -312,7 +312,6 @@ public class IdeWindow {
 				item("Open...", "Shortcut+O", this::actionOpen), recentMenu, new SeparatorMenuItem(),
 				item("Save", "Shortcut+S", this::actionSave), item("Save As...", "Shortcut+Shift+S", this::actionSaveAs),
 				item("Reload", null, this::actionReload), new SeparatorMenuItem(),
-				item("Clear Run Settings...", null, this::actionClearRunSettings), new SeparatorMenuItem(),
 				item("New Window", "Shortcut+Shift+N", ()->new IdeWindow().show()),
 				item("Close", "Shortcut+W", ()->{
 					if( close()) {
@@ -371,7 +370,8 @@ public class IdeWindow {
 				resumeItem, stepOverItem, stepIntoItem, suspendItem, new SeparatorMenuItem(),
 				item("Toggle Breakpoint", "Shortcut+B", ()->editor.toggleBreakpoint(editor.getCaretLine())),
 				new SeparatorMenuItem(), useSelection, useAdapter, new SeparatorMenuItem(),
-				item("Clear Console", "Shortcut+K", console::clear));
+				item("Clear Console", "Shortcut+K", console::clear), new SeparatorMenuItem(),
+				item("Clear Run Settings...", null, this::actionClearRunSettings));
 
 		// what environment scripts get (see ShellEnvironment)
 		menus.help.getItems().add(item("Script Environment...", null, this::showScriptEnvironment));
@@ -572,7 +572,13 @@ public class IdeWindow {
 						BACKGROUND.execute(()->{
 							try {
 								store.clear();
-								Platform.runLater(()->status.setText("Cleared the run settings."));
+								Platform.runLater(()->{
+									// the open windows' too: what they show is what's kept, and saving them would keep it again
+									for(IdeWindow w : new java.util.ArrayList<>(OPEN)) {
+										w.clearRunSettingsFields();
+									}
+									status.setText("Cleared the run settings of "+n+(n == 1 ? " script." : " scripts."));
+								});
 							} catch (IOException e) {
 								Platform.runLater(()->report("Can't clear the run settings", e));
 							}
@@ -583,6 +589,19 @@ public class IdeWindow {
 				Platform.runLater(()->report("Can't read the run settings", e));
 			}
 		});
+	}
+
+	/**
+	 * Clear Run Settings, in this window: no arguments or redirects; as the script was kept, so it
+	 * doesn't count as changed (its code still does, if it was).
+	 */
+	void clearRunSettingsFields() {
+		arguments.setText("");
+		stdIn.setText("");
+		stdOut.setText("");
+		stdErr.setText("");
+		original = new ScriptDocument(original.body(), RunSettings.NONE);
+		updateTitle();
 	}
 
 	private void updateTitle() {

@@ -115,6 +115,26 @@ public class IdeWindowTest {
 		return FileSourceFactory.getDefaultFactory().createFileSource(p.toString());
 	}
 
+	/** Run > Clear Run Settings...: the store's, and the open windows' (so saving doesn't keep them again). */
+	@Test
+	public void clearRunSettingsClearsTheOpenWindowsToo() throws Exception {
+		TestWindow w = window();
+		FileSource f = file("clear.sh", "echo a\n");
+		store.put(f, new RunSettings("x y", "", "/tmp/out", ""));
+		Fx.run(()->w.load(f));
+		Fx.waitFor(()->w.scriptFile() != null);
+		assertEquals("x y", Fx.call(()->w.argumentsField().getText()));
+
+		Fx.run(w::actionClearRunSettings);
+		Fx.waitFor(()->w.statusText().startsWith("Cleared"));
+		assertEquals("Cleared the run settings of 1 script.", Fx.call(w::statusText));
+		assertEquals(0, store.size());
+		assertEquals("", Fx.call(()->w.argumentsField().getText()));
+		assertEquals("", Fx.call(()->w.stdOutField().getText()));
+		// as it's kept now: not a change
+		assertFalse(Fx.call(w::hasChanged));
+	}
+
 	@Test
 	public void theViewMenuChangesTheEditorFont() throws Exception {
 		TestWindow w = window();

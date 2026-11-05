@@ -137,6 +137,9 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- Clear Run Settings... (now in the Run menu, in both IDEs; it was in File) also empties the
+  arguments and redirects of the scripts open in the IDE's windows, so saving one doesn't keep
+  them again, and says how many scripts' settings it cleared (the Swing IDE said nothing).
 - The Swing IDE's stdout and stderr browse buttons open a Save dialog, where a new file can be
   named, as the JavaFX IDE's do (they only let you pick a file that was already there).
 - The IDEs' own debugger takes a breakpoint's condition and hit count as Loupe does (and the Debug

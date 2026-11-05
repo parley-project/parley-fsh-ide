@@ -1090,10 +1090,6 @@ public class FshIDE extends JFrame  {
 		file.add(StandardMenus.item("Save As...", StandardMenus.keys(KeyEvent.VK_S, shift), this::actionSaveAs));
 		file.add(StandardMenus.item("Reload", null, this::actionReload));
 		file.addSeparator();
-		JMenuItem clearRunSettings = StandardMenus.item("Clear Run Settings...", null, this::actionClearRunSettings);
-		clearRunSettings.setToolTipText("Forget the arguments and redirects kept for every script");
-		file.add(clearRunSettings);
-		file.addSeparator();
 		file.add(StandardMenus.item("New Window", StandardMenus.keys(KeyEvent.VK_N, shift), this::actionNewWindow));
 		file.add(StandardMenus.item("Close", KeyEvent.VK_W, this::actionExit));
 
@@ -1138,6 +1134,10 @@ public class FshIDE extends JFrame  {
 		run.addSeparator();
 		run.add(useSelectedCodeCheckItem);
 		run.add(autoExecuteCheckItem);
+		run.addSeparator();
+		JMenuItem clearRunSettings = StandardMenus.item("Clear Run Settings...", null, this::actionClearRunSettings);
+		clearRunSettings.setToolTipText("Forget the arguments and redirects kept for every script");
+		run.add(clearRunSettings);
 
 		// what environment scripts get (see ShellEnvironment)
 		menus.help.add(StandardMenus.item("Script Environment...", ()->showScriptEnvironment(this)));
@@ -1555,7 +1555,27 @@ public class FshIDE extends JFrame  {
 			store.clear();
 		} catch (IOException e) {
 			showError(e, "Can't clear the run settings");
+			return;
 		}
+		// the open windows' too: what they show is what's kept, and saving them would keep it again
+		for(FshIDE w : new ArrayList<>(ideWindows)) {
+			w.clearRunSettingsFields();
+		}
+		JOptionPane.showMessageDialog(contentPane, "Cleared the run settings of "+n+(n == 1 ? " script." : " scripts."),
+				"Clear Run Settings", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	/**
+	 * Clear Run Settings, in this window: no arguments or redirects; as the script was kept, so it
+	 * doesn't count as changed (its code still does, if it was).
+	 */
+	void clearRunSettingsFields() {
+		argumentsTextField.setText("");
+		stdInTextField.setText("");
+		stdOutTextField.setText("");
+		stdErrTextField.setText("");
+		original = new ScriptDocument(original.body(), RunSettings.NONE);
+		updateTitle();
 	}
 
 	protected void actionExit() {
