@@ -115,6 +115,22 @@ public class IdeWindowTest {
 		return FileSourceFactory.getDefaultFactory().createFileSource(p.toString());
 	}
 
+	/** The console's right-click menu: Clear Console, as in the Run menu. */
+	@Test
+	public void theConsoleRightClickMenuClears() throws Exception {
+		TestWindow w = window();
+		Fx.run(()->w.console().append("some output\n", false));
+		Fx.waitFor(()->!w.console().getArea().getText().isEmpty());
+		javafx.scene.control.MenuItem clear = Fx.call(()->{
+			javafx.scene.control.ContextMenu menu = w.console().getArea().getContextMenu();
+			assertTrue(menu != null, "the console has a right-click menu");
+			return menu.getItems().stream().filter(i->"Clear Console".equals(i.getText())).findFirst().orElse(null);
+		});
+		assertTrue(clear != null, "Clear Console");
+		Fx.run(clear::fire);
+		Fx.waitFor(()->w.console().getArea().getText().isEmpty());
+	}
+
 	/** Run > Clear Run Settings...: the store's, and the open windows' (so saving doesn't keep them again). */
 	@Test
 	public void clearRunSettingsClearsTheOpenWindowsToo() throws Exception {

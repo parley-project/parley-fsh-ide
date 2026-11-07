@@ -67,6 +67,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -864,6 +865,10 @@ public class FshIDE extends JFrame  {
 		EditorFonts.apply(outputTextArea);
 		// the editor's colors: not a white console under a tinted editor
 		EditorColors.apply(outputTextArea);
+		// right-click: Clear Console, as in the Run menu
+		JPopupMenu consolePopup = new JPopupMenu();
+		consolePopup.add(StandardMenus.item("Clear Console", null, this::actionClearConsole));
+		outputTextArea.setComponentPopupMenu(consolePopup);
 
 
 
@@ -1135,6 +1140,8 @@ public class FshIDE extends JFrame  {
 		run.add(useSelectedCodeCheckItem);
 		run.add(autoExecuteCheckItem);
 		run.addSeparator();
+		run.add(StandardMenus.item("Clear Console", KeyEvent.VK_K, this::actionClearConsole));
+		run.addSeparator();
 		JMenuItem clearRunSettings = StandardMenus.item("Clear Run Settings...", null, this::actionClearRunSettings);
 		clearRunSettings.setToolTipText("Forget the arguments and redirects kept for every script");
 		run.add(clearRunSettings);
@@ -1151,6 +1158,11 @@ public class FshIDE extends JFrame  {
 		item.setText(text);
 		item.setAccelerator(StandardMenus.keys(key, 0));
 		return item;
+	}
+
+	/** Run > Clear Console (and the console's right-click menu): clears the console's text. */
+	protected void actionClearConsole() {
+		outputTextArea.clear();
 	}
 
 	/** Run > Stop: stops the script running or being debugged. */
