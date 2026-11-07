@@ -69,6 +69,8 @@ public class ScriptEditor extends StackPane {
 	private volatile Map<Integer,Breakpoint> breakpoints = Collections.emptyMap();
 	private final Map<Integer,String> errors = new TreeMap<>();
 	private int currentLine = -1;
+	// where Step Into stopped, when just a statement is highlighted: {start, end} in the text, or null
+	private int[] currentStatement;
 	private final List<Runnable> breakpointListeners = new ArrayList<>();
 	private BiConsumer<Breakpoint,javafx.scene.input.MouseEvent> onBreakpointMenu;
 	// the blocks that can be folded, from the last scan of the text
@@ -308,8 +310,34 @@ public class ScriptEditor extends StackPane {
 		return errors.get(line);
 	}
 
+	/**
+	 * Marks just a statement on line (0-based) as where the script is paused (after Step Into):
+	 * length characters from column, if the line still has text there.
+	 * @return false if it couldn't be (the line has changed): mark the whole line instead
+	 */
+	public boolean setCurrentStatement(int line, int column, int length, String text) {
+		setCurrentLine(-1);
+		if( line < 0 || line >= area.getParagraphs().size() || column < 0
+				|| column+length > area.getParagraph(line).length()
+				|| !area.getParagraph(line).getText().substring(column, column+length).equals(text)) {
+			return false;
+		}
+		int start = area.getAbsolutePosition(line, column);
+		currentStatement = new int[] {start, start+length};
+		currentLine = line;
+		reveal(line);
+		highlight();
+		area.showParagraphInViewport(line);
+		redrawGutter();
+		return true;
+	}
+
 	/** Marks line (0-based) as where the script is paused, and shows it; -1 for none. */
 	public void setCurrentLine(int line) {
+		if( currentStatement != null ) {
+			currentStatement = null;
+			highlight();
+		}
 		if( currentLine >= 0 && currentLine < area.getParagraphs().size()) {
 			List<String> style = new ArrayList<>(area.getParagraph(currentLine).getParagraphStyle());
 			style.remove("current-line");
@@ -329,6 +357,11 @@ public class ScriptEditor extends StackPane {
 
 	public int getCurrentLine() {
 		return currentLine;
+	}
+
+	/** for the tests: the statement marked (start and end in the text), or null for none or the whole line */
+	int[] getCurrentStatement() {
+		return currentStatement == null ? null : currentStatement.clone();
 	}
 
 	/** The (0-based) line the caret is on. */
@@ -359,11 +392,30 @@ public class ScriptEditor extends StackPane {
 					return both;
 				});
 			}
+			if( currentStatement != null && currentStatement[1] <= text.length()) {
+				spans = spans.overlay(statementSpans(text.length()), (a, b)->{
+					if( b.isEmpty()) {
+						return a;
+					}
+					List<String> both = new ArrayList<>(a);
+					both.addAll(b);
+					return both;
+				});
+			}
 			area.setStyleSpans(0, spans);
 		}
 		if( foldsChanged ) {
 			redrawGutter();
 		}
+	}
+
+	/** the statement where Step Into stopped (see setCurrentStatement) */
+	private StyleSpans<Collection<String>> statementSpans(int length) {
+		StyleSpansBuilder<Collection<String>> b = new StyleSpansBuilder<>();
+		b.add(Collections.emptyList(), currentStatement[0]);
+		b.add(Collections.singletonList("current-statement"), currentStatement[1]-currentStatement[0]);
+		b.add(Collections.emptyList(), length-currentStatement[1]);
+		return b.create();
 	}
 
 	private StyleSpans<Collection<String>> misspelledSpans(int length) {

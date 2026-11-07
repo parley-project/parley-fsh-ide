@@ -1,6 +1,8 @@
 package us.bringardner.fsh.ide.fx;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -45,6 +47,27 @@ public class ScriptEditorTest {
 		// text added below doesn't move it
 		Fx.run(()->e.getCodeArea().appendText("echo e\n"));
 		assertSame(bp, Fx.call(()->e.getBreakpoint(3)));
+	}
+
+	@Test
+	public void aStatementMarkedAsCurrent() throws Exception {
+		ScriptEditor e = editor("echo a\nx=1; echo b\n");
+		assertTrue(Fx.call(()->e.setCurrentStatement(1, 5, 6, "echo b")));
+		assertEquals(1, Fx.call(e::getCurrentLine));
+		int at = "echo a\nx=1; ".length();
+		assertArrayEquals(new int[] {at, at+6}, Fx.call(e::getCurrentStatement));
+		assertTrue(Fx.call(()->e.getCodeArea().getStyleOfChar(at+1)).contains("current-statement"));
+		assertFalse(Fx.call(()->e.getCodeArea().getStyleOfChar(at-2)).contains("current-statement"));
+		assertFalse(Fx.call(()->e.getCodeArea().getParagraph(1).getParagraphStyle()).contains("current-line"), "not the whole line");
+
+		// a line that no longer says that: the caller marks the line
+		assertFalse(Fx.call(()->e.setCurrentStatement(1, 5, 6, "echo c")));
+		assertNull(Fx.call(e::getCurrentStatement));
+
+		Fx.run(()->e.setCurrentStatement(1, 5, 6, "echo b"));
+		Fx.run(()->e.setCurrentLine(-1));
+		assertNull(Fx.call(e::getCurrentStatement));
+		assertFalse(Fx.call(()->e.getCodeArea().getStyleOfChar(at+1)).contains("current-statement"));
 	}
 
 	@Test

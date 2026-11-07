@@ -169,6 +169,51 @@ public class EditorPanel extends JPanel {
 	}
 	public void removeAllLineHighlights() {
 		editorPane.removeAllLineHighlights();
+		removeStatementHighlight();
+	}
+
+	// the statement highlighted (where Step Into stopped), or null
+	private Object statementHighlight;
+
+	/**
+	 * Highlights just a statement on line (0-based): length characters from column, if the line
+	 * still has text there (otherwise nothing is highlighted).
+	 * @return false if it couldn't be (the line has changed): highlight the whole line instead
+	 */
+	public boolean addStatementHighlight(int line, int column, int length, String text, Color color) {
+		removeStatementHighlight();
+		try {
+			if( line < 0 || line >= editorPane.getLineCount()) {
+				return false;
+			}
+			int start = editorPane.getLineStartOffset(line)+column;
+			int end = start+length;
+			if( column < 0 || end > editorPane.getLineEndOffset(line) || !editorPane.getText(start, length).equals(text)) {
+				return false;
+			}
+			statementHighlight = editorPane.getHighlighter().addHighlight(start, end,
+					new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(color));
+			return true;
+		} catch (BadLocationException e) {
+			return false;
+		}
+	}
+
+	/** for the tests: the statement highlighted (start and end in the text), or null */
+	int[] getStatementHighlight() {
+		if( statementHighlight == null ) {
+			return null;
+		}
+		javax.swing.text.Highlighter.Highlight h = (javax.swing.text.Highlighter.Highlight) statementHighlight;
+		return new int[] {h.getStartOffset(), h.getEndOffset()};
+	}
+
+	/** Removes the statement highlight (see addStatementHighlight). */
+	public void removeStatementHighlight() {
+		if( statementHighlight != null ) {
+			editorPane.getHighlighter().removeHighlight(statementHighlight);
+			statementHighlight = null;
+		}
 	}
 	
 	public void addBreapointListner(BreakpointListner l) {

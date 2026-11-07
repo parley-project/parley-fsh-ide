@@ -388,6 +388,9 @@ public final class SyntaxColors {
 		// the line a debugged script is stopped on: light or dark to go with the background
 		b.append(p).append(" .current-line { -fx-background-color: ").append(isDark() ? "#33401C" : "#D9F2D9")
 		.append("; }\n");
+		// (just the statement Step Into stopped at, when its line has others)
+		b.append(p).append(" .current-statement { -rtfx-background-color: ").append(isDark() ? "#33401C" : "#D9F2D9")
+		.append("; }\n");
 		// the console, under the editor: the same background and text; prompts as comments are,
 		// errors red (lighter on a dark background)
 		String c = ".root." + CSS_CLASS + " .console";

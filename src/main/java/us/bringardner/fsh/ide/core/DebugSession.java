@@ -91,11 +91,35 @@ public class DebugSession extends DebugContext {
 	// false while just running: no stopping and no statement log, only terminate
 	private volatile boolean active;
 
-	// the statement about to run, and its context; read when the script stops
+	// the statement about to run, the text it was read from, and its context; read when the script stops
 	private Ast.Node current;
+	private String currentSource;
 	private ShellContext currentCtx;
+	// Step Into was pressed (till the script stops), and the statement it stopped at
+	private boolean steppingInto;
+	private Statement pausedStatement;
 	// a breakpoint's condition is running: its own commands are not the script's
 	private boolean evaluating;
+	/*
+	 * Where the script stopped, for each call depth (the functions and sourced files running):
+	 * the line it stopped on, and the statements started on that line since. The visit to the
+	 * line lasts until a statement on another line starts at that depth, the same statement
+	 * starts again (the next time round a loop) or the function returns. While it lasts, the
+	 * line's breakpoint doesn't stop the script again (only Step Into stops at the rest of the line).
+	 */
+	private static final class Visit {
+		final int line;
+		final java.util.Set<Ast.Node> started = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+
+		Visit(int line, Ast.Node node) {
+			this.line = line;
+			started.add(node);
+		}
+	}
+	private final java.util.TreeMap<Integer,Visit> visits = new java.util.TreeMap<>();
+	// Step Over: the call depth it started at (it ends when that depth's visit does)
+	private boolean steppingOver;
+	private int stepDepth;
 
 	/**
 	 * @param breakpoints the breakpoint on an editor line (0-based), or null; called on the
@@ -113,6 +137,12 @@ public class DebugSession extends DebugContext {
 	public void setActive(boolean active) {
 		this.active = active;
 		ignoreBreakpoints = false;
+		synchronized (this) {
+			endStepOver();
+			steppingInto = false;
+			pausedStatement = null;
+			visits.clear();
+		}
 	}
 
 	/**
@@ -122,6 +152,10 @@ public class DebugSession extends DebugContext {
 	public void runToEnd() {
 		ignoreBreakpoints = true;
 		resume();
+	}
+
+	private synchronized void endStepOver() {
+		steppingOver = false;
 	}
 
 	public boolean isActive() {
@@ -171,6 +205,8 @@ public class DebugSession extends DebugContext {
 			current = node;
 		}
 		currentCtx = ctx;
+		// (a watchpoint's stop shows the whole line)
+		steppingInto = false;
 		hit = wp;
 		hitName = Watchpoint.normalize(name);
 		hitWrite = write;
@@ -189,6 +225,7 @@ public class DebugSession extends DebugContext {
 
 	@Override
 	public void suspend() {
+		endStepOver();
 		setCurrentState(RunState.StepInto);
 	}
 
@@ -200,24 +237,127 @@ public class DebugSession extends DebugContext {
 	@Override
 	public void resume() {
 		listener.resuming();
+		endStepOver();
 		setCurrentState(RunState.Running);
 	}
 
+	/**
+	 * Step Over: runs the rest of the line it stopped on, and stops at the first statement on
+	 * another line, in the same function or the one it returns to; the functions it calls run
+	 * without stopping (unless at a breakpoint or a watchpoint). In a loop, a statement starting
+	 * again on the same line (the next time round) stops too.
+	 */
 	@Override
 	public void stepOver() {
 		listener.resuming();
-		setCurrentState(RunState.StepOver);
+		synchronized (this) {
+			endStepOver();
+			if( current != null && currentCtx != null && visits.containsKey(currentCtx.callFrames.size())) {
+				steppingOver = true;
+				stepDepth = currentCtx.callFrames.size();
+			}
+			// (fsh stops at the next statement in StepOver: isBreakpoint decides where instead)
+			setCurrentState(steppingOver ? RunState.Running : RunState.StepOver);
+		}
 	}
 
+	/** Step Into: stops at the next statement, the next one on the same line or in a function it calls. */
 	@Override
 	public void stepInto() {
 		listener.resuming();
-		setCurrentState(RunState.StepInto);
+		synchronized (this) {
+			endStepOver();
+			steppingInto = true;
+			setCurrentState(RunState.StepInto);
+		}
+	}
+
+	/**
+	 * Where on its line the statement a Step Into stopped at is, for an editor to highlight just
+	 * it: column (0-based) and length on the line, and its text there (so an editor can check
+	 * its line still says that).
+	 */
+	public static final class Statement {
+		public final int column;
+		public final int length;
+		public final String text;
+
+		Statement(int column, int length, String text) {
+			this.column = column;
+			this.length = length;
+			this.text = text;
+		}
+	}
+
+	/**
+	 * The statement the script is paused at, when Step Into stopped it at one that shares its
+	 * line with others; null to highlight the whole line (a breakpoint, a watchpoint, Step Over,
+	 * Suspend, or a statement that is the whole line). Call it from Listener.paused.
+	 */
+	public synchronized Statement pausedStatement() {
+		return pausedStatement;
+	}
+
+	/** the statement's place on its (first) line, or null if it is all there is on the line */
+	static Statement statementOnLine(Ast.Node node, String source) {
+		if( node == null || source == null || node.start < 0 || node.end > source.length() || node.start >= node.end ) {
+			return null;
+		}
+		int lineStart = source.lastIndexOf('\n', node.start-1)+1;
+		int lineEnd = source.indexOf('\n', node.start);
+		if( lineEnd < 0 ) {
+			lineEnd = source.length();
+		}
+		int end = Math.min(node.end, lineEnd);
+		String line = source.substring(lineStart, lineEnd);
+		String text = source.substring(node.start, end);
+		if( text.trim().equals(line.trim())) {
+			return null;
+		}
+		return new Statement(node.start-lineStart, end-node.start, text);
+	}
+
+	/**
+	 * A statement is starting at line (the script's) and depth: the visits it ends (a returned
+	 * function's, or this depth's when it's another line or the same statement again).
+	 * @return true if it's part of the visit to the line the script stopped on at this depth
+	 */
+	private boolean stillVisiting(int line, int depth, Ast.Node node) {
+		// (the functions returned from)
+		visits.tailMap(depth, false).clear();
+		Visit v = visits.get(depth);
+		if( v == null ) {
+			return false;
+		}
+		if( line == v.line && v.started.add(node)) {
+			return true;
+		}
+		visits.remove(depth);
+		return false;
 	}
 
 	@Override
 	public synchronized boolean isBreakpoint(Point linePt,ShellContext ctx) {
-		if( !active || evaluating || ignoreBreakpoints ) {
+		if( !active || evaluating ) {
+			return false;
+		}
+		int depth = ctx.callFrames.size();
+		if( stillVisiting(linePt.x, depth, ctx.getLastNode())) {
+			// the rest of the line it stopped on: its breakpoint doesn't stop it again
+			return false;
+		}
+		if( steppingOver && depth <= stepDepth && !visits.containsKey(stepDepth)) {
+			// Step Over is done: the line it stepped over is (at a statement on another line, the
+			// same one again, or back in a caller); a breakpoint here counts its hit too
+			breakpointHit(linePt, ctx);
+			return true;
+		}
+		return breakpointHit(linePt, ctx);
+	}
+
+	/** a breakpoint on the line, enabled, whose condition holds and whose hit count is reached */
+	private boolean breakpointHit(Point linePt,ShellContext ctx) {
+		if( ignoreBreakpoints ) {
 			return false;
 		}
 		int line = editorLine(linePt.x);
@@ -261,6 +401,7 @@ public class DebugSession extends DebugContext {
 			throw new LoopControlException(LoopControl.Break, 100000);
 		}
 		current = node;
+		currentSource = source;
 		currentCtx = ctx;
 	}
 
@@ -273,6 +414,18 @@ public class DebugSession extends DebugContext {
 			listener.watchpointHit(hit, hitName, hitWrite, hitWrite ? currentCtx.peekVariable(hitName) : null);
 		}
 		hit = null;
+		if( state == RunState.AtBreakpoint ) {
+			// stopped (at the step's end, a breakpoint, a watchpoint or Suspend): the step is
+			// over, and the script is visiting this line
+			steppingOver = false;
+			pausedStatement = steppingInto ? statementOnLine(current, currentSource) : null;
+			steppingInto = false;
+			if( current != null && currentCtx != null ) {
+				int depth = currentCtx.callFrames.size();
+				visits.tailMap(depth, false).clear();
+				visits.put(depth, new Visit(current.line, current));
+			}
+		}
 		if( state == RunState.AtBreakpoint && active && current != null && currentCtx != null) {
 			listener.paused(editorLine(current.line), currentCtx, currentCtx.getVariables());
 		}

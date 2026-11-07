@@ -74,6 +74,233 @@ public class TestDebugSession {
 		finished.get(10, TimeUnit.SECONDS);
 	}
 
+	/** the variable as it is at the pause */
+	private static String var(RecordingListener.Pause p, String name) {
+		return String.valueOf(p.variables().get(name));
+	}
+
+	@Test
+	public void stepOverRunsTheRestOfTheLine() throws Exception {
+		breakpoint(0);
+		start("x=1; x=2; x=3\ny=4\ny=5\n");
+		RecordingListener.Pause p = nextPause();
+		assertEquals(0, p.line());
+		assertEquals("null", var(p, "x"));
+		session.stepOver();
+		p = nextPause();
+		assertEquals(1, p.line(), "the next line, not the next statement on line 0");
+		assertEquals("3", var(p, "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void stepIntoRunsTheNextStatementOnTheLine() throws Exception {
+		breakpoint(0);
+		start("x=1; x=2; x=3\ny=4\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.stepInto();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(0, p.line());
+		assertEquals("1", var(p, "x"));
+		session.stepInto();
+		p = nextPause();
+		assertEquals(0, p.line());
+		assertEquals("2", var(p, "x"));
+		session.stepOver();
+		p = nextPause();
+		assertEquals(1, p.line());
+		assertEquals("3", var(p, "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void stepOverDoesntGoIntoAFunction() throws Exception {
+		breakpoint(3);
+		start("f() {\n  x=1\n}\nf; y=2\nz=3\n");
+		assertEquals(3, nextPause().line());
+		session.stepOver();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(4, p.line());
+		assertEquals("1", var(p, "x"));
+		assertEquals("2", var(p, "y"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void stepOverStopsAtABreakpointInAFunction() throws Exception {
+		breakpoint(3);
+		breakpoint(1);
+		start("f() {\n  x=1\n}\nf; y=2\nz=3\n");
+		assertEquals(3, nextPause().line());
+		session.stepOver();
+		assertEquals(1, nextPause().line());
+		// (not again at y=2: line 3 was stopped at, and the call returns to it)
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void stepOverAtAFunctionsEndGoesBackToTheCaller() throws Exception {
+		breakpoint(1);
+		start("f() {\n  x=1\n}\nf; y=2\nz=3\n");
+		assertEquals(1, nextPause().line());
+		session.stepOver();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(3, p.line(), "the rest of the caller's line");
+		assertEquals("1", var(p, "x"));
+		assertEquals("null", var(p, "y"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void stepOverInALoopStopsEachTimeRound() throws Exception {
+		breakpoint(1);
+		start("for i in 1 2; do\n  x=$i\ndone\ny=1\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.stepOver();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(1, p.line(), "the same line, the next time round");
+		assertEquals("1", var(p, "x"));
+		session.stepOver();
+		p = nextPause();
+		assertEquals(3, p.line());
+		assertEquals("2", var(p, "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void stepOverALoopOnOneLineStopsEachTimeRound() throws Exception {
+		breakpoint(0);
+		start("for i in 1 2; do x=$i; done\ny=1\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.stepOver();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(0, p.line(), "x=$i, the next time round");
+		assertEquals("1", var(p, "x"));
+		session.stepOver();
+		p = nextPause();
+		assertEquals(1, p.line());
+		assertEquals("2", var(p, "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void aBreakpointStopsOnceOnALine() throws Exception {
+		breakpoint(0);
+		start("x=1; x=2; x=3\ny=4\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void afterStepIntoTheRestOfTheLineDoesntStopAgain() throws Exception {
+		breakpoint(0);
+		start("x=1; x=2; x=3\ny=4\n");
+		nextPause();
+		session.stepInto();
+		assertEquals("1", var(nextPause(), "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void backFromAFunctionTheRestOfTheLineDoesntStopAgain() throws Exception {
+		breakpoint(3);
+		start("f() {\n  x=1\n}\nf; y=2\nz=3\n");
+		assertEquals(3, nextPause().line());
+		session.stepInto();
+		nextPause();
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void aBreakpointInALoopStopsEachTimeRound() throws Exception {
+		breakpoint(1);
+		start("for i in 1 2 3; do\n  x=$i\ndone\n");
+		for(String x : new String[] {"null", "1", "2"}) {
+			RecordingListener.Pause p = nextPause();
+			assertEquals(1, p.line());
+			assertEquals(x, var(p, "x"));
+			session.resume();
+		}
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void aBreakpointOnALoopOnOneLineStopsEachTimeRound() throws Exception {
+		breakpoint(0);
+		start("for i in 1 2; do x=$i; done\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.resume();
+		// x=$i, the next time round
+		assertEquals("1", var(nextPause(), "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void aRecursiveCallStopsAgain() throws Exception {
+		breakpoint(1);
+		start("f() {\n  x=$1; if [ $1 -lt 2 ]; then f $(( $1 + 1 )); fi\n}\nf 1\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.resume();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(1, p.line(), "the line again, in the call it makes");
+		assertEquals("1", var(p, "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void stepIntoGivesTheStatementOnTheLine() throws Exception {
+		breakpoint(1);
+		start("y=0\n  x=1; echo   b; x=3\nz=4\n");
+		nextPause();
+		assertNull(session.pausedStatement(), "a breakpoint: the whole line");
+		session.stepInto();
+		nextPause();
+		DebugSession.Statement st = session.pausedStatement();
+		assertNotNull(st);
+		assertEquals("echo   b", st.text);
+		assertEquals(7, st.column);
+		assertEquals(8, st.length);
+		session.stepInto();
+		nextPause();
+		assertEquals("x=3", session.pausedStatement().text);
+		session.stepInto();
+		assertEquals(2, nextPause().line());
+		assertNull(session.pausedStatement(), "the whole line is the statement");
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void stepOverGivesTheWholeLine() throws Exception {
+		breakpoint(0);
+		start("x=1; x=2\ny=1; y=2\n");
+		nextPause();
+		session.stepOver();
+		assertEquals(1, nextPause().line());
+		assertNull(session.pausedStatement());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
 	@Test
 	public void linesOfARunSelection() throws Exception {
 		// the selection starts on editor line 5

@@ -26,6 +26,8 @@
 
 /* debugging */
 .script-editor .current-line { -fx-background-color: #d9f2d9; }
+/* the statement Step Into stopped at, when its line has others */
+.script-editor .current-statement { -rtfx-background-color: #d9f2d9; }
 
 /* spelling and folding */
 .script-editor .misspelled {
@@ -68,6 +70,7 @@
 .theme-dark .console .error  { -fx-fill: #E06C5A; }
 .theme-dark .console .prompt { -fx-fill: #A39B85; }
 .theme-dark .script-editor .current-line { -fx-background-color: #33401C; }
+.theme-dark .script-editor .current-statement { -rtfx-background-color: #33401C; }
 .theme-dark .script-editor .misspelled { -rtfx-underline-color: #E06C5A; }
 .theme-dark .script-editor .fold-toggle { -fx-text-fill: #876D29; }
 .theme-dark .script-editor .fold-toggle:hover { -fx-text-fill: #D0AA42; }
