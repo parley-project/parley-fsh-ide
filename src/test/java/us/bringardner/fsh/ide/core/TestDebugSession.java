@@ -138,8 +138,8 @@ public class TestDebugSession {
 		assertEquals(3, nextPause().line());
 		session.stepOver();
 		assertEquals(1, nextPause().line());
-		// (resume would stop again at y=2: line 3's breakpoint stops at each statement on it)
-		session.runToEnd();
+		// (not again at y=2: line 3 was stopped at, and the call returns to it)
+		session.resume();
 		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
 	}
 
@@ -189,6 +189,81 @@ public class TestDebugSession {
 		assertEquals("2", var(p, "x"));
 		session.resume();
 		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void aBreakpointStopsOnceOnALine() throws Exception {
+		breakpoint(0);
+		start("x=1; x=2; x=3\ny=4\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void afterStepIntoTheRestOfTheLineDoesntStopAgain() throws Exception {
+		breakpoint(0);
+		start("x=1; x=2; x=3\ny=4\n");
+		nextPause();
+		session.stepInto();
+		assertEquals("1", var(nextPause(), "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void backFromAFunctionTheRestOfTheLineDoesntStopAgain() throws Exception {
+		breakpoint(3);
+		start("f() {\n  x=1\n}\nf; y=2\nz=3\n");
+		assertEquals(3, nextPause().line());
+		session.stepInto();
+		nextPause();
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void aBreakpointInALoopStopsEachTimeRound() throws Exception {
+		breakpoint(1);
+		start("for i in 1 2 3; do\n  x=$i\ndone\n");
+		for(String x : new String[] {"null", "1", "2"}) {
+			RecordingListener.Pause p = nextPause();
+			assertEquals(1, p.line());
+			assertEquals(x, var(p, "x"));
+			session.resume();
+		}
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void aBreakpointOnALoopOnOneLineStopsEachTimeRound() throws Exception {
+		breakpoint(0);
+		start("for i in 1 2; do x=$i; done\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.resume();
+		// x=$i, the next time round
+		assertEquals("1", var(nextPause(), "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	@Test
+	public void aRecursiveCallStopsAgain() throws Exception {
+		breakpoint(1);
+		start("f() {\n  x=$1; if [ $1 -lt 2 ]; then f $(( $1 + 1 )); fi\n}\nf 1\n");
+		assertEquals("null", var(nextPause(), "x"));
+		session.resume();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(1, p.line(), "the line again, in the call it makes");
+		assertEquals("1", var(p, "x"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
 	}
 
 	@Test

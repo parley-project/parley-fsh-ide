@@ -96,12 +96,26 @@ public class DebugSession extends DebugContext {
 	private ShellContext currentCtx;
 	// a breakpoint's condition is running: its own commands are not the script's
 	private boolean evaluating;
-	// Step Over: the line (the script's, 1-based) and call depth it started from, and the
-	// statements started on that line since (one starting again is the next time round a loop)
+	/*
+	 * Where the script stopped, for each call depth (the functions and sourced files running):
+	 * the line it stopped on, and the statements started on that line since. The visit to the
+	 * line lasts until a statement on another line starts at that depth, the same statement
+	 * starts again (the next time round a loop) or the function returns. While it lasts, the
+	 * line's breakpoint doesn't stop the script again (only Step Into stops at the rest of the line).
+	 */
+	private static final class Visit {
+		final int line;
+		final java.util.Set<Ast.Node> started = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+
+		Visit(int line, Ast.Node node) {
+			this.line = line;
+			started.add(node);
+		}
+	}
+	private final java.util.TreeMap<Integer,Visit> visits = new java.util.TreeMap<>();
+	// Step Over: the call depth it started at (it ends when that depth's visit does)
 	private boolean steppingOver;
-	private int stepLine;
 	private int stepDepth;
-	private final java.util.Set<Ast.Node> steppedOver = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
 
 	/**
 	 * @param breakpoints the breakpoint on an editor line (0-based), or null; called on the
@@ -119,7 +133,10 @@ public class DebugSession extends DebugContext {
 	public void setActive(boolean active) {
 		this.active = active;
 		ignoreBreakpoints = false;
-		endStepOver();
+		synchronized (this) {
+			endStepOver();
+			visits.clear();
+		}
 	}
 
 	/**
@@ -133,7 +150,6 @@ public class DebugSession extends DebugContext {
 
 	private synchronized void endStepOver() {
 		steppingOver = false;
-		steppedOver.clear();
 	}
 
 	public boolean isActive() {
@@ -228,11 +244,9 @@ public class DebugSession extends DebugContext {
 		listener.resuming();
 		synchronized (this) {
 			endStepOver();
-			if( current != null && currentCtx != null ) {
+			if( current != null && currentCtx != null && visits.containsKey(currentCtx.callFrames.size())) {
 				steppingOver = true;
-				stepLine = current.line;
 				stepDepth = currentCtx.callFrames.size();
-				steppedOver.add(current);
 			}
 			// (fsh stops at the next statement in StepOver: isBreakpoint decides where instead)
 			setCurrentState(steppingOver ? RunState.Running : RunState.StepOver);
@@ -247,18 +261,23 @@ public class DebugSession extends DebugContext {
 		setCurrentState(RunState.StepInto);
 	}
 
-	/** Step Over is done: a statement on another line (or the same one again), here or in a caller. */
-	private boolean stepOverDone(int line, ShellContext ctx) {
-		int depth = ctx.callFrames.size();
-		if( depth > stepDepth ) {
-			// (in a function it calls)
+	/**
+	 * A statement is starting at line (the script's) and depth: the visits it ends (a returned
+	 * function's, or this depth's when it's another line or the same statement again).
+	 * @return true if it's part of the visit to the line the script stopped on at this depth
+	 */
+	private boolean stillVisiting(int line, int depth, Ast.Node node) {
+		// (the functions returned from)
+		visits.tailMap(depth, false).clear();
+		Visit v = visits.get(depth);
+		if( v == null ) {
 			return false;
 		}
-		if( depth < stepDepth || line != stepLine ) {
+		if( line == v.line && v.started.add(node)) {
 			return true;
 		}
-		// the same line: the next statement on it, or one starting again
-		return !steppedOver.add(ctx.getLastNode());
+		visits.remove(depth);
+		return false;
 	}
 
 	@Override
@@ -266,16 +285,16 @@ public class DebugSession extends DebugContext {
 		if( !active || evaluating ) {
 			return false;
 		}
-		if( steppingOver ) {
-			if( stepOverDone(linePt.x, ctx)) {
-				// (a breakpoint here counts its hit too)
-				breakpointHit(linePt, ctx);
-				return true;
-			}
-			if( linePt.x == stepLine && ctx.callFrames.size() == stepDepth ) {
-				// the rest of the line being stepped over: its breakpoint doesn't stop it again
-				return false;
-			}
+		int depth = ctx.callFrames.size();
+		if( stillVisiting(linePt.x, depth, ctx.getLastNode())) {
+			// the rest of the line it stopped on: its breakpoint doesn't stop it again
+			return false;
+		}
+		if( steppingOver && depth <= stepDepth && !visits.containsKey(stepDepth)) {
+			// Step Over is done: the line it stepped over is (at a statement on another line, the
+			// same one again, or back in a caller); a breakpoint here counts its hit too
+			breakpointHit(linePt, ctx);
+			return true;
 		}
 		return breakpointHit(linePt, ctx);
 	}
@@ -339,9 +358,14 @@ public class DebugSession extends DebugContext {
 		}
 		hit = null;
 		if( state == RunState.AtBreakpoint ) {
-			// stopped (at the step's end, a breakpoint, a watchpoint or Suspend): the step is over
+			// stopped (at the step's end, a breakpoint, a watchpoint or Suspend): the step is
+			// over, and the script is visiting this line
 			steppingOver = false;
-			steppedOver.clear();
+			if( current != null && currentCtx != null ) {
+				int depth = currentCtx.callFrames.size();
+				visits.tailMap(depth, false).clear();
+				visits.put(depth, new Visit(current.line, current));
+			}
 		}
 		if( state == RunState.AtBreakpoint && active && current != null && currentCtx != null) {
 			listener.paused(editorLine(current.line), currentCtx, currentCtx.getVariables());
