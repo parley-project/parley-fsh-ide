@@ -91,9 +91,13 @@ public class DebugSession extends DebugContext {
 	// false while just running: no stopping and no statement log, only terminate
 	private volatile boolean active;
 
-	// the statement about to run, and its context; read when the script stops
+	// the statement about to run, the text it was read from, and its context; read when the script stops
 	private Ast.Node current;
+	private String currentSource;
 	private ShellContext currentCtx;
+	// Step Into was pressed (till the script stops), and the statement it stopped at
+	private boolean steppingInto;
+	private Statement pausedStatement;
 	// a breakpoint's condition is running: its own commands are not the script's
 	private boolean evaluating;
 	/*
@@ -135,6 +139,8 @@ public class DebugSession extends DebugContext {
 		ignoreBreakpoints = false;
 		synchronized (this) {
 			endStepOver();
+			steppingInto = false;
+			pausedStatement = null;
 			visits.clear();
 		}
 	}
@@ -199,6 +205,8 @@ public class DebugSession extends DebugContext {
 			current = node;
 		}
 		currentCtx = ctx;
+		// (a watchpoint's stop shows the whole line)
+		steppingInto = false;
 		hit = wp;
 		hitName = Watchpoint.normalize(name);
 		hitWrite = write;
@@ -257,8 +265,56 @@ public class DebugSession extends DebugContext {
 	@Override
 	public void stepInto() {
 		listener.resuming();
-		endStepOver();
-		setCurrentState(RunState.StepInto);
+		synchronized (this) {
+			endStepOver();
+			steppingInto = true;
+			setCurrentState(RunState.StepInto);
+		}
+	}
+
+	/**
+	 * Where on its line the statement a Step Into stopped at is, for an editor to highlight just
+	 * it: column (0-based) and length on the line, and its text there (so an editor can check
+	 * its line still says that).
+	 */
+	public static final class Statement {
+		public final int column;
+		public final int length;
+		public final String text;
+
+		Statement(int column, int length, String text) {
+			this.column = column;
+			this.length = length;
+			this.text = text;
+		}
+	}
+
+	/**
+	 * The statement the script is paused at, when Step Into stopped it at one that shares its
+	 * line with others; null to highlight the whole line (a breakpoint, a watchpoint, Step Over,
+	 * Suspend, or a statement that is the whole line). Call it from Listener.paused.
+	 */
+	public synchronized Statement pausedStatement() {
+		return pausedStatement;
+	}
+
+	/** the statement's place on its (first) line, or null if it is all there is on the line */
+	static Statement statementOnLine(Ast.Node node, String source) {
+		if( node == null || source == null || node.start < 0 || node.end > source.length() || node.start >= node.end ) {
+			return null;
+		}
+		int lineStart = source.lastIndexOf('\n', node.start-1)+1;
+		int lineEnd = source.indexOf('\n', node.start);
+		if( lineEnd < 0 ) {
+			lineEnd = source.length();
+		}
+		int end = Math.min(node.end, lineEnd);
+		String line = source.substring(lineStart, lineEnd);
+		String text = source.substring(node.start, end);
+		if( text.trim().equals(line.trim())) {
+			return null;
+		}
+		return new Statement(node.start-lineStart, end-node.start, text);
 	}
 
 	/**
@@ -345,6 +401,7 @@ public class DebugSession extends DebugContext {
 			throw new LoopControlException(LoopControl.Break, 100000);
 		}
 		current = node;
+		currentSource = source;
 		currentCtx = ctx;
 	}
 
@@ -361,6 +418,8 @@ public class DebugSession extends DebugContext {
 			// stopped (at the step's end, a breakpoint, a watchpoint or Suspend): the step is
 			// over, and the script is visiting this line
 			steppingOver = false;
+			pausedStatement = steppingInto ? statementOnLine(current, currentSource) : null;
+			steppingInto = false;
 			if( current != null && currentCtx != null ) {
 				int depth = currentCtx.callFrames.size();
 				visits.tailMap(depth, false).clear();

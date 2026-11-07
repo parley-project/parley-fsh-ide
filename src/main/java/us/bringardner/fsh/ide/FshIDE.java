@@ -250,10 +250,15 @@ public class FshIDE extends JFrame  {
 	private final DebugSession.Listener debugListener = new DebugSession.Listener() {
 		@Override
 		public void paused(int line, ShellContext ctx, Map<String, Object> variables) {
+			// (after Step Into: just the statement it stopped at, when the line has others)
+			DebugSession.Statement statement = debugSession.pausedStatement();
 			SwingUtilities.invokeLater(()->{
 				logBatcher.flush();
 				editorPane.removeAllLineHighlights();
-				if( line >= 0 ) {
+				if( line >= 0 && statement != null && editorPane.addStatementHighlight(line,
+						statement.column, statement.length, statement.text, EditorColors.debugLine())) {
+					// (highlighted)
+				} else if( line >= 0 ) {
 					try {
 						editorPane.addLineHighlight(line, EditorColors.debugLine());
 					} catch (BadLocationException e) {

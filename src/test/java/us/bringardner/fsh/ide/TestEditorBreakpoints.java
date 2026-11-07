@@ -50,6 +50,28 @@ public class TestEditorBreakpoints {
 		void run() throws Exception;
 	}
 
+	/** Where Step Into stopped: just the statement, if the line still says it. */
+	@Test
+	public void highlightsAStatement() throws Exception {
+		onEdt(()->{
+			EditorPanel editor = new EditorPanel();
+			editor.setText("echo a\nx=1; echo b\n", null);
+			assertTrue(editor.addStatementHighlight(1, 5, 6, "echo b", java.awt.Color.GREEN));
+			int at = "echo a\nx=1; ".length();
+			assertEquals(at, editor.getStatementHighlight()[0]);
+			assertEquals(at+6, editor.getStatementHighlight()[1]);
+
+			// one at a time; a line that says something else isn't highlighted
+			assertTrue(!editor.addStatementHighlight(1, 5, 6, "echo c", java.awt.Color.GREEN));
+			assertNull(editor.getStatementHighlight());
+			assertTrue(!editor.addStatementHighlight(1, 9, 6, "echo b", java.awt.Color.GREEN));
+
+			editor.addStatementHighlight(1, 5, 6, "echo b", java.awt.Color.GREEN);
+			editor.removeAllLineHighlights();
+			assertNull(editor.getStatementHighlight());
+		});
+	}
+
 	@Test
 	public void followsItsLine() throws Exception {
 		onEdt(()->{

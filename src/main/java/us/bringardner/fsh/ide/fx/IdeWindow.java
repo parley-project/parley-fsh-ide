@@ -162,10 +162,14 @@ public class IdeWindow {
 			// (set on this thread just before, by watchpointHit, when a watchpoint stopped it)
 			String hit = watchpointStop;
 			watchpointStop = null;
+			// (after Step Into: just the statement it stopped at, when the line has others)
+			DebugSession.Statement statement = IdeWindow.this.debugSession.pausedStatement();
 			Platform.runLater(()->{
 				log.flush();
 				pausedContext = ctx;
-				editor.setCurrentLine(line);
+				if( statement == null || !editor.setCurrentStatement(line, statement.column, statement.length, statement.text)) {
+					editor.setCurrentLine(line);
+				}
 				debugPanel.setVariables(variables, true);
 				status.setText("Paused at line "+(line+1)+(hit == null ? "" : ": watchpoint, "+hit));
 				updateControls();

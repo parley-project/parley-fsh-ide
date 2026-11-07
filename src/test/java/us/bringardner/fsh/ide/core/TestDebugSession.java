@@ -267,6 +267,41 @@ public class TestDebugSession {
 	}
 
 	@Test
+	public void stepIntoGivesTheStatementOnTheLine() throws Exception {
+		breakpoint(1);
+		start("y=0\n  x=1; echo   b; x=3\nz=4\n");
+		nextPause();
+		assertNull(session.pausedStatement(), "a breakpoint: the whole line");
+		session.stepInto();
+		nextPause();
+		DebugSession.Statement st = session.pausedStatement();
+		assertNotNull(st);
+		assertEquals("echo   b", st.text);
+		assertEquals(7, st.column);
+		assertEquals(8, st.length);
+		session.stepInto();
+		nextPause();
+		assertEquals("x=3", session.pausedStatement().text);
+		session.stepInto();
+		assertEquals(2, nextPause().line());
+		assertNull(session.pausedStatement(), "the whole line is the statement");
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
+	public void stepOverGivesTheWholeLine() throws Exception {
+		breakpoint(0);
+		start("x=1; x=2\ny=1; y=2\n");
+		nextPause();
+		session.stepOver();
+		assertEquals(1, nextPause().line());
+		assertNull(session.pausedStatement());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	@Test
 	public void linesOfARunSelection() throws Exception {
 		// the selection starts on editor line 5
 		session.setFirstLine(5);

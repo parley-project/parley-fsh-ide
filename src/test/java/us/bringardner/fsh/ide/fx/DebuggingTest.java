@@ -1,5 +1,6 @@
 package us.bringardner.fsh.ide.fx;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -114,6 +115,23 @@ public class DebuggingTest {
 		assertEquals("a\nb\n", console(w));
 		assertFalse(Fx.call(()->w.debugPanel().variablesEditable()));
 		assertTrue(Fx.call(()->w.debugPanel().logText()).endsWith("4: echo b\n"));
+	}
+
+	@Test
+	public void stepIntoMarksJustTheStatement() throws Exception {
+		TestWindow w = window("x=1; x=2\necho a\n");
+		Fx.run(()->{
+			w.editor().addBreakpoint(0);
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+		assertNull(Fx.call(()->w.editor().getCurrentStatement()), "a breakpoint marks the line");
+		Fx.run(()->w.debugSession().stepInto());
+		Fx.waitFor(()->w.isPaused() && w.editor().getCurrentStatement() != null);
+		assertArrayEquals(new int[] {5, 8}, Fx.call(()->w.editor().getCurrentStatement()));
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->!w.isRunning());
+		assertNull(Fx.call(()->w.editor().getCurrentStatement()));
 	}
 
 	@Test
