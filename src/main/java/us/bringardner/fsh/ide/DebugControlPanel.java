@@ -61,16 +61,7 @@ public class DebugControlPanel extends JPanel {
 		suspendButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/suspend.png")));
 		suspendButton.setToolTipText("Suspend");
 		add(suspendButton);
-
-		JButton terminateButton = new JButton("");
-		terminateButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				actionTerminate();
-			}
-		});
-		terminateButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/terminate.png")));
-		terminateButton.setToolTipText("Terminate");
-		add(terminateButton);
+		// (no Terminate here: the toolbar's Stop ends the script)
 
 		JButton stepIntoButton = new JButton("");
 		stepIntoButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/step_into.png")));
@@ -121,13 +112,6 @@ public class DebugControlPanel extends JPanel {
 	protected void actionStepInto() {
 		if( controller != null ) {
 			controller.stepInto();
-		}
-
-	}
-
-	protected void actionTerminate() {
-		if( controller != null ) {
-			controller.terminate();
 		}
 
 	}
