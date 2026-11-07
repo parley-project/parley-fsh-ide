@@ -96,6 +96,12 @@ public class DebugSession extends DebugContext {
 	private ShellContext currentCtx;
 	// a breakpoint's condition is running: its own commands are not the script's
 	private boolean evaluating;
+	// Step Over: the line (the script's, 1-based) and call depth it started from, and the
+	// statements started on that line since (one starting again is the next time round a loop)
+	private boolean steppingOver;
+	private int stepLine;
+	private int stepDepth;
+	private final java.util.Set<Ast.Node> steppedOver = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
 
 	/**
 	 * @param breakpoints the breakpoint on an editor line (0-based), or null; called on the
@@ -113,6 +119,7 @@ public class DebugSession extends DebugContext {
 	public void setActive(boolean active) {
 		this.active = active;
 		ignoreBreakpoints = false;
+		endStepOver();
 	}
 
 	/**
@@ -122,6 +129,11 @@ public class DebugSession extends DebugContext {
 	public void runToEnd() {
 		ignoreBreakpoints = true;
 		resume();
+	}
+
+	private synchronized void endStepOver() {
+		steppingOver = false;
+		steppedOver.clear();
 	}
 
 	public boolean isActive() {
@@ -189,6 +201,7 @@ public class DebugSession extends DebugContext {
 
 	@Override
 	public void suspend() {
+		endStepOver();
 		setCurrentState(RunState.StepInto);
 	}
 
@@ -200,24 +213,76 @@ public class DebugSession extends DebugContext {
 	@Override
 	public void resume() {
 		listener.resuming();
+		endStepOver();
 		setCurrentState(RunState.Running);
 	}
 
+	/**
+	 * Step Over: runs the rest of the line it stopped on, and stops at the first statement on
+	 * another line, in the same function or the one it returns to; the functions it calls run
+	 * without stopping (unless at a breakpoint or a watchpoint). In a loop, a statement starting
+	 * again on the same line (the next time round) stops too.
+	 */
 	@Override
 	public void stepOver() {
 		listener.resuming();
-		setCurrentState(RunState.StepOver);
+		synchronized (this) {
+			endStepOver();
+			if( current != null && currentCtx != null ) {
+				steppingOver = true;
+				stepLine = current.line;
+				stepDepth = currentCtx.callFrames.size();
+				steppedOver.add(current);
+			}
+			// (fsh stops at the next statement in StepOver: isBreakpoint decides where instead)
+			setCurrentState(steppingOver ? RunState.Running : RunState.StepOver);
+		}
 	}
 
+	/** Step Into: stops at the next statement, the next one on the same line or in a function it calls. */
 	@Override
 	public void stepInto() {
 		listener.resuming();
+		endStepOver();
 		setCurrentState(RunState.StepInto);
+	}
+
+	/** Step Over is done: a statement on another line (or the same one again), here or in a caller. */
+	private boolean stepOverDone(int line, ShellContext ctx) {
+		int depth = ctx.callFrames.size();
+		if( depth > stepDepth ) {
+			// (in a function it calls)
+			return false;
+		}
+		if( depth < stepDepth || line != stepLine ) {
+			return true;
+		}
+		// the same line: the next statement on it, or one starting again
+		return !steppedOver.add(ctx.getLastNode());
 	}
 
 	@Override
 	public synchronized boolean isBreakpoint(Point linePt,ShellContext ctx) {
-		if( !active || evaluating || ignoreBreakpoints ) {
+		if( !active || evaluating ) {
+			return false;
+		}
+		if( steppingOver ) {
+			if( stepOverDone(linePt.x, ctx)) {
+				// (a breakpoint here counts its hit too)
+				breakpointHit(linePt, ctx);
+				return true;
+			}
+			if( linePt.x == stepLine && ctx.callFrames.size() == stepDepth ) {
+				// the rest of the line being stepped over: its breakpoint doesn't stop it again
+				return false;
+			}
+		}
+		return breakpointHit(linePt, ctx);
+	}
+
+	/** a breakpoint on the line, enabled, whose condition holds and whose hit count is reached */
+	private boolean breakpointHit(Point linePt,ShellContext ctx) {
+		if( ignoreBreakpoints ) {
 			return false;
 		}
 		int line = editorLine(linePt.x);
@@ -273,6 +338,11 @@ public class DebugSession extends DebugContext {
 			listener.watchpointHit(hit, hitName, hitWrite, hitWrite ? currentCtx.peekVariable(hitName) : null);
 		}
 		hit = null;
+		if( state == RunState.AtBreakpoint ) {
+			// stopped (at the step's end, a breakpoint, a watchpoint or Suspend): the step is over
+			steppingOver = false;
+			steppedOver.clear();
+		}
 		if( state == RunState.AtBreakpoint && active && current != null && currentCtx != null) {
 			listener.paused(editorLine(current.line), currentCtx, currentCtx.getVariables());
 		}
