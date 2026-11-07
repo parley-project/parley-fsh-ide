@@ -35,6 +35,7 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -372,6 +373,8 @@ public class IdeWindow {
 				new SeparatorMenuItem(), useSelection, useAdapter, new SeparatorMenuItem(),
 				item("Clear Console", "Shortcut+K", console::clear), new SeparatorMenuItem(),
 				item("Clear Run Settings...", null, this::actionClearRunSettings));
+		// right-click on the console: Clear Console, as in the Run menu
+		console.getArea().setContextMenu(new ContextMenu(item("Clear Console", null, console::clear)));
 
 		// what environment scripts get (see ShellEnvironment)
 		menus.help.getItems().add(item("Script Environment...", null, this::showScriptEnvironment));
