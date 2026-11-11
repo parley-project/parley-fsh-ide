@@ -265,6 +265,8 @@ public class FshIDE extends JFrame  {
 						showError(e, "Add hilight");
 					}
 				}
+				// the line it stopped on shows (scrolled to, if it doesn't)
+				editorPane.showLine(line);
 				debugVariablePanel.setContext(editorPane, ctx, variables);
 			});
 		}
@@ -1464,6 +1466,11 @@ public class FshIDE extends JFrame  {
 		showDebugViewItem.setSelected(show);
 		actionShowDebugView();
 		return debugVariablePanel;
+	}
+
+	/** for the tests: the debugger, to step and resume a paused script */
+	DebugSession debugSession() {
+		return debugSession;
 	}
 
 	/** for the tests: [Debug, Run, Stop] enabled */

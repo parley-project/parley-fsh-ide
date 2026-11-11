@@ -143,6 +143,9 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- While debugging in the Swing IDE, the editor scrolls to the line the script stopped on when it
+  isn't in view (to the middle of the editor, opening a folded block it's in); a line that shows
+  is left where it is, and the caret isn't moved. The JavaFX IDE already did.
 - A variable a script gets from the login shell's environment (one the IDE itself doesn't have
   when it's opened from the Finder, such as `CLASSPATH` or `SDKMAN_PLATFORM` set in a startup file)
   shows on the fsh Variables tab, not with the script's own on User Variables.

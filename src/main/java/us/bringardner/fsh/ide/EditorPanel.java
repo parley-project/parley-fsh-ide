@@ -172,6 +172,53 @@ public class EditorPanel extends JPanel {
 		removeStatementHighlight();
 	}
 
+	/**
+	 * Scrolls so line (0-based) shows, with lines around it, if it doesn't already (a folded
+	 * block it's in is opened); a line that shows is left where it is. The caret and the
+	 * selection stay as they are. The debugger shows the line a script stopped on with it.
+	 */
+	public void showLine(int line) {
+		try {
+			if( line < 0 || line >= editorPane.getLineCount()) {
+				return;
+			}
+			int offset = editorPane.getLineStartOffset(line);
+			editorPane.getFoldManager().ensureOffsetNotInClosedFold(offset);
+			java.awt.geom.Rectangle2D at = editorPane.modelToView2D(offset);
+			if( at == null ) {
+				// (not laid out yet)
+				return;
+			}
+			java.awt.Rectangle visible = editorPane.getVisibleRect();
+			int top = (int) at.getY();
+			int height = (int) Math.ceil(at.getHeight());
+			if( top >= visible.y && top+height <= visible.y+visible.height ) {
+				return;
+			}
+			// in the middle of the editor (sideways, where it is)
+			int y = Math.max(0, top-(visible.height-height)/2);
+			editorPane.scrollRectToVisible(new java.awt.Rectangle(visible.x, y, 1, visible.height));
+		} catch (BadLocationException e) {
+			// no such line: nothing to show
+		}
+	}
+
+	/** for the tests: true if all of line (0-based) shows in the editor */
+	boolean isLineShowing(int line) {
+		try {
+			java.awt.geom.Rectangle2D at = editorPane.modelToView2D(editorPane.getLineStartOffset(line));
+			java.awt.Rectangle visible = editorPane.getVisibleRect();
+			return at != null && at.getY() >= visible.y && at.getY()+at.getHeight() <= visible.y+visible.height;
+		} catch (BadLocationException e) {
+			return false;
+		}
+	}
+
+	/** for the tests: how far down the editor is scrolled */
+	int scrolledTo() {
+		return editorPane.getVisibleRect().y;
+	}
+
 	// the statement highlighted (where Step Into stopped), or null
 	private Object statementHighlight;
 
