@@ -117,4 +117,55 @@ public class ScriptText {
 			out.write(clean(text).getBytes(StandardCharsets.UTF_8));
 		}
 	}
+
+	/**
+	 * The variable at offset in a script's text, for a debugger's right-click menu, or null: the
+	 * name the offset is in (or just after), when the text shows it is a variable: it follows $
+	 * or ${ (${#name} and ${!name} too), it is being set (name=, name+=, name[), or known says
+	 * it is one (the names of the paused script's variables, say). A positional parameter is given
+	 * as it's written: $1.
+	 */
+	public static String variableAt(String text, int offset, java.util.function.Predicate<String> known) {
+		if( text == null || offset < 0 || offset > text.length()) {
+			return null;
+		}
+		int start = offset;
+		while( start > 0 && isNameChar(text.charAt(start-1))) {
+			start--;
+		}
+		int end = offset;
+		while( end < text.length() && isNameChar(text.charAt(end))) {
+			end++;
+		}
+		if( start == end ) {
+			return null;
+		}
+		String name = text.substring(start, end);
+		// what is in front of it: $, ${, ${# or ${!
+		int before = start;
+		if( before > 1 && (text.charAt(before-1) == '#' || text.charAt(before-1) == '!') && text.charAt(before-2) == '{') {
+			before--;
+		}
+		if( before > 0 && text.charAt(before-1) == '{') {
+			before--;
+		}
+		boolean dollar = before > 0 && text.charAt(before-1) == '$' && (before == start || text.charAt(before) == '{');
+		if( name.matches("[0-9]+")) {
+			return dollar ? "$"+name : null;
+		}
+		if( !name.matches("[A-Za-z_][A-Za-z_0-9]*")) {
+			return null;
+		}
+		boolean set = text.startsWith("=", end) && !text.startsWith("==", end) || text.startsWith("+=", end) || text.startsWith("[", end);
+		// (a word of a command, such as the b of a=b, isn't being set: it must start its word)
+		boolean startsWord = start == 0 || " \t\n;&|(".indexOf(text.charAt(start-1)) >= 0;
+		if( dollar || set && startsWord || known != null && known.test(name)) {
+			return name;
+		}
+		return null;
+	}
+
+	private static boolean isNameChar(char c) {
+		return c == '_' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+	}
 }

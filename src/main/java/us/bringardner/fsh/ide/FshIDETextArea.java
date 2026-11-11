@@ -90,14 +90,52 @@ public class FshIDETextArea extends RSyntaxTextArea {
 		super.processMouseEvent(e);
 	}
 
+	/** what the popup menu shows in place of the edit menu, for the place clicked (see setPopupItems) */
+	private java.util.function.IntFunction<List<Component>> popupItems;
+	/** the edit menu's items, while others are shown in their place */
+	private List<Component> editItems;
+
+	/**
+	 * Lets the popup menu show other items in place of the edit menu's: each time it opens,
+	 * provider is asked for them, with the place in the text that was clicked (the caret's, when
+	 * it's opened from the keyboard); null from it (or a null provider) gives the edit menu. The
+	 * IDE shows its run and debug menus with it while a script runs.
+	 */
+	public void setPopupItems(java.util.function.IntFunction<List<Component>> provider) {
+		popupItems = provider;
+	}
+
+	/** The place in the text the popup menu was opened at. */
+	private int popupOffset() {
+		int pos = popupPoint == null ? -1 : viewToModel2D(popupPoint);
+		return pos < 0 ? getCaretPosition() : pos;
+	}
+
 	/** The popup menu with, when the click was on a misspelled word, the suggestions, Ignore and Add to Dictionary first. */
 	@Override
 	protected void configurePopupMenu(JPopupMenu popupMenu) {
+		if( editItems != null ) {
+			// the edit menu again
+			popupMenu.removeAll();
+			for(Component c : editItems) {
+				popupMenu.add(c);
+			}
+			editItems = null;
+		}
 		super.configurePopupMenu(popupMenu);
 		for(Component c : spellingItems) {
 			popupMenu.remove(c);
 		}
 		spellingItems.clear();
+		List<Component> others = popupItems == null ? null : popupItems.apply(popupOffset());
+		if( others != null ) {
+			editItems = java.util.Arrays.asList(popupMenu.getComponents());
+			popupMenu.removeAll();
+			for(Component c : others) {
+				popupMenu.add(c);
+			}
+			return;
+		}
 		FshSpellingParser sp = spelling;
 		if( sp == null || popupPoint == null ) {
 			return;

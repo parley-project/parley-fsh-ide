@@ -164,4 +164,46 @@ public class TestDebugVariables {
 		assertEquals(5, fsh.size());
 		assertEquals(true, fsh.containsAll(List.of("$0", "IFS", "OPTIND", "OLDPWD", envName)));
 	}
+
+	/** What a debugger shows for a name, or for text with a $ in it, of a paused script. */
+	@Test
+	public void theValueOfChosenText() {
+		Console console = new Console();
+		FshList args = new FshList();
+		args.add(new Argument("script"));
+		args.add(new Argument("first"));
+		console.setPositionalParameters(true, args);
+		ShellContext ctx = new ShellContext(console);
+		ctx.setVariable("count", "3");
+		ctx.setVariable("dir", "/a b");
+		FshList list = new FshList();
+		list.add("one");
+		list.add("two");
+		ctx.setVariable("list", list);
+
+		assertEquals("3", DebugVariables.valueOf(ctx, "count"));
+		assertEquals("3", DebugVariables.valueOf(ctx, " $count "));
+		assertEquals("3", DebugVariables.valueOf(ctx, "${count}"));
+		assertEquals("/a b/bin", DebugVariables.valueOf(ctx, "$dir/bin"));
+		assertEquals("two", DebugVariables.valueOf(ctx, "${list[1]}"));
+		assertEquals("2", DebugVariables.valueOf(ctx, "${#list[@]}"));
+		assertEquals("first", DebugVariables.valueOf(ctx, "$1"));
+		assertEquals("4", DebugVariables.valueOf(ctx, "$(( count + 1 ))"));
+		// the whole array, as the variables view shows it
+		assertEquals(String.valueOf(ctx.getVariables().get("list")), DebugVariables.valueOf(ctx, "list"));
+
+		// nothing of the script's changes
+		assertEquals("4", DebugVariables.valueOf(ctx, "$(( count += 1 ))"));
+		assertEquals("new", DebugVariables.valueOf(ctx, "${fresh:=new}"));
+		assertEquals("3", String.valueOf(ctx.getVariables().get("count")));
+		assertFalse(ctx.getVariables().containsKey("fresh"));
+
+		// no value to show, and why
+		assertEquals("nosuch isn't set", assertThrows(IllegalArgumentException.class, ()->DebugVariables.valueOf(ctx, "nosuch")).getMessage());
+		assertTrue(assertThrows(IllegalArgumentException.class, ()->DebugVariables.valueOf(ctx, "echo hi")).getMessage().startsWith("Not a variable"));
+		for(String runs : new String[] {"$(date)", "`date`", "x$(( $(date) ))", "<(date)"}) {
+			assertTrue(assertThrows(IllegalArgumentException.class, ()->DebugVariables.valueOf(ctx, runs)).getMessage().contains("would run a command"), runs);
+		}
+		assertThrows(IllegalArgumentException.class, ()->DebugVariables.valueOf(ctx, "  "));
+	}
 }

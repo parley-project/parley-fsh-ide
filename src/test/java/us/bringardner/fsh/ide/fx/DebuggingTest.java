@@ -529,4 +529,148 @@ public class DebuggingTest {
 		Fx.waitFor(()->!w.isRunning());
 		assertEquals("3\n", console(w));
 	}
+
+	// ---- while a script runs: no edits, and the run's or the debugger's right-click menu
+
+	/** a menu's items' texts ("-" for a separator), a * after one that is greyed; on the JavaFX thread */
+	private static List<String> texts(javafx.scene.control.ContextMenu menu) {
+		List<String> ret = new ArrayList<>();
+		for(javafx.scene.control.MenuItem m : menu.getItems()) {
+			ret.add(m instanceof javafx.scene.control.SeparatorMenuItem ? "-" : m.getText()+(m.isDisable() ? "*" : ""));
+		}
+		return ret;
+	}
+
+	private static void click(TestWindow w, int pos, String text) throws Exception {
+		Fx.run(()->{
+			for(javafx.scene.control.MenuItem m : w.runMenu(pos).getItems()) {
+				if( text.equals(m.getText())) {
+					m.fire();
+					return;
+				}
+			}
+			throw new AssertionError("no "+text+" in "+texts(w.runMenu(pos)));
+		});
+	}
+
+	@Test
+	public void theDebugMenuTakesTheEditMenusPlace() throws Exception {
+		//             line 1   2     3        4            5     6
+		String code = "x=1\nx=2\ny=$x\nname=\"a b\"\nx=3\nx=4\n";
+		TestWindow w = window(code);
+		// nothing runs: the edit menu, and the text can be edited
+		assertNull(Fx.call(()->w.runMenu(0)));
+		assertTrue(Fx.call(()->texts(w.editor().menuFor(0))).contains("Paste"));
+		assertTrue(Fx.call(()->w.editor().isEditable()));
+
+		Fx.run(()->{
+			w.editor().addBreakpoint(1);
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+
+		// stopped on line 2, a right-click on line 3's $x
+		int atX = code.indexOf("$x")+1;
+		assertEquals(List.of("Run to Line 3", "-", "Toggle Breakpoint", "-", "Watch x...", "Show Value of x", "-",
+				"Resume", "Step Over", "Step Into", "Stop", "-", "Copy*"), Fx.call(()->texts(w.runMenu(atX))));
+		// on the breakpoint's line: its properties too
+		List<String> onBreakpoint = Fx.call(()->texts(w.runMenu(code.indexOf("x=2")+3)));
+		assertTrue(onBreakpoint.contains("Breakpoint Properties..."), onBreakpoint.toString());
+		assertFalse(onBreakpoint.contains("Watch x..."), "the 2 of x=2 isn't a variable: "+onBreakpoint);
+		// the editor's right-click menu is that menu, not the edit menu
+		List<String> shown = Fx.call(()->texts(w.editor().menuFor(atX)));
+		assertTrue(shown.contains("Resume") && !shown.contains("Paste"), shown.toString());
+
+		// it can't be edited: undo, a template, replace; and the status line says why
+		assertFalse(Fx.call(()->w.editor().isEditable()));
+		Fx.run(()->{
+			w.editor().insert(0, 1, us.bringardner.fsh.ide.core.TemplateText.expand("zzz"));
+			w.findBar().find.setText("x");
+			w.findBar().replace.setText("q");
+			assertEquals(0, w.findBar().replaceAll());
+		});
+		assertEquals(code, Fx.call(()->w.editor().getText()));
+
+		// Show Value of the variable clicked: on the status line and under the variables
+		click(w, atX, "Show Value of x");
+		assertEquals("x = 1", Fx.call(w::statusText));
+		assertEquals("x = 1", Fx.call(()->w.debugPanel().userDetailText()));
+
+		// Run to Line 5 (no breakpoint there): it stops there, after lines 3 and 4
+		click(w, code.indexOf("x=3"), "Run to Line 5");
+		Fx.waitFor(()->w.isPaused() && w.editor().getCurrentLine() == 4);
+		assertEquals("2", String.valueOf(variable(w, "y")));
+		assertEquals("a b", String.valueOf(variable(w, "name")));
+		// Show Value of a selection; text that would run a command isn't run
+		Fx.run(()->w.editor().getCodeArea().selectRange(code.indexOf("$x"), code.indexOf("$x")+2));
+		List<String> withSelection = Fx.call(()->texts(w.runMenu(0)));
+		assertTrue(withSelection.contains("Show Value of $x") && withSelection.contains("Copy"), withSelection.toString());
+		click(w, 0, "Show Value of $x");
+		assertEquals("$x = 2", Fx.call(w::statusText));
+		Fx.run(()->w.showValue("$(echo hi)"));
+		assertTrue(Fx.call(w::statusText).contains("would run a command"), Fx.call(w::statusText));
+
+		// Toggle Breakpoint on line 6, and Resume stops there
+		click(w, code.indexOf("x=4"), "Toggle Breakpoint");
+		assertTrue(Fx.call(()->w.editor().getBreakpoint(5) != null));
+		click(w, 0, "Resume");
+		Fx.waitFor(()->w.isPaused() && w.editor().getCurrentLine() == 5);
+		click(w, 0, "Stop");
+		Fx.waitFor(()->!w.isRunning());
+
+		// over: the edit menu again, and it can be edited
+		assertNull(Fx.call(()->w.runMenu(0)));
+		assertTrue(Fx.call(()->texts(w.editor().menuFor(0))).contains("Paste"));
+		assertTrue(Fx.call(()->w.editor().isEditable()));
+	}
+
+	@Test
+	public void aPlainRunHasStopAndCopyAndADebugRunGreysWhatNeedsAStop() throws Exception {
+		String code = "echo start\nsleep 30\necho end\n";
+		TestWindow w = window(code);
+		Fx.run(w::run);
+		Fx.waitFor(w::isRunning);
+		assertEquals(List.of("Stop", "Copy*"), Fx.call(()->texts(w.runMenu(0))));
+		assertEquals(List.of("Stop", "Copy*"), Fx.call(()->texts(w.editor().menuFor(0))));
+		assertFalse(Fx.call(()->w.editor().isEditable()));
+		Fx.run(()->w.editor().getCodeArea().selectRange(0, 4));
+		assertEquals(List.of("Stop", "Copy"), Fx.call(()->texts(w.runMenu(0))));
+		click(w, 0, "Stop");
+		Fx.waitFor(()->!w.isRunning());
+		assertNull(Fx.call(()->w.runMenu(0)));
+		assertTrue(Fx.call(()->w.editor().isEditable()));
+
+		// a debug run that isn't stopped
+		Fx.run(()->{
+			w.editor().getCodeArea().deselect();
+			w.debug();
+		});
+		Fx.waitFor(w::isRunning);
+		assertEquals(List.of("Run to Line 1*", "-", "Toggle Breakpoint", "-", "Resume*", "Step Over*", "Step Into*", "Stop", "-", "Copy*"),
+				Fx.call(()->texts(w.runMenu(0))));
+		click(w, 0, "Stop");
+		Fx.waitFor(()->!w.isRunning());
+	}
+
+	/** Through the Loupe adapter: Run to Line and Show Value work there too. */
+	@Test
+	public void runToLineAndShowValueThroughTheAdapter() throws Exception {
+		String code = "x=1\nx=2\ny=$x\nx=3\nx=4\n";
+		TestWindow w = window(code);
+		Fx.run(()->{
+			w.useAdapter(true);
+			w.editor().addBreakpoint(1);
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+		assertEquals(1, Fx.call(()->w.editor().getCurrentLine()));
+		click(w, code.indexOf("x=3"), "Run to Line 4");
+		Fx.waitFor(()->w.isPaused() && w.editor().getCurrentLine() == 3);
+		click(w, code.indexOf("y=")+0, "Show Value of y");
+		Fx.waitFor(()->"y = 2".equals(w.statusText()));
+		// it was for that once: Resume runs to the end
+		click(w, 0, "Resume");
+		Fx.waitFor(()->!w.isRunning());
+		assertEquals(List.of(), w.problems);
+	}
 }

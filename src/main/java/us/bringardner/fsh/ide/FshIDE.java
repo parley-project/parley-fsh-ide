@@ -247,9 +247,15 @@ public class FshIDE extends JFrame  {
 
 	private static final int MAX_LOG_LENGTH = 200_000;
 
+	// the paused script's context and variables (null while it isn't paused), for the debug menu
+	private volatile ShellContext pausedContext;
+	private volatile Map<String,Object> pausedVariables;
+
 	private final DebugSession.Listener debugListener = new DebugSession.Listener() {
 		@Override
 		public void paused(int line, ShellContext ctx, Map<String, Object> variables) {
+			pausedContext = ctx;
+			pausedVariables = variables;
 			// (after Step Into: just the statement it stopped at, when the line has others)
 			DebugSession.Statement statement = debugSession.pausedStatement();
 			SwingUtilities.invokeLater(()->{
@@ -283,6 +289,8 @@ public class FshIDE extends JFrame  {
 
 		@Override
 		public void resuming() {
+			pausedContext = null;
+			pausedVariables = null;
 			if( SwingUtilities.isEventDispatchThread()) {
 				editorPane.removeAllLineHighlights();
 			}
@@ -593,8 +601,12 @@ public class FshIDE extends JFrame  {
 	}
 
 	/** The title: the script's name, with a * if it has unsaved changes. */
+	/** what the title says while a script runs, when the text can't be edited */
+	static final String RUNNING_TITLE = "  (running: it can't be edited until the script ends)";
+
 	private void updateTitle() {
-		String title = (hasChanged() ? "* " : "") + (scriptFile == null ? "" : scriptFile.getName());
+		String title = (hasChanged() ? "* " : "") + (scriptFile == null ? "" : scriptFile.getName())
+				+ (runState == IdeRunstate.Idel ? "" : RUNNING_TITLE);
 		if( !title.equals(getTitle())) {
 			setTitle(title);
 		}
@@ -729,11 +741,11 @@ public class FshIDE extends JFrame  {
 		flowLayout.setAlignment(FlowLayout.LEFT);
 		controlPanel.add(menuPanel, BorderLayout.SOUTH);
 
-		// the editor's own menu: Reload, and Breakpoint
+		// while a script runs, the editor's right-click menu is the run's or the debugger's
+		editorPane.setPopupItems(this::runPopupItems);
+		// the editor's own menu: Reload
 		JMenuItem item = new JMenuItem("Reload");
 		item.addActionListener((e)-> actionReload());
-		editorPane.appendMenu(item);
-		item = new JMenuItem("Breakpoint");
 		editorPane.appendMenu(item);
 
 		// the Run menu's options (the menus themselves: buildMenus)
@@ -1468,6 +1480,106 @@ public class FshIDE extends JFrame  {
 		return debugVariablePanel;
 	}
 
+	// ---- the editor's right-click menu while a script runs
+
+	/** True while a debug run is stopped (at a breakpoint, a step, a watchpoint or Suspend). */
+	private boolean isPaused() {
+		return runState == IdeRunstate.Debugging && pausedContext != null
+				&& debugSession.getCurrentState() == us.bringardner.fsh.DebugContext.RunState.AtBreakpoint;
+	}
+
+	private static JMenuItem popupItem(String text, boolean enabled, Runnable action) {
+		JMenuItem item = new JMenuItem(text);
+		item.setEnabled(enabled);
+		item.addActionListener(e->action.run());
+		return item;
+	}
+
+	/** (shortened, on one line, for a menu item) */
+	private static String forMenu(String text) {
+		String t = text.trim().replaceAll("\\s+", " ");
+		return t.length() > 40 ? t.substring(0, 37)+"..." : t;
+	}
+
+	/**
+	 * The editor's right-click menu for the place clicked (an offset in the text), while a script
+	 * runs: for a plain run Stop and Copy; for a debug run the debug menu (Run to Line, the line's
+	 * breakpoint, the variable or selection clicked, Resume and the steps, Stop, Copy), with what
+	 * needs a stopped script greyed until it stops. Null while nothing runs: the edit menu.
+	 */
+	List<Component> runPopupItems(int offset) {
+		if( runState == IdeRunstate.Idel ) {
+			return null;
+		}
+		List<Component> items = new ArrayList<>();
+		String selection = editorPane.getSelectedText();
+		JMenuItem stop = popupItem("Stop", true, this::stopTask);
+		JMenuItem copy = popupItem("Copy", selection != null && !selection.isEmpty(), editorPane::copy);
+		if( runState != IdeRunstate.Debugging ) {
+			items.add(stop);
+			items.add(copy);
+			return items;
+		}
+		boolean paused = isPaused();
+		int line = editorPane.getLineOfOffset(offset);
+		if( line >= 0 ) {
+			items.add(popupItem("Run to Line "+(line+1), paused, ()->debugSession.runToLine(line)));
+			items.add(new JPopupMenu.Separator());
+			items.add(popupItem("Toggle Breakpoint", true, ()->editorPane.toggleBreakpoint(line)));
+			Breakpoint bp = editorPane.getBreakpoint(line);
+			if( bp != null ) {
+				items.add(popupItem("Breakpoint Properties...", true, ()->editorPane.editBreakpoint(bp)));
+			}
+			items.add(new JPopupMenu.Separator());
+		}
+		// the variable clicked (to watch, and to show), or the selection (to show)
+		Map<String,Object> known = pausedVariables;
+		String variable = us.bringardner.fsh.ide.core.ScriptText.variableAt(editorPane.getText(), offset,
+				name->known != null && known.containsKey(name));
+		if( variable != null && us.bringardner.fsh.ide.core.Watchpoint.isValidName(variable)) {
+			items.add(popupItem("Watch "+variable+"...", true, ()->debugVariablePanel.addWatchpoint(variable)));
+		}
+		String show = selection != null && !selection.isBlank() ? selection : variable;
+		if( show != null ) {
+			items.add(popupItem("Show Value of "+forMenu(show), paused, ()->showValue(show)));
+		}
+		if( variable != null || show != null ) {
+			items.add(new JPopupMenu.Separator());
+		}
+		items.add(popupItem("Resume", paused, debugSession::resume));
+		items.add(popupItem("Step Over", paused, debugSession::stepOver));
+		items.add(popupItem("Step Into", paused, debugSession::stepInto));
+		items.add(stop);
+		items.add(new JPopupMenu.Separator());
+		items.add(copy);
+		return items;
+	}
+
+	/**
+	 * Shows what text (a variable's name, or text with a $ in it) is in the paused script, in the
+	 * text area under the variables, as a clicked variable shows: "text = value", or why it has none.
+	 */
+	void showValue(String text) {
+		ShellContext ctx = pausedContext;
+		if( ctx == null || !isPaused()) {
+			return;
+		}
+		String line;
+		try {
+			line = text.trim()+" = "+us.bringardner.fsh.ide.core.DebugVariables.valueOf(ctx, text);
+		} catch (IllegalArgumentException e) {
+			line = e.getMessage();
+		}
+		logBatcher.flush();
+		appendLog(line+"\n");
+	}
+
+	/** for the tests: the text under the debug view's variables (the log, and the values shown) */
+	String logText() {
+		logBatcher.flush();
+		return logView.getText();
+	}
+
 	/** for the tests: the debugger, to step and resume a paused script */
 	DebugSession debugSession() {
 		return debugSession;
@@ -1510,6 +1622,11 @@ public class FshIDE extends JFrame  {
 			horizontalStrut.setVisible(true);
 			debugControlPanel.setVisible(false);
 			runState = IdeRunstate.Idel;
+			pausedContext = null;
+			pausedVariables = null;
+			// the script can be edited again
+			editorPane.setEditable(true);
+			updateTitle();
 			updateRunButtons();
 			debugSession.setActive(false);
 			editorPane.setHighlightCurrentLine(false);
@@ -1554,6 +1671,9 @@ public class FshIDE extends JFrame  {
 					.debug(debugSession)
 					.stackSize(stackSize);
 			runState = state;
+			// while it runs the script can't be edited (the title says so)
+			editorPane.setEditable(false);
+			updateTitle();
 			updateRunButtons();
 			currentRun.start();
 		} else {

@@ -149,6 +149,67 @@ public final class DebugVariables {
 		return text;
 	}
 
+	/**
+	 * What a debugger shows for text chosen in a paused script: a variable's name (x, or as the
+	 * script writes it, $x or ${x}) gives its value, an array's or a map's as the variables view
+	 * shows it; other text with a $ in it (such as ${a[1]}, $1 or $HOME/bin) is expanded as the
+	 * shell expands it between double quotes. Nothing of the script's changes: it's expanded in a
+	 * copy of the script's variables (so ${x:=1} or $((i++)) sets nothing), and text that would
+	 * run a command ($( ), ` `, &lt;( ) or &gt;( )) is refused. Call it only while the script is
+	 * paused.
+	 *
+	 * @throws IllegalArgumentException with why there's no value to show
+	 */
+	public static String valueOf(ShellContext ctx, String text) {
+		String t = text == null ? "" : text.trim();
+		if( t.isEmpty()) {
+			throw new IllegalArgumentException("Nothing to show the value of");
+		}
+		if( Watchpoint.isValidName(t) && !t.contains("[")) {
+			String name = Watchpoint.normalize(t);
+			Map<String,Object> all = ctx.getVariables();
+			if( !all.containsKey(name)) {
+				throw new IllegalArgumentException(name+" isn't set");
+			}
+			return String.valueOf(all.get(name));
+		}
+		String expression = expression(t);
+		try {
+			return us.bringardner.fsh.exec.Executor.expandWord(ctx.isolatedSubShell(), expression);
+		} catch (RuntimeException e) {
+			throw new IllegalArgumentException("Can't show "+oneLine(t)+": "+(e.getMessage() == null ? e.toString() : e.getMessage()));
+		}
+	}
+
+	/**
+	 * Text chosen in a script, as what to expand for its value where a debugger doesn't have the
+	 * script's context (Loupe's evaluate): ${name} for a variable's name, otherwise the text itself.
+	 *
+	 * @throws IllegalArgumentException for text with no $ in it that isn't a name, and for text
+	 *         that would run a command ($( ), ` `, &lt;( ) or &gt;( )), as valueOf
+	 */
+	public static String expression(String text) {
+		String t = text == null ? "" : text.trim();
+		if( t.isEmpty()) {
+			throw new IllegalArgumentException("Nothing to show the value of");
+		}
+		if( t.contains("`") || t.contains("<(") || t.contains(">(") || t.matches("(?s).*\\$\\((?!\\().*")) {
+			throw new IllegalArgumentException("Its value isn't shown, since that would run a command: "+oneLine(t));
+		}
+		if( t.matches("[A-Za-z_][A-Za-z_0-9]*")) {
+			return "${"+t+"}";
+		}
+		if( !t.contains("$")) {
+			throw new IllegalArgumentException("Not a variable: "+oneLine(t));
+		}
+		return t;
+	}
+
+	private static String oneLine(String text) {
+		String ret = text.replace("\r\n", "⏎").replace('\n', '⏎').replace('\r', '⏎');
+		return ret.length() > 60 ? ret.substring(0, 57)+"..." : ret;
+	}
+
 	/** Simple class name of a variable's value (a Type column), or "" for null. */
 	public static String typeName(Object value) {
 		return value == null ? "" : value.getClass().getSimpleName();
