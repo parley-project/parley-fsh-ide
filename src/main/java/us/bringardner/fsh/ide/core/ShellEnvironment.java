@@ -192,6 +192,22 @@ public final class ShellEnvironment {
 		}
 	}
 
+	/**
+	 * What forScripts() gives, without waiting: none while the login shell's environment is
+	 * still being got.
+	 */
+	public static Map<String,String> known() {
+		CompletableFuture<Map<String,String>> c = capture;
+		if( c == null || !c.isDone()) {
+			return Map.of();
+		}
+		try {
+			return c.getNow(Map.of());
+		} catch (RuntimeException e) {
+			return Map.of();
+		}
+	}
+
 	/** for the tests: what forScripts gives (null: as if never started) */
 	static synchronized void setForTests(Map<String,String> env) {
 		capture = env == null ? null : CompletableFuture.completedFuture(env);
