@@ -323,6 +323,17 @@ public class DebugPanel extends TabPane {
 		return ret;
 	}
 
+	/** True if the script's variables shown (whatever the filter) have one called name. */
+	public boolean hasVariable(String name) {
+		return allVariables != null && allVariables.containsKey(name);
+	}
+
+	/** Shows text ("name = value", say) in the pane under the variables, as a clicked variable shows. */
+	public void showValue(String text) {
+		userVariables.detail.setText(text);
+		fshVariables.detail.setText(text);
+	}
+
 	/** Leaves the variables shown but read-only (the script isn't paused any more). */
 	public void freezeVariables() {
 		variablesEditable = false;

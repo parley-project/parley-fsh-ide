@@ -4,6 +4,15 @@
 
 ### Added
 
+- While a script is being debugged, a right-click in the editor shows a debug menu in place of
+  the edit menu, in both IDEs, for the line and the text clicked: **Run to Line** (the script
+  runs and stops when it reaches that line, this once, or sooner at a breakpoint or a watchpoint),
+  **Toggle Breakpoint**, **Breakpoint Properties...** (on a line with one), **Watch** *name*...
+  and **Show Value of** *name* (on a variable; Show Value also takes a selection such as
+  `${capital[Japan]}`, and shows the value under the variables, without running anything: text
+  that would run a command is refused), **Resume**, **Step Over**, **Step Into**, **Stop** and
+  **Copy**. What needs a stopped script is greyed while it runs. Run to Line and Show Value work
+  through the Loupe adapter too. During a plain run the menu is **Stop** and **Copy**.
 - While the debug view shows and no script is running, its fsh Variables tab shows what the next
   run starts with, in both IDEs: the shell's own variables, the environment's (the login shell's
   included) and `$0`, under a line that says so. It's refreshed when a run ends, the view opens or
@@ -69,6 +78,10 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Changed
 
+- A script can't be edited while it runs or is being debugged, in both IDEs: a change wouldn't
+  reach the running script, and would move its lines away from the ones the debugger shows. It can
+  still be scrolled, selected, copied and searched. The Swing IDE's title and the JavaFX IDE's
+  status line say so, and it can be edited again when the run ends.
 - The Swing IDE's Run menu has no Profile item: it did nothing.
 - The Swing IDE's Stop is the JavaFX IDE's: a Stop button after Run, enabled while a script runs
   or is being debugged, stops it. Run no longer turns into a stop button while a script runs, and

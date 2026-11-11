@@ -864,8 +864,103 @@ public class EditorPanel extends JPanel {
 
 
 
+	// a script is running: the text can't be changed (see setEditable)
+	private boolean locked;
+
+	/**
+	 * Whether the text can be changed: false while a script runs, since a change wouldn't reach
+	 * the running script and would move its lines away from the ones the debugger shows. Then
+	 * nothing changes it (typing, paste, undo, replace, a template, a completion ...); it can
+	 * still be scrolled, selected, copied and searched, and setText still loads a script.
+	 */
+	public void setEditable(boolean editable) {
+		locked = !editable;
+		editorPane.setEditable(editable);
+		javax.swing.text.Document doc = editorPane.getDocument();
+		if( doc instanceof javax.swing.text.AbstractDocument && ((javax.swing.text.AbstractDocument) doc).getDocumentFilter() != lock ) {
+			((javax.swing.text.AbstractDocument) doc).setDocumentFilter(lock);
+		}
+	}
+
+	public boolean isEditable() {
+		return !locked;
+	}
+
+	// refuses every change to the text while it's locked
+	private final javax.swing.text.DocumentFilter lock = new javax.swing.text.DocumentFilter() {
+		@Override
+		public void insertString(FilterBypass fb, int offset, String string, javax.swing.text.AttributeSet attr) throws BadLocationException {
+			if( !locked ) {
+				super.insertString(fb, offset, string, attr);
+			}
+		}
+
+		@Override
+		public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+			if( !locked ) {
+				super.remove(fb, offset, length);
+			}
+		}
+
+		@Override
+		public void replace(FilterBypass fb, int offset, int length, String text, javax.swing.text.AttributeSet attrs) throws BadLocationException {
+			if( !locked ) {
+				super.replace(fb, offset, length, text, attrs);
+			}
+		}
+	};
+
+	/** See FshIDETextArea.setPopupItems: the right-click menu's items in place of the edit menu's. */
+	public void setPopupItems(java.util.function.IntFunction<java.util.List<java.awt.Component>> provider) {
+		editorPane.setPopupItems(provider);
+	}
+
+	/** The line (0-based) offset is on, or -1. */
+	public int getLineOfOffset(int offset) {
+		try {
+			return editorPane.getLineOfOffset(offset);
+		} catch (BadLocationException e) {
+			return -1;
+		}
+	}
+
+	/** Copies the selected text to the clipboard. */
+	public void copy() {
+		editorPane.copy();
+	}
+
+	/** Adds a breakpoint on line (0-based), or removes the one there. */
+	public void toggleBreakpoint(int line) {
+		Breakpoint bp = breakpoints.get(line);
+		if( bp != null ) {
+			removeBreakpoint(bp);
+		} else {
+			addBreakpoint(line);
+		}
+	}
+
+	/** Shows a breakpoint's dialog (its condition and hit count), by the mouse pointer; it may delete the breakpoint. */
+	public void editBreakpoint(Breakpoint bp) {
+		BreakpointPropertiesDialog d = new BreakpointPropertiesDialog();
+		java.awt.PointerInfo pointer = java.awt.MouseInfo.getPointerInfo();
+		Point p = pointer == null ? editorPane.getLocationOnScreen() : pointer.getLocation();
+		d.showDialog(bp, editorPane, p.x, p.y);
+		if( d.isDelete()) {
+			removeBreakpoint(bp);
+		} else {
+			fireBreakpointsChanged();
+		}
+	}
+
 	public void setText(String string, FileSource scriptFile) {
-		editorPane.setText(string);
+		// (a script is loaded even while the text can't be edited)
+		boolean wasLocked = locked;
+		locked = false;
+		try {
+			editorPane.setText(string);
+		} finally {
+			locked = wasLocked;
+		}
 		editorPane.setCaretPosition(0);
 		editorPane.removeAllLineHighlights();
 		gutter.removeAllTrackingIcons();

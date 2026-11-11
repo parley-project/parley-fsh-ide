@@ -132,11 +132,14 @@ public class DebugSession extends DebugContext {
 
 	// Run to End was chosen: no more stopping at breakpoints this run (Suspend still stops)
 	private volatile boolean ignoreBreakpoints;
+	// Run to Line: the editor line (0-based) to stop at, till the script next stops; -1 for none
+	private volatile int runToLine = -1;
 
 	/** True to stop at breakpoints and steps and log statements; false to just run. */
 	public void setActive(boolean active) {
 		this.active = active;
 		ignoreBreakpoints = false;
+		runToLine = -1;
 		synchronized (this) {
 			endStepOver();
 			steppingInto = false;
@@ -151,6 +154,18 @@ public class DebugSession extends DebugContext {
 	 */
 	public void runToEnd() {
 		ignoreBreakpoints = true;
+		resume();
+	}
+
+	/**
+	 * Run to Line: lets a paused script run, and stops it when a statement on line (the
+	 * editor's, 0-based) starts, as if a breakpoint were there for this once. It stops sooner at a
+	 * breakpoint or a watchpoint on the way (or Suspend), and then the line is forgotten. A line
+	 * the script never reaches doesn't stop it. The line the script is stopped on stops it the
+	 * next time it's reached (the next time round a loop), not for the rest of this visit.
+	 */
+	public void runToLine(int line) {
+		runToLine = line;
 		resume();
 	}
 
@@ -352,6 +367,11 @@ public class DebugSession extends DebugContext {
 			breakpointHit(linePt, ctx);
 			return true;
 		}
+		if( runToLine >= 0 && editorLine(linePt.x) == runToLine ) {
+			// Run to Line's line (a breakpoint here counts its hit too)
+			breakpointHit(linePt, ctx);
+			return true;
+		}
 		return breakpointHit(linePt, ctx);
 	}
 
@@ -416,8 +436,9 @@ public class DebugSession extends DebugContext {
 		hit = null;
 		if( state == RunState.AtBreakpoint ) {
 			// stopped (at the step's end, a breakpoint, a watchpoint or Suspend): the step is
-			// over, and the script is visiting this line
+			// over (and Run to Line, wherever it stopped), and the script is visiting this line
 			steppingOver = false;
+			runToLine = -1;
 			pausedStatement = steppingInto ? statementOnLine(current, currentSource) : null;
 			steppingInto = false;
 			if( current != null && currentCtx != null ) {

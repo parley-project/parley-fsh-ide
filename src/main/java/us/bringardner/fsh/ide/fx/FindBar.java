@@ -172,8 +172,15 @@ public class FindBar extends VBox {
 		}
 	}
 
+	/** what Replace says while a script runs */
+	static final String NOT_EDITABLE = "Can't replace while the script runs";
+
 	/** Replaces the selection if it's a match (then finds the next one if andFind). */
 	public void replace(boolean andFind) {
+		if( !editor.isEditable()) {
+			result.setText(NOT_EDITABLE);
+			return;
+		}
 		var area = editor.getCodeArea();
 		String selected = area.getSelectedText();
 		String query = find.getText();
@@ -199,6 +206,10 @@ public class FindBar extends VBox {
 	 * @return how many were replaced
 	 */
 	public int replaceAll() {
+		if( !editor.isEditable()) {
+			result.setText(NOT_EDITABLE);
+			return 0;
+		}
 		var area = editor.getCodeArea();
 		String query = find.getText();
 		try {

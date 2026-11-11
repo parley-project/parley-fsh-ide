@@ -579,4 +579,66 @@ public class TestDebugSession {
 		assertEquals("x unset", DebugSession.describeHit("x", true, null));
 		assertEquals("x written (value: a⏎b)", DebugSession.describeHit("x", true, "a\nb"));
 	}
+
+	/** Run to Line: stops at the line this once, without a breakpoint there. */
+	@Test
+	public void runToLineStopsThereOnce() throws Exception {
+		breakpoint(0);
+		start("x=1\nfor i in a b c; do\n  y=$i\n  z=$i\ndone\nx=2\n");
+		assertEquals(0, nextPause().line());
+		session.runToLine(3);
+		RecordingListener.Pause p = nextPause();
+		assertEquals(3, p.line());
+		assertEquals("a", var(p, "y"));
+		// the line it's stopped on: the next time round the loop
+		session.runToLine(3);
+		p = nextPause();
+		assertEquals(3, p.line());
+		assertEquals("b", var(p, "y"));
+		// it was for that once: Resume runs to the end
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	/** Run to Line stops sooner at a breakpoint on the way, and then the line is forgotten. */
+	@Test
+	public void runToLineStopsAtABreakpointOnTheWay() throws Exception {
+		breakpoint(0);
+		breakpoint(2);
+		start("x=1\nx=2\nx=3\nx=4\nx=5\n");
+		assertEquals(0, nextPause().line());
+		session.runToLine(4);
+		assertEquals(2, nextPause().line());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll(), "it stopped at the line after stopping at the breakpoint");
+	}
+
+	/** Run to Line for a line the script doesn't reach: it runs to its end. */
+	@Test
+	public void runToALineThatIsNotReached() throws Exception {
+		breakpoint(0);
+		start("x=1\nif false; then\n  x=2\nfi\nx=3\n");
+		assertEquals(0, nextPause().line());
+		session.runToLine(2);
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+		// and the next run isn't stopped there either
+		assertEquals(1, listener.resumes);
+	}
+
+	/** In a function: Run to Line stops in it, with its variables. */
+	@Test
+	public void runToLineInAFunction() throws Exception {
+		breakpoint(4);
+		start("f() {\n  local n=$1\n  echo $n\n}\nf 7\nf 8\n");
+		assertEquals(4, nextPause().line());
+		session.runToLine(2);
+		RecordingListener.Pause p = nextPause();
+		assertEquals(2, p.line());
+		assertEquals("7", var(p, "n"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
 }

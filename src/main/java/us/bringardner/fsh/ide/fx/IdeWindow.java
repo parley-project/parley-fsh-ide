@@ -287,6 +287,14 @@ public class IdeWindow {
 			syntaxCheckDelay.playFromStart();
 		});
 		syntaxCheckDelay.setOnFinished(e->checkSyntax());
+		editor.setContextMenuProvider(this::runMenu);
+		// typing while a script runs: the status line says why nothing happens
+		editor.getCodeArea().addEventFilter(javafx.scene.input.KeyEvent.KEY_TYPED, e->{
+			if( !e.isShortcutDown() && !e.isControlDown() && !e.isAltDown() && !e.getCharacter().isEmpty()
+					&& e.getCharacter().charAt(0) >= ' ' ) {
+				canEdit();
+			}
+		});
 		editor.addBreakpointListener(()->debugPanel.setBreakpoints(editor.getBreakpoints().values()));
 		editor.setOnBreakpointMenu((bp, e)->editBreakpoint(bp));
 		debugPanel.setOnBreakpointChanged(bp->editor.breakpointChanged());
@@ -334,8 +342,16 @@ public class IdeWindow {
 				prefs.putBoolean(PREF_SPELLING, is);
 			}
 		});
-		menus.edit.getItems().addAll(item("Undo", "Shortcut+Z", ()->editor.getCodeArea().undo()),
-				item("Redo", "Shortcut+Shift+Z", ()->editor.getCodeArea().redo()), new SeparatorMenuItem(),
+		menus.edit.getItems().addAll(item("Undo", "Shortcut+Z", ()->{
+					if( canEdit()) {
+						editor.getCodeArea().undo();
+					}
+				}),
+				item("Redo", "Shortcut+Shift+Z", ()->{
+					if( canEdit()) {
+						editor.getCodeArea().redo();
+					}
+				}), new SeparatorMenuItem(),
 				// on whichever text has the focus: the editor, the arguments, the console
 				item("Cut", "Shortcut+X", ()->onFocusedText("cut")), item("Copy", "Shortcut+C", ()->onFocusedText("copy")),
 				item("Paste", "Shortcut+V", ()->onFocusedText("paste")),
@@ -344,7 +360,11 @@ public class IdeWindow {
 				item("Find Previous", "Shortcut+Shift+G", ()->findBar.findNext(false)),
 				item("Replace...", "Shortcut+Alt+F", ()->findBar.show(true)),
 				item("Go to Line...", "Shortcut+L", this::actionGoToLine), new SeparatorMenuItem(),
-				item("Complete", "Ctrl+Space", completion::show), new SeparatorMenuItem(), spelling);
+				item("Complete", "Ctrl+Space", ()->{
+					if( canEdit()) {
+						completion.show();
+					}
+				}), new SeparatorMenuItem(), spelling);
 
 		// View: the editor's and console's font and text size, and folding
 		menus.view.getItems().addAll(item("Bigger Text", "Shortcut+PLUS", this::biggerText),
@@ -439,9 +459,17 @@ public class IdeWindow {
 		} else {
 			org.fxmisc.richtext.CodeArea t = editor.getCodeArea();
 			switch (action) {
-			case "cut": t.cut(); break;
+			case "cut":
+				if( canEdit()) {
+					t.cut();
+				}
+				break;
 			case "copy": t.copy(); break;
-			case "paste": t.paste(); break;
+			case "paste":
+				if( canEdit()) {
+					t.paste();
+				}
+				break;
 			default: t.selectAll(); break;
 			}
 		}
@@ -1198,6 +1226,153 @@ public class IdeWindow {
 		for(TextField f : new TextField[] {arguments, stdIn, stdOut, stdErr}) {
 			f.setDisable(running);
 		}
+		// while a script runs it can't be edited (see ScriptEditor.setEditable)
+		editor.setEditable(!running);
+	}
+
+	// ---- while a script runs: no edits, and the editor's right-click menu is the run's or the debugger's
+
+	/** what the status line adds when an edit is tried while a script runs */
+	static final String NOT_EDITABLE = " (the script can't be edited until it ends)";
+
+	/** True if the script can be edited; if not (a script is running), the status line says why. */
+	private boolean canEdit() {
+		if( editor.isEditable()) {
+			return true;
+		}
+		if( !status.getText().endsWith(NOT_EDITABLE)) {
+			status.setText(status.getText()+NOT_EDITABLE);
+		}
+		return false;
+	}
+
+	private static MenuItem menuItem(String text, boolean enabled, Runnable action) {
+		MenuItem ret = new MenuItem(text);
+		ret.setDisable(!enabled);
+		ret.setOnAction(e->action.run());
+		return ret;
+	}
+
+	/** (shortened, on one line, for a menu item) */
+	private static String forMenu(String text) {
+		String t = text.trim().replaceAll("\\s+", " ");
+		return t.length() > 40 ? t.substring(0, 37)+"..." : t;
+	}
+
+	/**
+	 * The editor's right-click menu for the place clicked (a position in the text), while a
+	 * script runs: for a plain run Stop and Copy; for a debug run the debug menu (Run to Line,
+	 * the line's breakpoint, the variable or selection clicked, Resume and the steps, Stop,
+	 * Copy), with what needs a stopped script greyed until it stops. Null while nothing runs:
+	 * the edit menu.
+	 */
+	ContextMenu runMenu(int pos) {
+		if( !isRunning()) {
+			return null;
+		}
+		ContextMenu menu = new ContextMenu();
+		String selection = editor.getCodeArea().getSelectedText();
+		MenuItem stop = menuItem("Stop", true, this::stop);
+		MenuItem copy = menuItem("Copy", selection != null && !selection.isEmpty(), ()->editor.getCodeArea().copy());
+		if( !debugging ) {
+			menu.getItems().addAll(stop, copy);
+			return menu;
+		}
+		boolean paused = isPaused();
+		String text = editor.getText();
+		int at = Math.max(0, Math.min(pos, text.length()));
+		int line = editor.getCodeArea().offsetToPosition(at, org.fxmisc.richtext.model.TwoDimensional.Bias.Forward).getMajor();
+		menu.getItems().addAll(menuItem("Run to Line "+(line+1), paused, ()->runToLine(line)), new SeparatorMenuItem(),
+				menuItem("Toggle Breakpoint", true, ()->editor.toggleBreakpoint(line)));
+		Breakpoint bp = editor.getBreakpoint(line);
+		if( bp != null ) {
+			menu.getItems().add(menuItem("Breakpoint Properties...", true, ()->editBreakpoint(bp)));
+		}
+		menu.getItems().add(new SeparatorMenuItem());
+		// the variable clicked (to watch, and to show), or the selection (to show)
+		String variable = ScriptText.variableAt(text, at, debugPanel::hasVariable);
+		if( variable != null && us.bringardner.fsh.ide.core.Watchpoint.isValidName(variable)) {
+			menu.getItems().add(menuItem("Watch "+variable+"...", true, ()->debugPanel.addWatchpoint(variable)));
+		}
+		String show = selection != null && !selection.isBlank() ? selection : variable;
+		if( show != null ) {
+			menu.getItems().add(menuItem("Show Value of "+forMenu(show), paused, ()->showValue(show)));
+		}
+		if( variable != null || show != null ) {
+			menu.getItems().add(new SeparatorMenuItem());
+		}
+		menu.getItems().addAll(menuItem("Resume", paused, this::resumeScript), menuItem("Step Over", paused, this::stepOverScript),
+				menuItem("Step Into", paused, this::stepIntoScript), stop, new SeparatorMenuItem(), copy);
+		return menu;
+	}
+
+	/**
+	 * Run to Line: lets the paused script run and stops it when it reaches line (0-based), this
+	 * once, or sooner at a breakpoint or a watchpoint.
+	 */
+	void runToLine(int line) {
+		if( !isPaused()) {
+			return;
+		}
+		LoupeSession l = loupe;
+		if( l == null ) {
+			debugSession.runToLine(line);
+			return;
+		}
+		// on the adapter: a breakpoint there for this once (the editor's are sent again the next time it goes on)
+		java.util.List<Breakpoint> bps = new java.util.ArrayList<>();
+		for(Breakpoint bp : editor.getBreakpoints().values()) {
+			if( bp.getLine() != line ) {
+				bps.add(bp);
+			}
+		}
+		Breakpoint to = new Breakpoint();
+		to.setLine(line);
+		to.reset();
+		bps.add(to);
+		adapterContinues(l, bps, ()->l.resume());
+	}
+
+	/**
+	 * Shows what text (a variable's name, or text with a $ in it) is in the paused script, on
+	 * the status line and under the variables: "text = value", or why it has none.
+	 */
+	void showValue(String text) {
+		if( !isPaused()) {
+			return;
+		}
+		String name = text.trim();
+		LoupeSession l = loupe;
+		if( l != null ) {
+			BACKGROUND.execute(()->{
+				String line;
+				try {
+					line = name+" = "+l.evaluate(DebugVariables.expression(name));
+				} catch (IllegalArgumentException e) {
+					line = e.getMessage();
+				} catch (Exception e) {
+					line = "Can't show "+name+": "+e.getMessage();
+				}
+				String shown = line;
+				Platform.runLater(()->shownValue(shown));
+			});
+			return;
+		}
+		ShellContext ctx = pausedContext;
+		if( ctx == null ) {
+			return;
+		}
+		try {
+			shownValue(name+" = "+DebugVariables.valueOf(ctx, name));
+		} catch (IllegalArgumentException e) {
+			shownValue(e.getMessage());
+		}
+	}
+
+	private void shownValue(String line) {
+		debugPanel.showValue(line);
+		String first = line.replace("\r\n", "⏎").replace('\n', '⏎').replace('\r', '⏎');
+		status.setText(first.length() > 200 ? first.substring(0, 197)+"..." : first);
 	}
 
 	// for tests
@@ -1336,6 +1511,11 @@ public class IdeWindow {
 
 	DebugPanel debugPanel() {
 		return debugPanel;
+	}
+
+	/** for the tests: Run > Debug Through the Loupe Adapter */
+	void useAdapter(boolean use) {
+		useAdapter.setSelected(use);
 	}
 
 	/** for the tests: View > Show Debug View */

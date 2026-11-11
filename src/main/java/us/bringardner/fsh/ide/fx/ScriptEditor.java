@@ -90,7 +90,7 @@ public class ScriptEditor extends StackPane {
 		area.plainTextChanges().subscribe(c->textChanged(c.getPosition(), c.getRemoved().length(), c.getInserted().length()));
 		area.setOnContextMenuRequested(e->{
 			int pos = area.hit(e.getX(), e.getY()).getInsertionIndex();
-			contextMenu(pos).show(area, e.getScreenX(), e.getScreenY());
+			menuFor(pos).show(area, e.getScreenX(), e.getScreenY());
 			e.consume();
 		});
 		getChildren().add(new VirtualizedScrollPane<>(area));
@@ -593,6 +593,41 @@ public class ScriptEditor extends StackPane {
 		}
 	}
 
+	// what the right-click menu is in place of the edit menu, for the place clicked (see setContextMenuProvider)
+	private java.util.function.IntFunction<ContextMenu> menuProvider;
+
+	/**
+	 * Lets the right-click menu be another in place of the edit menu: each time it opens,
+	 * provider is asked for it, with the place in the text that was clicked; null from it (or a
+	 * null provider) gives the edit menu. The IDE shows its run and debug menus with it while a
+	 * script runs.
+	 */
+	public void setContextMenuProvider(java.util.function.IntFunction<ContextMenu> provider) {
+		menuProvider = provider;
+	}
+
+	/** The right-click menu at pos: the provider's, else the edit menu. */
+	ContextMenu menuFor(int pos) {
+		ContextMenu ret = menuProvider == null ? null : menuProvider.apply(pos);
+		return ret != null ? ret : contextMenu(pos);
+	}
+
+	/**
+	 * Whether the text can be changed: false while a script runs, since a change wouldn't reach
+	 * the running script and would move its lines away from the ones the debugger shows. It can
+	 * still be scrolled, selected, copied and searched, and setText still loads a script.
+	 */
+	public void setEditable(boolean editable) {
+		if( !editable ) {
+			templateFields.stop();
+		}
+		area.setEditable(editable);
+	}
+
+	public boolean isEditable() {
+		return area.isEditable();
+	}
+
 	/** The right-click menu at pos: spelling suggestions if a misspelled word is there, then cut, copy and paste. */
 	ContextMenu contextMenu(int pos) {
 		ContextMenu menu = new ContextMenu();
@@ -692,6 +727,10 @@ public class ScriptEditor extends StackPane {
 	 * or puts the caret where the template says, else after it.
 	 */
 	public void insert(int start, int end, TemplateText.Expansion e) {
+		if( !area.isEditable()) {
+			// (a script is running)
+			return;
+		}
 		templateFields.stop();
 		area.replaceText(start, end, e.text);
 		if( e.cursor >= 0 ) {
