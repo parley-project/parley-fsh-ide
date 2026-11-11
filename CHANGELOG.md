@@ -4,6 +4,12 @@
 
 ### Added
 
+- While the debug view shows and no script is running, its fsh Variables tab shows what the next
+  run starts with, in both IDEs: the shell's own variables, the environment's (the login shell's
+  included) and `$0`, under a line that says so. It's refreshed when a run ends, the view opens or
+  the script's file changes. What the file `FSH_ENV` names sets isn't shown (that file runs when
+  the script does), and the values can't be changed there. After a debug run the User Variables
+  tab still shows the script's own variables as it left them.
 - Scripts run with the environment a terminal would give them, in both IDEs and through Loupe.
   An IDE opened from the Finder or the Dock (or some Linux desktops) gets a small environment, not
   the one a terminal's login shell makes from your startup files, so a script that found its

@@ -19,6 +19,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import us.bringardner.fsh.Console;
@@ -29,6 +30,7 @@ import us.bringardner.fsh.ShellContext;
 import us.bringardner.fsh.Argument;
 import us.bringardner.fsh.job.AbstractJob;
 import us.bringardner.fsh.job.ForgroundJob;
+import us.bringardner.fsh.syntax.Parser;
 import us.bringardner.parley.files.FileSource;
 import us.bringardner.parley.files.FileSourceFactory;
 
@@ -184,12 +186,6 @@ public class ScriptRun {
 		try {
 			if( !code.isBlank()) {
 				Console console = createConsole();
-				FshList args = new FshList();
-				args.add(new Argument(scriptName));
-				for (String a : ScriptText.splitArguments(arguments)) {
-					args.add( new Argument(a));
-				}
-				console.setPositionalParameters(true, args);
 				// the startup file a script has, as fsh script: FSH_ENV's (before the debugger is
 				// on: it doesn't stop in it)
 				try {
@@ -233,12 +229,59 @@ public class ScriptRun {
 		listener.finished(this, exitCode, sc, error);
 	}
 
-	private Console createConsole() throws IOException {
-		Console console = new Console();
-		// the environment a terminal would give it (see ShellEnvironment)
-		for(java.util.Map.Entry<String,String> e : ShellEnvironment.forScripts().entrySet()) {
+	/**
+	 * What every run's shell is given before its script starts: the environment a terminal
+	 * would give it (see ShellEnvironment), $0 and the arguments.
+	 */
+	private static void setUp(Console console, String scriptName, String arguments) {
+		for(Map.Entry<String,String> e : ShellEnvironment.forScripts().entrySet()) {
 			console.setEnvironmentVariable(e.getKey(), e.getValue());
 		}
+		FshList args = new FshList();
+		args.add(new Argument(scriptName));
+		for (String a : ScriptText.splitArguments(arguments)) {
+			args.add( new Argument(a));
+		}
+		console.setPositionalParameters(true, args);
+	}
+
+	/**
+	 * The variables the next run would start with, for a debugger's view while nothing runs: the
+	 * shell's own, the environment's (ShellEnvironment's included), $0 and the arguments as $1,
+	 * $2 ... A new shell is set up as a run's is, and asked. What the startup file FSH_ENV names
+	 * would set isn't there: that file runs when the script does, not for this.
+	 * <p>
+	 * It waits for ShellEnvironment's variables if they're still being got (see
+	 * ShellEnvironment.whenKnown). Call it while no script is starting: fsh's parser asks the
+	 * newest shell for its aliases, and that is put back as it was only if nothing else changed
+	 * it meanwhile.
+	 *
+	 * @param scriptName $0
+	 * @param arguments separated by white space
+	 */
+	public static Map<String,Object> startVariables(String scriptName, String arguments) {
+		// (a new Console makes itself the one fsh's parser asks: see Console's constructor)
+		java.util.function.Function<String,String> aliases = Parser.aliases;
+		java.util.function.BooleanSupplier posixMode = Parser.posixMode;
+		Console console = new Console();
+		java.util.function.Function<String,String> ownAliases = Parser.aliases;
+		java.util.function.BooleanSupplier ownPosixMode = Parser.posixMode;
+		try {
+			setUp(console, scriptName, arguments);
+			return new ShellContext(console).getVariables();
+		} finally {
+			if( Parser.aliases == ownAliases ) {
+				Parser.aliases = aliases;
+			}
+			if( Parser.posixMode == ownPosixMode ) {
+				Parser.posixMode = posixMode;
+			}
+		}
+	}
+
+	private Console createConsole() throws IOException {
+		Console console = new Console();
+		setUp(console, scriptName, arguments);
 		console.setStdIn(in);
 		console.setStdOut(out);
 		console.setStdErr(err);

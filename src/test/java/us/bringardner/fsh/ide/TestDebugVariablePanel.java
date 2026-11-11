@@ -76,6 +76,51 @@ public class TestDebugVariablePanel {
 		});
 	}
 
+	/**
+	 * While no script runs, the fsh Variables tab shows what the next run starts with (and says
+	 * so); the User Variables tab keeps the finished script's. A new run's take their place.
+	 */
+	@Test
+	public void theNextRunsVariablesShowWhileNothingRuns() throws Exception {
+		SwingUtilities.invokeAndWait(()->{
+			ShellContext ctx = new ShellContext(new Console());
+			ctx.setVariable("count", "3");
+			ctx.setVariable("IFS", ",");
+			DebugVariablePanel panel = new DebugVariablePanel();
+			// a finished debug run's variables
+			panel.setContext(null, null, ctx.getVariables());
+			assertTrue(!panel.showsStartVariables());
+			assertEquals(",", value(panel.fshTable(), "IFS"));
+
+			panel.setStartVariables(us.bringardner.fsh.ide.core.ScriptRun.startVariables("/scripts/hello.fsh", "a b"));
+			assertTrue(panel.showsStartVariables());
+			List<String> fsh = names(panel.fshTable());
+			assertEquals(" \t\n", value(panel.fshTable(), "IFS"));
+			assertEquals("/scripts/hello.fsh", value(panel.fshTable(), "$0"));
+			// (the arguments are the script's own: not on this tab)
+			assertTrue(!fsh.contains("$1"), fsh.toString());
+			// the script's own, as it left them
+			assertEquals(List.of("count"), names(panel.userTable()));
+
+			// the next debug run: cleared, then its own
+			panel.setContext(null, null);
+			assertTrue(!panel.showsStartVariables());
+			assertEquals(0, panel.fshTable().getModel().getRowCount());
+			panel.setContext(null, ctx, ctx.getVariables());
+			assertTrue(!panel.showsStartVariables());
+			assertEquals(",", value(panel.fshTable(), "IFS"));
+		});
+	}
+
+	private static String value(JTable table, String name) {
+		for(int row=0; row < table.getModel().getRowCount(); row++ ) {
+			if( name.equals(table.getModel().getValueAt(row, 0))) {
+				return String.valueOf(table.getModel().getValueAt(row, 2));
+			}
+		}
+		return null;
+	}
+
 	@Test
 	public void aLongValueMakesTheTableWiderThanTheTab() throws Exception {
 		SwingUtilities.invokeAndWait(()->{

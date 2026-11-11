@@ -261,6 +261,7 @@ public class IdeWindow {
 			} else if( !is ) {
 				mainSplit.getItems().remove(debugPanel);
 			}
+			showStartVariables();
 		});
 		status.setPadding(new Insets(2, 6, 2, 6));
 		root.setBottom(status);
@@ -553,9 +554,27 @@ public class IdeWindow {
 		setDocument(ScriptDocument.parse(code), file);
 	}
 
+	/**
+	 * While the debug view shows and no script runs, its fsh Variables tab shows what the next
+	 * run starts with (when a run ends, the view opens, or the script's file, its $0, changes).
+	 */
+	private void showStartVariables() {
+		if( !showDebugPanel.isSelected() || isRunning()) {
+			return;
+		}
+		// (once the login shell's environment is known, so this doesn't wait for it here)
+		us.bringardner.fsh.ide.core.ShellEnvironment.whenKnown(()->Platform.runLater(()->{
+			if( showDebugPanel.isSelected() && !isRunning()) {
+				debugPanel.setStartVariables(ScriptRun.startVariables(
+						scriptFile != null ? scriptFile.getAbsolutePath() : "fsh", arguments.getText()));
+			}
+		}));
+	}
+
 	/** Shows a script read from file (null for a new script). */
 	void setDocument(ScriptDocument doc, FileSource file) {
 		scriptFile = file;
+		showStartVariables();
 		arguments.setText(doc.arguments());
 		stdIn.setText(doc.stdIn());
 		stdOut.setText(doc.stdOut());
@@ -837,6 +856,7 @@ public class IdeWindow {
 	/** After doc is written to file: it's the window's script, and no longer changed. */
 	private void saved(FileSource file, ScriptDocument doc, String warning) {
 		scriptFile = file;
+		showStartVariables();
 		original = doc;
 		addRecent(file);
 		status.setText(warning != null ? warning : "Saved "+file.getAbsolutePath());
@@ -972,6 +992,8 @@ public class IdeWindow {
 					if( finalVariables != null ) {
 						debugPanel.setVariables(finalVariables, false);
 					}
+					// (the fsh Variables tab: what the next run starts with)
+					showStartVariables();
 					updateControls();
 					status.setText((r.isCanceled() ? "Stopped" : "Finished")+", exit code "+exitCode);
 				}
@@ -1096,6 +1118,7 @@ public class IdeWindow {
 						loupePaused = false;
 						editor.setCurrentLine(-1);
 						debugPanel.freezeVariables();
+						showStartVariables();
 						if( error != null ) {
 							report("The debug session failed", error);
 						}
@@ -1124,6 +1147,7 @@ public class IdeWindow {
 				Platform.runLater(()->{
 					loupe = null;
 					session.close();
+					showStartVariables();
 					updateControls();
 					report("The script couldn't start on the adapter", e);
 				});
@@ -1312,6 +1336,11 @@ public class IdeWindow {
 
 	DebugPanel debugPanel() {
 		return debugPanel;
+	}
+
+	/** for the tests: View > Show Debug View */
+	void showDebugView(boolean show) {
+		showDebugPanel.setSelected(show);
 	}
 
 	OutlineView outline() {

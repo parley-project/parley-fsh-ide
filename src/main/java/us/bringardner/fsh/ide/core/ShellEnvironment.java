@@ -178,6 +178,20 @@ public final class ShellEnvironment {
 		}
 	}
 
+	/**
+	 * Runs action once the variables for a script are known, so forScripts() won't wait: now, on
+	 * this thread, if they are (or it wasn't started); otherwise on the thread that gets them.
+	 */
+	public static void whenKnown(Runnable action) {
+		CompletableFuture<Map<String,String>> c = capture;
+		if( c == null ) {
+			action.run();
+		} else {
+			// (it always completes: a shell that fails or takes too long gives none)
+			c.thenRun(action);
+		}
+	}
+
 	/** for the tests: what forScripts gives (null: as if never started) */
 	static synchronized void setForTests(Map<String,String> env) {
 		capture = env == null ? null : CompletableFuture.completedFuture(env);
