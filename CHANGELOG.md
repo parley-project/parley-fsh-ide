@@ -156,6 +156,8 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- The Swing editor's right-click edit menu no longer has a Breakpoint item that did nothing
+  (breakpoints are toggled in the margin, or from the debug menu while debugging).
 - While debugging in the Swing IDE, the editor scrolls to the line the script stopped on when it
   isn't in view (to the middle of the editor, opening a folded block it's in); a line that shows
   is left where it is, and the caret isn't moved. The JavaFX IDE already did.

@@ -743,11 +743,9 @@ public class FshIDE extends JFrame  {
 
 		// while a script runs, the editor's right-click menu is the run's or the debugger's
 		editorPane.setPopupItems(this::runPopupItems);
-		// the editor's own menu: Reload, and Breakpoint
+		// the editor's own menu: Reload
 		JMenuItem item = new JMenuItem("Reload");
 		item.addActionListener((e)-> actionReload());
-		editorPane.appendMenu(item);
-		item = new JMenuItem("Breakpoint");
 		editorPane.appendMenu(item);
 
 		// the Run menu's options (the menus themselves: buildMenus)

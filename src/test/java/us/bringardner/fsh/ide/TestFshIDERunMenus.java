@@ -149,6 +149,8 @@ public class TestFshIDERunMenus {
 			// nothing runs: the edit menu, and the text can be edited
 			List<String> edit = popup(w);
 			assertTrue(edit.contains("Paste"), edit.toString());
+			// (it had a Breakpoint item that did nothing)
+			assertFalse(edit.contains("Breakpoint"), edit.toString());
 			assertNull(onEdt(()->w.runPopupItems(0)));
 			assertTrue(onEdt(()->w.editor().isEditable()));
 
