@@ -50,6 +50,13 @@ public class DebugVariablePanel extends JPanel  {
 	private static final long serialVersionUID = 1L;
 	private ShellContext ctx ;
 	private Map<String,Object> variableSnapshot;
+	// while no script runs: what the next run starts with (the fsh Variables tab shows these), or null
+	private Map<String,Object> startVariables;
+	/** what the fsh Variables tab says while it shows what the next run starts with (as the JavaFX IDE's) */
+	static final String START_VARIABLES_CAPTION = "No script is running: this is what the next run starts with.";
+	static final String START_VARIABLES_HINT = "<html>The shell's own variables, the environment's and $0, as the next run gets them.<br>"
+			+"What the startup file FSH_ENV names sets isn't here: that file runs when the script does.</html>";
+	private final javax.swing.JLabel startCaption = new javax.swing.JLabel(START_VARIABLES_CAPTION);
 
 	// the script's own variables (loop variables and $1, $2 ... included), and fsh's
 	private final VariableTable userVariables = new VariableTable();
@@ -438,7 +445,14 @@ public class DebugVariablePanel extends JPanel  {
 		add(tabbedPane, BorderLayout.CENTER);
 
 		tabbedPane.addTab("User Variables", null, userVariables.scrollPane, "The script's own variables, its loop variables and $1, $2 ...");
-		tabbedPane.addTab("fsh Variables", null, fshVariables.scrollPane, "The shell's own variables, the environment's, and $0");
+		// (over the table, only while it shows what the next run starts with)
+		JPanel fshPanel = new JPanel(new BorderLayout(0, 0));
+		startCaption.setToolTipText(START_VARIABLES_HINT);
+		startCaption.setBorder(javax.swing.BorderFactory.createEmptyBorder(3, 6, 3, 6));
+		startCaption.setVisible(false);
+		fshPanel.add(startCaption, BorderLayout.NORTH);
+		fshPanel.add(fshVariables.scrollPane, BorderLayout.CENTER);
+		tabbedPane.addTab("fsh Variables", null, fshPanel, "The shell's own variables, the environment's, and $0");
 
 		JScrollPane breakpointsScrollPane = new JScrollPane();
 		JPanel panel = new JPanel();
@@ -670,7 +684,8 @@ public class DebugVariablePanel extends JPanel  {
 		// (a finished script's have no context: shown, but not to be edited)
 		Map<String,Object> vars = variableSnapshot;
 		userVariables.setRows(DebugVariables.list(vars, true, false));
-		fshVariables.setRows(DebugVariables.list(vars, true, true));
+		fshVariables.setRows(DebugVariables.list(startVariables != null ? startVariables : vars, true, true));
+		startCaption.setVisible(startVariables != null);
 		refreshBreakpoints();
 	}
 
@@ -695,12 +710,26 @@ public class DebugVariablePanel extends JPanel  {
 	public void setContext(EditorPanel editorPane, ShellContext ctx, Map<String,Object> variables ) {
 		this.ctx = ctx;
 		this.variableSnapshot = variables;
+		// (the script's own, or none: not what the next run starts with)
+		this.startVariables = null;
 		this.editorPane = editorPane;
 		createNodes();
 	}
 
 	public void setContext(EditorPanel editorPane, ShellContext ctx ) {
 		setContext(editorPane, ctx, ctx == null ? null : ctx.getVariables());
+	}
+
+	/**
+	 * While no script runs: the fsh Variables tab shows these, what the next run starts with (see
+	 * ScriptRun.startVariables), under a line that says so, until setContext. They can't be
+	 * changed here. The User Variables tab keeps what it shows.
+	 */
+	public void setStartVariables(Map<String,Object> variables) {
+		// (no script is running: nothing to change a variable of)
+		ctx = null;
+		startVariables = variables;
+		createNodes();
 	}
 
 	public void updateTree(SyntaxNode tree, String string) {
@@ -710,6 +739,8 @@ public class DebugVariablePanel extends JPanel  {
 	// for tests
 	JTable userTable() { return userVariables.table; }
 	JTable fshTable() { return fshVariables.table; }
+	/** True while the fsh Variables tab shows (and says it shows) what the next run starts with. */
+	boolean showsStartVariables() { return startVariables != null && startCaption.isVisible(); }
 	JTable watchpointsTable() { return watchpointsTable; }
 	JTable breakpointsTable() { return breakpointsTable; }
 	JButton editBreakpointButton() { return editBreakpointButton; }

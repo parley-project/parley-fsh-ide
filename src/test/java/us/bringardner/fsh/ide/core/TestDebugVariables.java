@@ -42,6 +42,32 @@ public class TestDebugVariables {
 		assertFalse(DebugVariables.isInheritedEnvironment(lower, value), lower + " is the script's");
 	}
 
+	/**
+	 * A variable the login shell's environment gives a script (see ShellEnvironment), which an
+	 * IDE opened from the Finder doesn't have itself, is fsh's: not the script's own.
+	 */
+	@Test
+	public void theLoginShellsEnvironmentIsFshs() {
+		String name = "FSH_IDE_TEST_ONLY_IN_THE_LOGIN_SHELL";
+		assertFalse(DebugVariables.isFshDefined(name));
+		ShellEnvironment.setForTests(Map.of(name, "/a/b"));
+		try {
+			assertTrue(DebugVariables.isFshDefined(name));
+			assertTrue(DebugVariables.isInheritedEnvironment(name, "/a/b"));
+			// (changed by the script: still fsh's, but no longer as inherited)
+			assertFalse(DebugVariables.isInheritedEnvironment(name, "/c"));
+			Map<String,Object> vars = ScriptRun.startVariables("fsh", "");
+			vars.put("mine", "1");
+			List<String> fsh = DebugVariables.list(vars, true, true).stream().map(Variable::getName).collect(Collectors.toList());
+			List<String> user = DebugVariables.list(vars, true, false).stream().map(Variable::getName).collect(Collectors.toList());
+			assertTrue(fsh.contains(name), fsh.toString());
+			assertEquals(List.of("mine"), user);
+		} finally {
+			ShellEnvironment.setForTests(null);
+		}
+		assertFalse(DebugVariables.isFshDefined(name));
+	}
+
 	@Test
 	public void listedByNameWithTheirTypes() {
 		List<Variable> list = DebugVariables.list(Map.of("b", 2, "a", "x"));

@@ -1035,13 +1035,31 @@ public class FshIDE extends JFrame  {
 		if( runState == IdeRunstate.Idel) {
 			boolean b = showDebugViewItem.isSelected();
 			if( b ) {
-				// (the variables a debug run left stay, as in the JavaFX IDE, until the next one)
+				// (the script's own variables a debug run left stay, as in the JavaFX IDE, until the next one)
 				debugVariablePanel.refreshBreakpoints();
 			}
 			debugSplitPane.setVisible(b);		
 			centerSplitPane.resetToPreferredSizes();
 			showSyntaxTree();
+			showStartVariables();
 		}
+	}
+
+	/**
+	 * While the debug view shows and no script runs, its fsh Variables tab shows what the next
+	 * run starts with (when a run ends, the view opens, or the script's file, its $0, changes).
+	 */
+	private void showStartVariables() {
+		if( debugVariablePanel == null || !debugSplitPane.isVisible() || runState != IdeRunstate.Idel ) {
+			return;
+		}
+		// (once the login shell's environment is known, so this doesn't wait for it here)
+		us.bringardner.fsh.ide.core.ShellEnvironment.whenKnown(()->SwingUtilities.invokeLater(()->{
+			if( debugSplitPane.isVisible() && runState == IdeRunstate.Idel ) {
+				debugVariablePanel.setStartVariables(ScriptRun.startVariables(
+						scriptFile != null ? scriptFile.getAbsolutePath() : "fsh", argumentsTextField.getText()));
+			}
+		}));
 	}
 
 	protected void actionDebug(boolean b) {
@@ -1441,6 +1459,13 @@ public class FshIDE extends JFrame  {
 		stopButton.setEnabled(running);
 	}
 
+	/** for the tests: View > Show Debug View, and the view's variables */
+	DebugVariablePanel showDebugView(boolean show) {
+		showDebugViewItem.setSelected(show);
+		actionShowDebugView();
+		return debugVariablePanel;
+	}
+
 	/** for the tests: [Debug, Run, Stop] enabled */
 	boolean[] runButtonsEnabled() {
 		return new boolean[] {debugButton.isEnabled(), executeButton.isEnabled(), stopButton.isEnabled()};
@@ -1621,6 +1646,7 @@ public class FshIDE extends JFrame  {
 		// loses them when it's next saved)
 		original = getDocument();
 		updateTitle();
+		showStartVariables();
 	}
 
 	protected void actionSave() {
@@ -1675,6 +1701,7 @@ public class FshIDE extends JFrame  {
 				// not saved: keep the file the editor came from
 				scriptFile = previous;
 			}
+			showStartVariables();
 		}
 
 

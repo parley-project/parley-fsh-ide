@@ -68,6 +68,13 @@ public class DebugPanel extends TabPane {
 	// all the paused script's variables; the tabs show those that pass the filter
 	private Map<String,Object> allVariables;
 	private boolean variablesEditable;
+	// while no script runs: what the next run starts with (the fsh Variables tab shows these), or null
+	private Map<String,Object> startVariables;
+	/** what the fsh Variables tab says while it shows what the next run starts with */
+	static final String START_VARIABLES_CAPTION = "No script is running: this is what the next run starts with.";
+	static final String START_VARIABLES_HINT = "The shell's own variables, the environment's and $0, as the next run gets them."
+			+" What the startup file FSH_ENV names sets isn't here: that file runs when the script does.";
+	private final Label startCaption = new Label(START_VARIABLES_CAPTION);
 	// one filter for both tabs (each has a field for it)
 	private final javafx.beans.property.StringProperty filterText = new javafx.beans.property.SimpleStringProperty("");
 	// the script's own variables (loop variables and $1, $2 ... included), and fsh's
@@ -183,6 +190,12 @@ public class DebugPanel extends TabPane {
 		log.getStyleClass().add("debug-log");
 
 		filterText.addListener((o, was, is)->showVariables());
+		// (over the fsh Variables table, only while it shows what the next run starts with)
+		startCaption.setTooltip(new javafx.scene.control.Tooltip(START_VARIABLES_HINT));
+		startCaption.setPadding(new Insets(0, 4, 4, 6));
+		startCaption.setVisible(false);
+		startCaption.setManaged(false);
+		fshVariables.top.getChildren().add(startCaption);
 		Tab user = new Tab("User Variables", userVariables.pane);
 		user.setTooltip(new javafx.scene.control.Tooltip("The script's own variables, its loop variables and $1, $2 ..."));
 		Tab fsh = new Tab("fsh Variables", fshVariables.pane);
@@ -277,13 +290,27 @@ public class DebugPanel extends TabPane {
 	public void setVariables(Map<String,Object> vars, boolean editable) {
 		allVariables = vars;
 		variablesEditable = editable;
+		// (the script's own, not what the next run starts with)
+		startVariables = null;
+		showVariables();
+	}
+
+	/**
+	 * While no script runs: the fsh Variables tab shows these, what the next run starts with (see
+	 * ScriptRun.startVariables), under a line that says so, until a script's own are set or the
+	 * variables are cleared. They can't be changed here. The User Variables tab keeps what it shows.
+	 */
+	public void setStartVariables(Map<String,Object> vars) {
+		startVariables = vars;
 		showVariables();
 	}
 
 	private void showVariables() {
 		String f = filterText.get() == null ? "" : filterText.get().trim().toLowerCase();
 		userVariables.setRows(filtered(DebugVariables.list(allVariables, true, false), f));
-		fshVariables.setRows(filtered(DebugVariables.list(allVariables, true, true), f));
+		fshVariables.setRows(filtered(DebugVariables.list(startVariables != null ? startVariables : allVariables, true, true), f));
+		startCaption.setVisible(startVariables != null);
+		startCaption.setManaged(startVariables != null);
 	}
 
 	private static List<Variable> filtered(List<Variable> list, String f) {
@@ -303,6 +330,7 @@ public class DebugPanel extends TabPane {
 
 	public void clearVariables() {
 		allVariables = null;
+		startVariables = null;
 		variablesEditable = false;
 		showVariables();
 		userVariables.detail.clear();
@@ -332,6 +360,8 @@ public class DebugPanel extends TabPane {
 		final TableColumn<Variable,String> value = new TableColumn<>("Value");
 		final TextField filter = new TextField();
 		final TextArea detail = new TextArea();
+		// the filter, and under it room for a line about what the table shows
+		final javafx.scene.layout.VBox top = new javafx.scene.layout.VBox();
 		final BorderPane pane;
 
 		VariableView(String placeholder) {
@@ -396,7 +426,8 @@ public class DebugPanel extends TabPane {
 			javafx.scene.control.SplitPane split = new javafx.scene.control.SplitPane(table, detail);
 			split.setOrientation(javafx.geometry.Orientation.VERTICAL);
 			split.setDividerPositions(0.75);
-			pane = new BorderPane(split, options, null, null, null);
+			top.getChildren().add(options);
+			pane = new BorderPane(split, top, null, null, null);
 		}
 
 		void setRows(List<Variable> list) {
@@ -478,4 +509,6 @@ public class DebugPanel extends TabPane {
 	TableView<Variable> userTable() { return userVariables.table; }
 	TableView<Variable> fshTable() { return fshVariables.table; }
 	String userDetailText() { return userVariables.detail.getText(); }
+	/** True while the fsh Variables tab shows (and says it shows) what the next run starts with. */
+	boolean showsStartVariables() { return startVariables != null && startCaption.isVisible(); }
 }

@@ -4,6 +4,12 @@
 
 ### Added
 
+- While the debug view shows and no script is running, its fsh Variables tab shows what the next
+  run starts with, in both IDEs: the shell's own variables, the environment's (the login shell's
+  included) and `$0`, under a line that says so. It's refreshed when a run ends, the view opens or
+  the script's file changes. What the file `FSH_ENV` names sets isn't shown (that file runs when
+  the script does), and the values can't be changed there. After a debug run the User Variables
+  tab still shows the script's own variables as it left them.
 - Scripts run with the environment a terminal would give them, in both IDEs and through Loupe.
   An IDE opened from the Finder or the Dock (or some Linux desktops) gets a small environment, not
   the one a terminal's login shell makes from your startup files, so a script that found its
@@ -137,6 +143,9 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ### Fixed
 
+- A variable a script gets from the login shell's environment (one the IDE itself doesn't have
+  when it's opened from the Finder, such as `CLASSPATH` or `SDKMAN_PLATFORM` set in a startup file)
+  shows on the fsh Variables tab, not with the script's own on User Variables.
 - Clear Run Settings... (now in the Run menu, in both IDEs; it was in File) also empties the
   arguments and redirects of the scripts open in the IDE's windows, so saving one doesn't keep
   them again, and says how many scripts' settings it cleared (the Swing IDE said nothing).

@@ -103,6 +103,63 @@ public class TestScriptRun {
 		}
 	}
 
+	/**
+	 * What a debugger shows while nothing runs: the variables the next run starts with, as a
+	 * run's shell has them, without running FSH_ENV's file (and so nothing of the user's).
+	 */
+	@Test
+	public void theVariablesTheNextRunStartsWith() throws Exception {
+		Path marker = dir.resolve("ran");
+		Path rc = dir.resolve("env.fsh");
+		Files.writeString(rc, "FROM_RC=yes\necho ran > '"+marker+"'\n");
+		ShellEnvironment.setForTests(java.util.Map.of("WHO", "tony", "FSH_ENV", rc.toString()));
+		java.util.function.Function<String,String> aliases = us.bringardner.fsh.syntax.Parser.aliases;
+		java.util.function.BooleanSupplier posixMode = us.bringardner.fsh.syntax.Parser.posixMode;
+		try {
+			java.util.Map<String,Object> vars = ScriptRun.startVariables("/scripts/hello.fsh", " a  b ");
+			// the shell's own, the login shell's environment, $0 and the arguments
+			assertEquals(" \t\n", String.valueOf(vars.get("IFS")));
+			assertEquals("tony", String.valueOf(vars.get("WHO")));
+			assertEquals("/scripts/hello.fsh", String.valueOf(vars.get("$0")));
+			assertEquals("a", String.valueOf(vars.get("$1")));
+			assertEquals("b", String.valueOf(vars.get("$2")));
+			// the startup file isn't run for this
+			assertNull(vars.get("FROM_RC"));
+			assertTrue(!Files.exists(marker), "FSH_ENV's file ran");
+			// fsh's parser still asks the shell it asked before
+			assertTrue(aliases == us.bringardner.fsh.syntax.Parser.aliases);
+			assertTrue(posixMode == us.bringardner.fsh.syntax.Parser.posixMode);
+
+			// the same as a run has before its first statement (apart from what its startup file set)
+			CompletableFuture<Result> result = new CompletableFuture<>();
+			Result r = runToEnd(run(":\n", result).scriptName("/scripts/hello.fsh").arguments(" a  b "), result);
+			assertNull(r.error());
+			java.util.Map<String,Object> ran = r.ctx().getVariables();
+			for(String name : new String[] {"IFS", "WHO", "$0", "$1", "$2", "HOME", "PATH", "OPTIND"}) {
+				assertEquals(String.valueOf(ran.get(name)), String.valueOf(vars.get(name)), name);
+			}
+			assertEquals("yes", String.valueOf(ran.get("FROM_RC")));
+		} finally {
+			ShellEnvironment.setForTests(null);
+		}
+	}
+
+	/** whenKnown: at once when the environment is known (or wasn't asked for). */
+	@Test
+	public void whenTheEnvironmentIsKnown() {
+		try {
+			java.util.concurrent.atomic.AtomicInteger calls = new java.util.concurrent.atomic.AtomicInteger();
+			ShellEnvironment.setForTests(null);
+			ShellEnvironment.whenKnown(calls::incrementAndGet);
+			assertEquals(1, calls.get());
+			ShellEnvironment.setForTests(java.util.Map.of("WHO", "tony"));
+			ShellEnvironment.whenKnown(calls::incrementAndGet);
+			assertEquals(2, calls.get());
+		} finally {
+			ShellEnvironment.setForTests(null);
+		}
+	}
+
 	@Test
 	public void runsWithArguments() throws Exception {
 		CompletableFuture<Result> result = new CompletableFuture<>();

@@ -307,6 +307,68 @@ public class DebuggingTest {
 		Fx.waitFor(()->!w.isRunning());
 	}
 
+	private static String fshValue(TestWindow w, String name) throws Exception {
+		return Fx.call(()->{
+			for(Variable v : w.debugPanel().fshVariables()) {
+				if( v.getName().equals(name)) {
+					return String.valueOf(v.getValue());
+				}
+			}
+			return null;
+		});
+	}
+
+	/**
+	 * While the debug view shows and no script runs, the fsh Variables tab shows what the next
+	 * run starts with (and says so); a debug run's own take their place while it runs.
+	 */
+	@Test
+	public void theNextRunsVariablesShowWhileNothingRuns() throws Exception {
+		TestWindow w = window("IFS=,\nx=1\necho $x\n");
+		// not until the view shows
+		assertFalse(Fx.call(()->w.debugPanel().showsStartVariables()));
+		Fx.run(()->w.showDebugView(true));
+		Fx.waitFor(()->w.debugPanel().showsStartVariables());
+		assertEquals(" \t\n", fshValue(w, "IFS"));
+		assertEquals("fsh", fshValue(w, "$0"));
+		assertEquals(java.util.List.of(), Fx.call(()->names(w.debugPanel().userVariables())));
+		// (nothing is running: they can't be changed)
+		assertFalse(Fx.call(()->w.debugPanel().variablesEditable()));
+
+		// a debug run: the script's own
+		Fx.run(()->{
+			w.editor().addBreakpoint(2);
+			w.debug();
+		});
+		Fx.waitFor(w::isPaused);
+		assertFalse(Fx.call(()->w.debugPanel().showsStartVariables()));
+		assertEquals(",", fshValue(w, "IFS"));
+
+		// when it ends: the next run's again, and the script's own as it left them
+		Fx.run(()->w.debugSession().resume());
+		Fx.waitFor(()->!w.isRunning());
+		Fx.waitFor(()->w.debugPanel().showsStartVariables());
+		assertEquals(" \t\n", fshValue(w, "IFS"));
+		assertEquals("1", String.valueOf(variable(w, "x")));
+		assertFalse(Fx.call(()->w.debugPanel().variablesEditable()));
+
+		// a script's file is its $0
+		us.bringardner.parley.files.FileSource file = us.bringardner.parley.files.FileSourceFactory.getDefaultFactory()
+				.createFileSource(home.resolve("hello.fsh").toString());
+		Fx.run(()->w.setCode("echo hi\n", file));
+		Fx.waitFor(()->file.getAbsolutePath().equals(fshValue0(w)));
+	}
+
+	// (on the JavaFX thread)
+	private static String fshValue0(TestWindow w) {
+		for(Variable v : w.debugPanel().fshVariables()) {
+			if( v.getName().equals("$0")) {
+				return String.valueOf(v.getValue());
+			}
+		}
+		return null;
+	}
+
 	@Test
 	public void aVariableIsChangedInItsEditor() throws Exception {
 		TestWindow w = window("name=world\necho hello $name\n");

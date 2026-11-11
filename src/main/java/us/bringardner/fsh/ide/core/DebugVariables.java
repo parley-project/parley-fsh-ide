@@ -47,11 +47,17 @@ public final class DebugVariables {
 	}
 
 	/**
-	 * The environment's value of the variable spelled exactly name, or null. (System.getenv(name)
-	 * ignores case on Windows, where it made a script's own path look like the environment's Path.)
+	 * The value of the variable spelled exactly name in the environment a script is given, or
+	 * null: the login shell's (see ShellEnvironment; an IDE opened from the Finder doesn't have
+	 * those itself), else the IDE's own. (System.getenv(name) ignores case on Windows, where it
+	 * made a script's own path look like the environment's Path.)
 	 */
 	static String environment(String name) {
-		String ret = System.getenv(name);
+		String ret = ShellEnvironment.known().get(name);
+		if( ret != null ) {
+			return ret;
+		}
+		ret = System.getenv(name);
 		if( ret == null ) {
 			return null;
 		}
