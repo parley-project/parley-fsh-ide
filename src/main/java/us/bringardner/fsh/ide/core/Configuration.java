@@ -182,6 +182,18 @@ public class Configuration {
 		}
 	}
 
+	// Run > Debug Remote's last settings
+	private RemoteDebug remoteDebug;
+
+	/** What Run &gt; Debug Remote was last given (a copy; never null). */
+	public RemoteDebug getRemoteDebug() {
+		return remoteDebug == null ? new RemoteDebug() : remoteDebug.copy();
+	}
+
+	public void setRemoteDebug(RemoteDebug remoteDebug) {
+		this.remoteDebug = remoteDebug == null ? null : remoteDebug.copy();
+	}
+
 	public int getMaxRecent() {
 		return maxRecent;
 	}
