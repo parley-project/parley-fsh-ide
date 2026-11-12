@@ -2,6 +2,19 @@
 
 ## 1.1.0 (unreleased)
 
+### Changed (2026-11-12: the native image's settings redone)
+
+- **Native image**: the recorded `reachability-metadata.json` no longer names fsh-ide's or Parley's
+  classes and files, so a rename can't leave a stale name behind (it still named
+  `us.bringardner.parley.core.ParleyLogger`). `mvn -Pnative package` lists them from the class path
+  as the image is built (`tools/NativeMetadata.java`: every `us.bringardner` class with its members,
+  a proxy for each JNA library interface, and the other files of their jars); the recorded file keeps
+  what the JDK (AWT, Swing) and the other libraries need, and `tools/record-native-config.sh` takes
+  Parley's part out after recording.
+- **Native image on Linux**: the X11 entries are recorded (the file had Windows' only), and the image
+  was built and run on Linux x86-64: edit, save, run, debug to a breakpoint and step, Settings, About.
+  macOS is still to record.
+
 ### Added
 
 - **Run > Debug Remote...**, in both IDEs: debugs a script on another machine, through fsh-loupe's

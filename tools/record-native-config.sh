@@ -1,10 +1,15 @@
 #!/bin/sh
-# Records the reachability metadata (reflection, JNI, resources) the native image of fsh-ide needs,
-# by running the real IDE on a JVM under GraalVM's tracing agent. Run it on each platform the native
-# image is built for (the AWT/Swing metadata is platform specific: the Windows entries are already in
-# the file; Linux and macOS add theirs), then commit the updated file.
+# Records what the native image of fsh-ide needs of the JDK (AWT and Swing) and the other libraries
+# (reflection, JNI, resources), by running the real IDE on a JVM under GraalVM's tracing agent, into
+# resources/META-INF/native-image/us.bringardner/fsh-ide/reachability-metadata.json. Run it on each
+# platform the native image is built for (the AWT/Swing entries are platform specific: each platform
+# adds its own), then commit the updated file.
 #
 #   tools/record-native-config.sh
+#
+# fsh-ide's and Parley's own classes and files are not kept in that file: the native build lists
+# them from the class path (tools/NativeMetadata.java), and they are taken out of the recording
+# when the IDE closes.
 #
 # Needs a GraalVM JDK (java -version says GraalVM) as the JAVA_HOME or on PATH, and Maven.
 # The agent merges into the existing file, so it only ever adds. Use the IDE the way you would:
@@ -29,5 +34,7 @@ esac
 
 java -agentlib:native-image-agent=config-merge-dir="$out" \
 	-cp "target/classes$sep$cp" us.bringardner.fsh.ide.FshIDE
+
+java tools/NativeMetadata.java strip "$out/reachability-metadata.json" "target/classes$sep$cp"
 
 echo "Recorded into $out"

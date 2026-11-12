@@ -68,8 +68,55 @@
 								<buildArg>-Djava.awt.headless=false</buildArg>
 								<!-- JNA and others look the platform charset (Cp1252) up by name -->
 								<buildArg>-H:+AddAllCharsets</buildArg>
+								<!-- fsh-ide's and Parley's own classes and files, listed below as the image is built -->
+								<buildArg>-H:ConfigurationFileDirectories=${project.build.directory}/native-config</buildArg>
 							</buildArgs>
 						</configuration>
+					</plugin>
+					<!-- target/native-config/reachability-metadata.json: every us.bringardner class on the class
+					     path, with its members, and the other files of their jars (tools/NativeMetadata.java), so
+					     the recorded resources/META-INF/native-image/.../reachability-metadata.json names only
+					     what the JDK and the other libraries need (tools/record-native-config.sh) -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-dependency-plugin</artifactId>
+						<version>3.8.1</version>
+						<executions>
+							<execution>
+								<id>native-classpath</id>
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>build-classpath</goal>
+								</goals>
+								<configuration>
+									<includeScope>runtime</includeScope>
+									<outputProperty>native.classpath</outputProperty>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>3.5.0</version>
+						<executions>
+							<execution>
+								<id>native-metadata</id>
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>${java.home}/bin/java</executable>
+									<arguments>
+										<argument>${project.basedir}/tools/NativeMetadata.java</argument>
+										<argument>generate</argument>
+										<argument>${project.build.directory}/native-config</argument>
+										<argument>${project.build.outputDirectory}${path.separator}${native.classpath}</argument>
+									</arguments>
+								</configuration>
+							</execution>
+						</executions>
 					</plugin>
 					<!-- AWT reads its font configuration from java.home/lib, and the image's java.home is
 					     its own folder (see FshIDE.main): ship the JDK's file beside the exe -->
