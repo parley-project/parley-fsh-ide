@@ -13,6 +13,10 @@
   window's own script and breakpoints are put back when the session ends. The connection has no
   login and no encryption (the dialog says so). The last settings are kept. In `core`:
   `RemoteDebug` (the settings), `AdapterSession` (what the IDEs drive; `LoupeSession` is one).
+- The IDE is a Debug Adapter Protocol client too: Debug Remote's dialog has a **Protocol** choice
+  (Loupe, or DAP), and `DapSession` (in `core`) debugs through an adapter that speaks DAP on a
+  port, in the same three ways. Over DAP a script that isn't the editor's is debugged without its
+  text being shown (parley-loupe's bridge doesn't answer DAP's `source` request); the IDE says so.
 - The Swing IDE can debug through a Loupe adapter (it had no adapter path): Debug Remote's
   sessions use the debug view, the debug controls and the editor's debug menu (Run to Line and
   Show Value included).

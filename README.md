@@ -128,10 +128,19 @@ redirect fields must be empty (an attach ignores them). Stop ends the script, al
 attached to; closing the connection without Stop (the IDE quits, the network drops) leaves an
 attached script running and ends one the IDE started.
 
+**Protocol.** The IDE speaks Loupe to the adapter unless DAP is chosen in the dialog: it is a
+Debug Adapter Protocol client too (`DapSession`, in `core`), for an adapter that listens on a
+port and speaks DAP. fsh-loupe's ports take either, so nothing changes on the other machine.
+Over DAP the adapter doesn't give a script's text (parley-loupe's bridge has no DAP `source`
+request), so a script file there, or one attached to, is debugged without being shown: the
+editor keeps its own script, and the IDE says so. A script's launch is described in fsh-loupe's
+terms (`source`, `script`, `args`), which another language's adapter won't know.
+
 The connection has **no login and no encryption**, and whoever can reach the port can run
 commands as the user the adapter runs as: use it only on a network where everyone who can
 reach the port is trusted. The last settings are kept in `~/.fsh-ide/Config.xml`.
-`RemoteDebug` and `AdapterSession`, in `core`, hold the settings and the session and have no UI.
+`RemoteDebug` and `AdapterSession`, in `core`, hold the settings and the session and have no UI
+(`LoupeSession` and `DapSession` are the two sessions).
 
 As through the adapter in this JVM: no standard input for a script the IDE starts, no log of
 every statement, no watchpoints. In the Swing IDE the variables of a remote script are shown but

@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * A debugging session with an adapter, as the IDEs drive it ({@link LoupeSession} speaks Loupe),
- * so the IDEs don't need to know which protocol the adapter speaks.
+ * A debugging session with an adapter, as the IDEs drive it: {@link LoupeSession} speaks Loupe
+ * and {@link DapSession} the Debug Adapter Protocol, and the IDEs don't need to know which.
  * <p>
  * Lines are the editor's (0-based). The listener is called on a thread of the session's, one
  * call at a time, in the order of events.

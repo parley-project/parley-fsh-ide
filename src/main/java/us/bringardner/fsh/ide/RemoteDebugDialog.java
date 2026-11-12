@@ -35,8 +35,8 @@ import us.bringardner.fsh.ide.core.RemoteDebug;
 import us.bringardner.fsh.ide.core.RemoteDebug.Mode;
 
 /**
- * Run &gt; Debug Remote...: the machine and port, what to debug there, and (for a script file
- * there) its path; as the JavaFX IDE's dialog. Debug gives the settings; closing it any other
+ * Run &gt; Debug Remote...: the machine and port, the protocol, what to debug there, and (for
+ * a script file there) its path; as the JavaFX IDE's dialog. Debug gives the settings; closing it any other
  * way gives nothing.
  */
 public class RemoteDebugDialog extends JDialog {
@@ -49,6 +49,8 @@ public class RemoteDebugDialog extends JDialog {
 	final JRadioButton remoteFile = new JRadioButton(Mode.REMOTE_FILE.getLabel());
 	final JRadioButton attach = new JRadioButton(Mode.ATTACH.getLabel());
 	final JTextField path = new JTextField(22);
+	final JRadioButton loupe = new JRadioButton(RemoteDebug.Protocol.LOUPE.getLabel());
+	final JRadioButton dap = new JRadioButton(RemoteDebug.Protocol.DAP.getLabel());
 	final JTextArea hint = note("");
 	final JLabel problem = new JLabel(" ");
 	final JButton debugButton = new JButton("Debug");
@@ -71,6 +73,16 @@ public class RemoteDebugDialog extends JDialog {
 			b.addActionListener(e->check());
 		}
 		button(last.getMode()).setSelected(true);
+		ButtonGroup protocols = new ButtonGroup();
+		JPanel protocol = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		protocol.setOpaque(false);
+		for(JRadioButton b : new JRadioButton[] {loupe, dap}) {
+			protocols.add(b);
+			b.setOpaque(false);
+			b.addActionListener(e->check());
+			protocol.add(b);
+		}
+		(last.getProtocol() == RemoteDebug.Protocol.DAP ? dap : loupe).setSelected(true);
 
 		JPanel fields = new JPanel(new GridBagLayout());
 		fields.setOpaque(false);
@@ -86,17 +98,18 @@ public class RemoteDebugDialog extends JDialog {
 		what.add(editorScript);
 		what.add(remoteFile);
 		what.add(attach);
-		row(fields, c, 2, "Debug:", what);
-		row(fields, c, 3, "Script's path:", path);
+		row(fields, c, 2, "Protocol:", protocol);
+		row(fields, c, 3, "Debug:", what);
+		row(fields, c, 4, "Script's path:", path);
 		c.gridx = 0;
 		c.gridwidth = 2;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
-		c.gridy = 4;
-		fields.add(hint, c);
 		c.gridy = 5;
-		fields.add(note(RemoteDebug.WARNING), c);
+		fields.add(hint, c);
 		c.gridy = 6;
+		fields.add(note(RemoteDebug.WARNING), c);
+		c.gridy = 7;
 		fields.add(problem, c);
 
 		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -158,7 +171,7 @@ public class RemoteDebugDialog extends JDialog {
 
 	/** Text that wraps, looking like a label. */
 	private static JTextArea note(String text) {
-		JTextArea a = new JTextArea(text, 3, 38);
+		JTextArea a = new JTextArea(text, text.isEmpty() ? 5 : 3, 38);
 		a.setLineWrap(true);
 		a.setWrapStyleWord(true);
 		a.setEditable(false);
@@ -187,13 +200,15 @@ public class RemoteDebugDialog extends JDialog {
 		problem.setText(p == null || now.getHost().isEmpty() ? " " : p);
 		debugButton.setEnabled(p == null);
 		path.setEnabled(remoteFile.isSelected());
-		hint.setText(RemoteDebug.hint(now.getMode()));
+		String more = RemoteDebug.hint(now.getProtocol());
+		hint.setText(RemoteDebug.hint(now.getMode())+(more.isEmpty() ? "" : "\n"+more));
 	}
 
 	/** What the fields hold now (a port that isn't one is 0, which {@link RemoteDebug#problem()} reports). */
 	RemoteDebug settings() {
 		Mode mode = remoteFile.isSelected() ? Mode.REMOTE_FILE : attach.isSelected() ? Mode.ATTACH : Mode.EDITOR_SCRIPT;
-		return new RemoteDebug(host.getText(), Math.max(0, RemoteDebug.parsePort(port.getText())), mode, path.getText());
+		return new RemoteDebug(host.getText(), Math.max(0, RemoteDebug.parsePort(port.getText())), mode, path.getText(),
+				dap.isSelected() ? RemoteDebug.Protocol.DAP : RemoteDebug.Protocol.LOUPE);
 	}
 
 	/** The settings Debug was pressed with, or null. */

@@ -19,7 +19,7 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 
 /**
  * Where and how Run &gt; Debug Remote debugs: the machine and port an adapter listens on, what
- * to debug there. The connection has no login and no encryption
+ * to debug there, and the protocol to speak (Loupe, or DAP). The connection has no login and no encryption
  * (the adapter's side says so when it starts): it is for a network where everyone who can
  * reach the port is trusted. The last one used is kept in the {@link Configuration}.
  */
@@ -52,9 +52,41 @@ public final class RemoteDebug {
 		}
 	}
 
+	/** The protocol the adapter speaks. */
+	public enum Protocol {
+		/** fsh-loupe's own. */
+		LOUPE("Loupe"),
+		/** The Debug Adapter Protocol. */
+		DAP("DAP");
+
+		private final String label;
+
+		Protocol(String label) {
+			this.label = label;
+		}
+
+		/** For a dialog. */
+		public String getLabel() {
+			return label;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
 	/** What the dialogs say about the connection. */
 	public static final String WARNING = "The connection has no login and no encryption: use it only on a network where"
 			+" everyone who can reach the port is trusted.";
+
+	/** What choosing protocol means, for the dialogs. */
+	public static String hint(Protocol protocol) {
+		return protocol == Protocol.DAP
+				? "DAP: for an adapter that speaks the Debug Adapter Protocol. fsh-loupe's takes it on the same port, but"
+						+" gives a script's text only over Loupe."
+				: "";
+	}
 
 	/** What has to be running on the other machine for mode, for the dialogs. */
 	public static String hint(Mode mode) {
@@ -78,15 +110,22 @@ public final class RemoteDebug {
 	private int port = DEFAULT_PORT;
 	private Mode mode = Mode.EDITOR_SCRIPT;
 	private String path = "";
+	private Protocol protocol = Protocol.LOUPE;
 
 	public RemoteDebug() {
 	}
 
+	/** Speaking Loupe. */
 	public RemoteDebug(String host, int port, Mode mode, String path) {
+		this(host, port, mode, path, Protocol.LOUPE);
+	}
+
+	public RemoteDebug(String host, int port, Mode mode, String path, Protocol protocol) {
 		setHost(host);
 		setPort(port);
 		setMode(mode);
 		setPath(path);
+		setProtocol(protocol);
 	}
 
 	public String getHost() {
@@ -122,8 +161,17 @@ public final class RemoteDebug {
 		this.path = path == null ? "" : path.trim();
 	}
 
+	/** The protocol to speak to the adapter (Loupe unless set). */
+	public Protocol getProtocol() {
+		return protocol == null ? Protocol.LOUPE : protocol;
+	}
+
+	public void setProtocol(Protocol protocol) {
+		this.protocol = protocol == null ? Protocol.LOUPE : protocol;
+	}
+
 	public RemoteDebug copy() {
-		return new RemoteDebug(getHost(), port, getMode(), getPath());
+		return new RemoteDebug(getHost(), port, getMode(), getPath(), getProtocol());
 	}
 
 	/**
@@ -159,7 +207,7 @@ public final class RemoteDebug {
 		if( problem != null ) {
 			throw new IOException(problem);
 		}
-		return LoupeSession.connect(getHost(), port, listener);
+		return getProtocol() == Protocol.DAP ? DapSession.connect(getHost(), port, listener) : LoupeSession.connect(getHost(), port, listener);
 	}
 
 	/** Such as "build1:4711". */

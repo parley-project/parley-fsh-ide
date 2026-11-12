@@ -28,8 +28,8 @@ import us.bringardner.fsh.ide.core.RemoteDebug;
 import us.bringardner.fsh.ide.core.RemoteDebug.Mode;
 
 /**
- * Run &gt; Debug Remote...: the machine and port, what to debug there, and (for a script file
- * there) its path. Debug gives the settings; closing it any other way gives nothing.
+ * Run &gt; Debug Remote...: the machine and port, the protocol, what to debug there, and (for
+ * a script file there) its path. Debug gives the settings; closing it any other way gives nothing.
  */
 public class RemoteDebugDialog extends Dialog<RemoteDebug> {
 
@@ -45,6 +45,9 @@ public class RemoteDebugDialog extends Dialog<RemoteDebug> {
 	final RadioButton remoteFile = new RadioButton(Mode.REMOTE_FILE.getLabel());
 	final RadioButton attach = new RadioButton(Mode.ATTACH.getLabel());
 	final TextField path = new TextField();
+	final ToggleGroup protocols = new ToggleGroup();
+	final RadioButton loupe = new RadioButton(RemoteDebug.Protocol.LOUPE.getLabel());
+	final RadioButton dap = new RadioButton(RemoteDebug.Protocol.DAP.getLabel());
 	final Label hint = new Label();
 	final Label problem = new Label();
 
@@ -61,6 +64,9 @@ public class RemoteDebugDialog extends Dialog<RemoteDebug> {
 			b.setToggleGroup(modes);
 		}
 		button(last.getMode()).setSelected(true);
+		loupe.setToggleGroup(protocols);
+		dap.setToggleGroup(protocols);
+		(last.getProtocol() == RemoteDebug.Protocol.DAP ? dap : loupe).setSelected(true);
 		path.disableProperty().bind(remoteFile.selectedProperty().not());
 		hint.setWrapText(true);
 		hint.setMaxWidth(440);
@@ -79,13 +85,15 @@ public class RemoteDebugDialog extends Dialog<RemoteDebug> {
 		grid.add(host, 1, 0);
 		grid.add(new Label("Port:"), 0, 1);
 		grid.add(port, 1, 1);
-		grid.add(new Label("Debug:"), 0, 2);
-		grid.add(new VBox(6, editorScript, remoteFile, attach), 1, 2);
-		grid.add(new Label("Script's path:"), 0, 3);
-		grid.add(path, 1, 3);
-		grid.add(hint, 0, 4, 2, 1);
-		grid.add(warning, 0, 5, 2, 1);
-		grid.add(problem, 0, 6, 2, 1);
+		grid.add(new Label("Protocol:"), 0, 2);
+		grid.add(new javafx.scene.layout.HBox(12, loupe, dap), 1, 2);
+		grid.add(new Label("Debug:"), 0, 3);
+		grid.add(new VBox(6, editorScript, remoteFile, attach), 1, 3);
+		grid.add(new Label("Script's path:"), 0, 4);
+		grid.add(path, 1, 4);
+		grid.add(hint, 0, 5, 2, 1);
+		grid.add(warning, 0, 6, 2, 1);
+		grid.add(problem, 0, 7, 2, 1);
 		getDialogPane().setContent(grid);
 		getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, DEBUG);
 
@@ -96,12 +104,14 @@ public class RemoteDebugDialog extends Dialog<RemoteDebug> {
 			// (an empty machine is where everyone starts: the button says enough)
 			problem.setText(p == null || now.getHost().isEmpty() ? "" : p);
 			debug.setDisable(p != null);
-			hint.setText(RemoteDebug.hint(now.getMode()));
+			String more = RemoteDebug.hint(now.getProtocol());
+			hint.setText(RemoteDebug.hint(now.getMode())+(more.isEmpty() ? "" : "\n"+more));
 		};
 		host.textProperty().addListener((o, a, b)->check.run());
 		port.textProperty().addListener((o, a, b)->check.run());
 		path.textProperty().addListener((o, a, b)->check.run());
 		modes.selectedToggleProperty().addListener((o, a, b)->check.run());
+		protocols.selectedToggleProperty().addListener((o, a, b)->check.run());
 		check.run();
 		// closing the dialog any way but Debug is Cancel
 		setResultConverter(b->b == DEBUG && settings().problem() == null ? settings() : null);
@@ -122,7 +132,8 @@ public class RemoteDebugDialog extends Dialog<RemoteDebug> {
 	/** What the fields hold now (a port that isn't one is 0, which {@link RemoteDebug#problem()} reports). */
 	RemoteDebug settings() {
 		Mode mode = remoteFile.isSelected() ? Mode.REMOTE_FILE : attach.isSelected() ? Mode.ATTACH : Mode.EDITOR_SCRIPT;
-		return new RemoteDebug(host.getText(), Math.max(0, RemoteDebug.parsePort(port.getText())), mode, path.getText());
+		return new RemoteDebug(host.getText(), Math.max(0, RemoteDebug.parsePort(port.getText())), mode, path.getText(),
+				dap.isSelected() ? RemoteDebug.Protocol.DAP : RemoteDebug.Protocol.LOUPE);
 	}
 
 	/** Shows the dialog and waits: the settings to debug with, or empty if it was canceled. */

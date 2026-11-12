@@ -178,8 +178,14 @@ public class TestRemoteDebugSwing {
 				assertTrue(d.debugButton.isEnabled());
 				// nothing until Debug is pressed
 				assertNull(d.getResult());
+				// Loupe unless DAP is chosen; choosing it says what it costs
+				assertTrue(d.loupe.isSelected());
+				assertEquals(RemoteDebug.Protocol.LOUPE, d.settings().getProtocol());
+				d.dap.doClick();
+				assertEquals(RemoteDebug.hint(Mode.REMOTE_FILE)+"\n"+RemoteDebug.hint(RemoteDebug.Protocol.DAP), d.hint.getText());
 				d.debugButton.doClick();
 				RemoteDebug r = d.getResult();
+				assertEquals(RemoteDebug.Protocol.DAP, r.getProtocol());
 				assertEquals("build1:5000", r.where());
 				assertEquals(Mode.REMOTE_FILE, r.getMode());
 				assertEquals("/opt/x.fsh", r.getPath());
@@ -342,6 +348,29 @@ public class TestRemoteDebugSwing {
 			assertEquals(List.of(), w.problems);
 			remote.status();
 			assertEquals("", remote.out(), "the script was ended before it wrote anything");
+		}
+	}
+
+	/** Over DAP: the editor's script, debugged there through the IDE's DAP client. */
+	@Test
+	public void theEditorsScriptOverDap() throws Exception {
+		try (RemoteSide remote = RemoteSide.listening()) {
+			TestIde w = window("x=1\nx=2\necho \"x is $x\"\n");
+			onEdt(()->{
+				w.editor().addBreakpoint(2);
+				w.debugRemote(new RemoteDebug("127.0.0.1", remote.port(), Mode.EDITOR_SCRIPT, "", RemoteDebug.Protocol.DAP));
+				return null;
+			});
+			waitFor(w::isScriptPaused, "it never stopped at the breakpoint: "+w.problems);
+			onEdt(()->{
+				w.showValue("x");
+				return null;
+			});
+			waitFor(()->w.logText().contains("x = 2"), "no value shown: "+w.logText());
+			click(w, "Resume");
+			waitFor(()->!w.isScriptRunning(), "it never finished");
+			assertTrue(onEdt(w::logText).contains("exitCode = 0"), onEdt(w::logText));
+			assertEquals(List.of(), w.problems);
 		}
 	}
 

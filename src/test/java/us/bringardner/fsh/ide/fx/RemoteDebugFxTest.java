@@ -142,6 +142,14 @@ public class RemoteDebugFxTest {
 			assertFalse(debug.isDisable(), "attach needs no path");
 			assertEquals(RemoteDebug.hint(Mode.ATTACH), d.hint.getText());
 
+			// Loupe unless DAP is chosen; choosing it says what it costs
+			assertTrue(d.loupe.isSelected());
+			assertEquals(RemoteDebug.Protocol.LOUPE, d.settings().getProtocol());
+			d.dap.setSelected(true);
+			assertEquals(RemoteDebug.Protocol.DAP, d.settings().getProtocol());
+			assertEquals(RemoteDebug.hint(Mode.ATTACH)+"\n"+RemoteDebug.hint(RemoteDebug.Protocol.DAP), d.hint.getText());
+			assertTrue(new RemoteDebugDialog(d.settings()).dap.isSelected());
+
 			// what was used last comes back
 			RemoteDebugDialog again = new RemoteDebugDialog(new RemoteDebug("h", 22, Mode.ATTACH, "/p"));
 			assertEquals("h", again.host.getText());
@@ -280,6 +288,31 @@ public class RemoteDebugFxTest {
 			assertEquals(List.of(), w.problems);
 			remote.status();
 			assertEquals("", remote.out(), "the script was ended before it wrote anything");
+			Fx.run(()->w.stage().hide());
+		}
+	}
+
+	/** Over DAP the adapter gives no text: the script there is debugged, and the editor keeps (and says it keeps) its own. */
+	@Test
+	public void overDapAScriptThereIsDebuggedWithoutItsText() throws Exception {
+		Path script = dir.resolve("there.fsh");
+		Files.writeString(script, THERE);
+		try (RemoteSide remote = RemoteSide.listening()) {
+			TestWindow w = window("echo mine\n");
+			RemoteDebug how = new RemoteDebug("127.0.0.1", remote.port(), Mode.REMOTE_FILE, script.toString(), RemoteDebug.Protocol.DAP);
+			Fx.run(()->{
+				w.argumentsField().setText("arg");
+				w.debugRemote(how);
+			});
+			Fx.waitFor(w::isPaused);
+			assertFalse(Fx.call(w::showsRemoteScript));
+			assertEquals("echo mine\n", Fx.call(()->w.editor().getText()));
+			assertTrue(w.statusText().contains("doesn't give a script's text over DAP"), w.statusText());
+			click(w, "Resume");
+			Fx.waitFor(()->!w.isRunning());
+			Fx.waitFor(()->w.console().getArea().getText().contains("x is 7 arg"));
+			assertEquals("Finished, exit code 3", w.statusText());
+			assertEquals(List.of(), w.problems);
 			Fx.run(()->w.stage().hide());
 		}
 	}
