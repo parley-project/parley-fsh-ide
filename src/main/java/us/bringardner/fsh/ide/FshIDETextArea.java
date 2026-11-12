@@ -253,7 +253,7 @@ public class FshIDETextArea extends RSyntaxTextArea {
 	}
 
 	/**
-	 * Folding on [ and ] with the shortcut key and Alt (Option), as in the JavaFX IDE: fold and unfold
+	 * Folding on [ and ] with the shortcut key and Alt (Option): fold and unfold
 	 * at the caret, and with Shift all of them. The keypad's + and - are the text size (View menu),
 	 * so RSyntaxTextArea's own keypad keys for the caret's fold no longer reach it; its keypad / and *
 	 * (all) still do.

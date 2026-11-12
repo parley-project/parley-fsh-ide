@@ -40,8 +40,8 @@ import us.bringardner.fsh.ide.core.TextSearch;
 
 
 /**
- * Edit > Find... and Replace...: finds forward or back, replaces one or all (TextAreaFind, with
- * the same matching as the JavaFX IDE's find bar). A match is selected in the editor. With
+ * Edit > Find... and Replace...: finds forward or back, replaces one or all (TextAreaFind).
+ * A match is selected in the editor. With
  * Selected Lines, only the lines that were selected are searched (shown highlighted).
  */
 public class FindDialog extends JDialog {

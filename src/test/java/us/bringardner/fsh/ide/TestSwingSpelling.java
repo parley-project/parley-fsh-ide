@@ -29,8 +29,8 @@ import org.junit.jupiter.api.io.TempDir;
 import us.bringardner.fsh.ide.core.SpellChecking;
 
 /**
- * The Swing editor's spelling is the JavaFX editor's: the same words are flagged, the same menu
- * (suggestions, Ignore, Add to Dictionary), and the user's words are shared (~/.fsh-ide/words.txt).
+ * The editor's spelling: the words that are flagged, the menu
+ * (suggestions, Ignore, Add to Dictionary), and the user's own words (~/.fsh-ide/words.txt).
  */
 public class TestSwingSpelling {
 
@@ -43,7 +43,7 @@ public class TestSwingSpelling {
 	public static void setUp() throws Exception {
 		System.setProperty("java.awt.headless", "true");
 		System.setProperty("user.home", home.toString());
-		// a word added earlier, say from the JavaFX IDE
+		// a word added earlier
 		Path words = home.resolve(".fsh-ide").resolve("words.txt");
 		Files.createDirectories(words.getParent());
 		Files.writeString(words, "fshide\n");
@@ -76,7 +76,7 @@ public class TestSwingSpelling {
 	}
 
 	@Test
-	public void flagsWhatTheJavaFxEditorFlags() throws Exception {
+	public void flagsCommentsAndQuotedText() throws Exception {
 		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
 		FshIDETextArea area = area(SCRIPT);
 		FshSpellingParser parser = new FshSpellingParser(area, dict);
@@ -195,7 +195,7 @@ public class TestSwingSpelling {
 		area.configurePopupMenu(menu);
 		assertEquals(usual, menu.getComponentCount());
 
-		// "Add" does what the JavaFX menu's does
+		// "Add" puts the word in the user's words
 		area.popupPoint = new Point((int) r.getCenterX() + 2, (int) r.getCenterY());
 		area.configurePopupMenu(menu);
 		for(Component c : menu.getComponents()) {

@@ -52,7 +52,7 @@ public class DebugVariablePanel extends JPanel  {
 	private Map<String,Object> variableSnapshot;
 	// while no script runs: what the next run starts with (the fsh Variables tab shows these), or null
 	private Map<String,Object> startVariables;
-	/** what the fsh Variables tab says while it shows what the next run starts with (as the JavaFX IDE's) */
+	/** what the fsh Variables tab says while it shows what the next run starts with */
 	static final String START_VARIABLES_CAPTION = "No script is running: this is what the next run starts with.";
 	static final String START_VARIABLES_HINT = "<html>The shell's own variables, the environment's and $0, as the next run gets them.<br>"
 			+"What the startup file FSH_ENV names sets isn't here: that file runs when the script does.</html>";
@@ -662,7 +662,7 @@ public class DebugVariablePanel extends JPanel  {
 			return;
 		}
 		try {
-			// the same as the JavaFX IDE: a positional parameter for $1 ..., else a variable
+			// a positional parameter for $1 ..., else a variable
 			DebugVariables.set(ctx, v.getName(), parseValue(v.getValue(), text));
 		} catch (RuntimeException e) {
 			// not one that can be set: leave it

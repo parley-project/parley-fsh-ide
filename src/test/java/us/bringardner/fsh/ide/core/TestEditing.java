@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-/** Find and replace, templates and completions: the editing help both IDEs can share. */
+/** Find and replace, templates and completions: the editing help in the core. */
 public class TestEditing {
 
 	private static final TextSearch.Options PLAIN = new TextSearch.Options(false, false, false, true);

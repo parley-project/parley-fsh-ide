@@ -28,8 +28,7 @@ import java.util.Map;
  * those of the theme it is made from. The ready-made schemes ({@link #SCHEMES}) are starting
  * points for the designer.
  * <p>
- * No UI toolkit here: the Swing IDE turns them into RSyntaxTextArea colors, the JavaFX IDE into a
- * stylesheet ({@link #css()}).
+ * No UI toolkit here: the IDE turns them into RSyntaxTextArea colors.
  */
 public final class SyntaxColors {
 
@@ -356,51 +355,6 @@ public final class SyntaxColors {
 			ret[i] = Integer.parseInt(h.substring(1), 16);
 		}
 		return ret;
-	}
-
-	// ---------------------------------------------------------------- JavaFX
-
-	/** The style class the JavaFX IDE puts on its root when it uses {@link #css()}. */
-	public static final String CSS_CLASS = "syntax-colors";
-
-	/**
-	 * A stylesheet giving the JavaFX IDE's script editor these colors (for a root with
-	 * {@link #CSS_CLASS}), and its console the same background, text, caret and selection. Its rules
-	 * are more specific than the IDE's own, light or dark. The JavaFX editor doesn't mark commands,
-	 * numbers, operators or the caret's line, so those colors aren't used there.
-	 */
-	public String css() {
-		String p = ".root." + CSS_CLASS + " .script-editor";
-		StringBuilder b = new StringBuilder();
-		b.append(p).append(" { -fx-background-color: ").append(hex(BACKGROUND)).append("; }\n");
-		// .text first: a keyword is .text too, and the later of two rules as specific wins
-		b.append(p).append(" .text { -fx-fill: ").append(hex(TEXT)).append("; }\n");
-		String[][] spans = {{"keyword", "" + KEYWORDS}, {"comment", "" + COMMENTS}, {"string", "" + STRINGS},
-			{"variable", "" + VARIABLES}, {"number", "" + NUMBERS}};
-		for(String[] s : spans) {
-			b.append(p).append(" .").append(s[0]).append(" { -fx-fill: ").append(hex(Integer.parseInt(s[1])))
-			.append("; }\n");
-		}
-		b.append(p).append(" .caret { -fx-stroke: ").append(hex(CARET)).append("; }\n");
-		b.append(p).append(" .selection { -fx-fill: ").append(hex(SELECTION)).append("; }\n");
-		b.append(p).append(" .lineno { -fx-background-color: ").append(hex(GUTTER)).append("; -fx-text-fill: ")
-		.append(hex(LINE_NUMBERS)).append("; }\n");
-		// the line a debugged script is stopped on: light or dark to go with the background
-		b.append(p).append(" .current-line { -fx-background-color: ").append(isDark() ? "#33401C" : "#D9F2D9")
-		.append("; }\n");
-		// (just the statement Step Into stopped at, when its line has others)
-		b.append(p).append(" .current-statement { -rtfx-background-color: ").append(isDark() ? "#33401C" : "#D9F2D9")
-		.append("; }\n");
-		// the console, under the editor: the same background and text; prompts as comments are,
-		// errors red (lighter on a dark background)
-		String c = ".root." + CSS_CLASS + " .console";
-		b.append(c).append(" { -fx-background-color: ").append(hex(BACKGROUND)).append("; }\n");
-		b.append(c).append(" .text { -fx-fill: ").append(hex(TEXT)).append("; }\n");
-		b.append(c).append(" .prompt { -fx-fill: ").append(hex(COMMENTS)).append("; }\n");
-		b.append(c).append(" .error { -fx-fill: ").append(isDark() ? "#E06C5A" : "#C62828").append("; }\n");
-		b.append(c).append(" .caret { -fx-stroke: ").append(hex(CARET)).append("; }\n");
-		b.append(c).append(" .selection { -fx-fill: ").append(hex(SELECTION)).append("; }\n");
-		return b.toString();
 	}
 
 	@Override

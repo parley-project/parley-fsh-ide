@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * The templates as the template manager (Edit &gt; Templates...) changes them, before they are saved:
- * kept in order of name, then description. The Swing and JavaFX managers both work on one.
+ * kept in order of name, then description.
  */
 public final class TemplateList {
 

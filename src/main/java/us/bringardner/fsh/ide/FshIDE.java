@@ -513,7 +513,7 @@ public class FshIDE extends JFrame  {
 	private DebugControlPanel debugControlPanel;
 
 	private JButton debugButton;
-	/** Stop, as the JavaFX IDE's: stops what is running or being debugged; disabled otherwise */
+	/** Stop: stops what is running or being debugged; disabled otherwise */
 	private final JButton stopButton = new JButton("");
 
 	private DebugVariablePanel debugVariablePanel;
@@ -1034,7 +1034,7 @@ public class FshIDE extends JFrame  {
 
 	/**
 	 * A redirect's browse button: an existing file to read (stdin), or (output: stdout, stderr) a
-	 * file to write, which may be a new one, as in the JavaFX IDE.
+	 * file to write, which may be a new one.
 	 */
 	protected void actionBrowse(JTextField fld, boolean output) {
 		try {
@@ -1061,7 +1061,7 @@ public class FshIDE extends JFrame  {
 		if( runState == IdeRunstate.Idel) {
 			boolean b = showDebugViewItem.isSelected();
 			if( b ) {
-				// (the script's own variables a debug run left stay, as in the JavaFX IDE, until the next one)
+				// (the script's own variables a debug run left stay until the next one)
 				debugVariablePanel.refreshBreakpoints();
 			}
 			debugSplitPane.setVisible(b);		
@@ -1461,7 +1461,7 @@ public class FshIDE extends JFrame  {
 	/**
 	 * The window's menus, laid out as in every Parley application (StandardMenus): File, Edit, View,
 	 * Run, Window and Help, with About, Settings... and Quit in the application menu on macOS and in
-	 * File and Help elsewhere. The same as the JavaFX IDE's.
+	 * File and Help elsewhere.
 	 */
 	private void buildMenus() {
 		StandardMenus menus = new StandardMenus(APP_NAME).about(AboutWindow::open)
@@ -1600,7 +1600,7 @@ public class FshIDE extends JFrame  {
 	}
 
 	/**
-	 * Edit > Check Spelling, as the JavaFX IDE's: on unless it was switched off (prefs remembers
+	 * Edit > Check Spelling: on unless it was switched off (prefs remembers
 	 * it), and switching it turns the text area's spell checking on or off.
 	 */
 	static JCheckBoxMenuItem spellingItem(FshIDETextArea area, Preferences prefs) {
@@ -1704,7 +1704,7 @@ public class FshIDE extends JFrame  {
 
 	/**
 	 * The appearance settings (the theme and font, shared with the other Parley applications
-	 * through swing-widgets), saved in the IDE's preferences; the JavaFX IDE uses the theme too.
+	 * through swing-widgets), saved in the IDE's preferences.
 	 * The editors keep their own font; their colors are the theme's (EditorColors): the theme designer
 	 * has a Script editor page for them.
 	 */
@@ -1812,7 +1812,7 @@ public class FshIDE extends JFrame  {
 	}
 
 	/**
-	 * Debug, Run and Stop, as in the JavaFX IDE: Debug and Run while nothing runs, Stop while a
+	 * Debug, Run and Stop: Debug and Run while nothing runs, Stop while a
 	 * script runs or is being debugged.
 	 */
 	private void updateRunButtons() {
@@ -2096,8 +2096,8 @@ public class FshIDE extends JFrame  {
 		}
 		logBatcher.add("exitCode = "+exitCode+"\n");
 		if( ctx != null && debugSession.isActive()) {
-			// the variables as the script left them, kept in the tables after the run (as in the
-			// JavaFX IDE); without its context, since the script is over, so they can't be edited
+			// the variables as the script left them, kept in the tables after the run;
+			// without its context, since the script is over, so they can't be edited
 			Map<String,Object> vars = ctx.getVariables();
 			SwingUtilities.invokeLater(()->debugVariablePanel.setContext(editorPane, null, vars));
 		}

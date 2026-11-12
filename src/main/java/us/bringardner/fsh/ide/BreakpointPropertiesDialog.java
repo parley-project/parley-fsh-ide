@@ -38,7 +38,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 	private final JPanel contentPanel = new JPanel();
-	/** the hit number (1 or more, as the JavaFX dialog's spinner) */
+	/** the hit number (1 or more) */
 	private JSpinner hitCountTextField;
 	private boolean cancel;
 	private JTextArea conditionalTextArea;
@@ -116,7 +116,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 		conditionalTextArea = new JTextArea() {
 			private static final long serialVersionUID = 1L;
 
-			/** an example, in grey, while the box is empty (as the JavaFX dialog's prompt) */
+			/** an example, in grey, while the box is empty */
 			@Override
 			protected void paintComponent(java.awt.Graphics g) {
 				super.paintComponent(g);
@@ -130,7 +130,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 		};
 		conditionalTextArea.setToolTipText("A command, as for if: the breakpoint stops when it succeeds (e.g. "+Breakpoint.CONDITION_EXAMPLE+")");
 		conditionalTextArea.setBounds(6, 110, 268, 71);
-		// always shown, as in the JavaFX dialog; it can be typed in when the box above is checked
+		// always shown; it can be typed in when the box above is checked
 		setConditionEnabled(false);
 		conditionalTextArea.setLineWrap(true);
 		conditionalTextArea.setBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.LIGHT_GRAY));
@@ -234,7 +234,7 @@ public class BreakpointPropertiesDialog extends JDialog {
 		return !cancel;
 	}
 
-	/** The condition box can be typed in, or (greyed, as the JavaFX dialog's) not. */
+	/** The condition box can be typed in, or (greyed) not. */
 	private void setConditionEnabled(boolean on) {
 		conditionalTextArea.setEnabled(on);
 		conditionalTextArea.setBackground(on ? java.awt.Color.WHITE : new java.awt.Color(0xEEEEEE));

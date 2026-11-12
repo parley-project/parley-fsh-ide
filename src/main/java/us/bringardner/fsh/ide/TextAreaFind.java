@@ -25,8 +25,8 @@ import org.fife.ui.rtextarea.RTextArea;
 import us.bringardner.fsh.ide.core.TextSearch;
 
 /**
- * Find and replace in a Swing text area, for FindDialog: the same matching as the JavaFX IDE's
- * find bar (core.TextSearch). A match is selected in the text area. A scope (Selected Lines) limits
+ * Find and replace in a Swing text area, for FindDialog: the matching is
+ * core.TextSearch's. A match is selected in the text area. A scope (Selected Lines) limits
  * the search to the lines that were selected, and follows the text as it changes (it is shown with
  * a highlight).
  */
