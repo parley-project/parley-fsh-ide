@@ -13,7 +13,7 @@
   Parley's part out after recording.
 - **Native image on Linux**: the X11 entries are recorded (the file had Windows' only), and the image
   was built and run on Linux x86-64: edit, save, run, debug to a breakpoint and step, Settings, About.
-  macOS is still to record.
+  macOS (Aqua, x86-64) is recorded too, 2026-11-12; its image is still to build and run.
 
 ### Added
 

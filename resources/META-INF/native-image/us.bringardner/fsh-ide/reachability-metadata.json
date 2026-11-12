@@ -7,6 +7,479 @@
       "type": "char[]"
     },
     {
+      "type": "com.apple.eawt._AppEventHandler",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "handleNativeNotification",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.eawt._AppMenuBarHandler",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "initMenuStates",
+          "parameterTypes": [
+            "boolean",
+            "boolean",
+            "boolean",
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaButtonBorder$Dynamic",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaButtonBorder$Named",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "com.apple.laf.AquaButtonBorder$Named"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaButtonBorder$Toggle",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaButtonRadioUI",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaButtonUI",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaButtonUI$AquaHierarchyButtonListener",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaComboBoxUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaGroupBorder$TabbedPane",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaGroupBorder$Titled",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaGroupBorder$Titleless",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaKeyBindings",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaLabelUI",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaListUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaLookAndFeel",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaMenuBarUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaMenuItemUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaMenuPainter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaMenuUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaOptionPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaPanelUI",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaPopupMenuSeparatorUI",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaPopupMenuUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaRootPaneUI",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaScrollPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaScrollRegionBorder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaSliderUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaSplitPaneDividerUI$HorizontalSplitDividerGradientPainter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaSplitPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaTabbedPaneContrastUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaTableHeaderUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaTableUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaTextAreaUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaTextFieldBorder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaTextFieldUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaTextPaneUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaToolBarUI$ToolBarBorder",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaToolTipUI",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaTreeUI",
+      "methods": [
+        {
+          "name": "createUI",
+          "parameterTypes": [
+            "javax.swing.JComponent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.AquaUtilControlSize$PropertySizeListener",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.ScreenMenu",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "invokeMenuClosing",
+          "parameterTypes": []
+        },
+        {
+          "name": "invokeOpenLater",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.apple.laf.resources.aqua"
+    },
+    {
       "type": "com.sun.java.swing.plaf.windows.WindowsPopupWindow",
       "jniAccessible": true
     },
@@ -515,6 +988,33 @@
         {
           "name": "width"
         }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "int",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.awt.Dimension[]"
+    },
+    {
+      "type": "java.awt.DisplayMode",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "int",
+            "int",
+            "int",
+            "int"
+          ]
+        }
       ]
     },
     {
@@ -666,8 +1166,96 @@
       ]
     },
     {
+      "type": "java.awt.SystemColor",
+      "fields": [
+        {
+          "name": "activeCaption"
+        },
+        {
+          "name": "activeCaptionBorder"
+        },
+        {
+          "name": "activeCaptionText"
+        },
+        {
+          "name": "control"
+        },
+        {
+          "name": "controlDkShadow"
+        },
+        {
+          "name": "controlHighlight"
+        },
+        {
+          "name": "controlLtHighlight"
+        },
+        {
+          "name": "controlShadow"
+        },
+        {
+          "name": "controlText"
+        },
+        {
+          "name": "desktop"
+        },
+        {
+          "name": "inactiveCaption"
+        },
+        {
+          "name": "inactiveCaptionBorder"
+        },
+        {
+          "name": "inactiveCaptionText"
+        },
+        {
+          "name": "info"
+        },
+        {
+          "name": "infoText"
+        },
+        {
+          "name": "menu"
+        },
+        {
+          "name": "menuText"
+        },
+        {
+          "name": "scrollbar"
+        },
+        {
+          "name": "text"
+        },
+        {
+          "name": "textHighlight"
+        },
+        {
+          "name": "textHighlightText"
+        },
+        {
+          "name": "textInactiveText"
+        },
+        {
+          "name": "textText"
+        },
+        {
+          "name": "window"
+        },
+        {
+          "name": "windowBorder"
+        },
+        {
+          "name": "windowText"
+        }
+      ]
+    },
+    {
       "type": "java.awt.Toolkit",
       "jniAccessible": true,
+      "fields": [
+        {
+          "name": "eventListener"
+        }
+      ],
       "methods": [
         {
           "name": "getDefaultToolkit",
@@ -754,6 +1342,9 @@
           "name": "VK_ADD"
         },
         {
+          "name": "VK_B"
+        },
+        {
           "name": "VK_BACK_SLASH"
         },
         {
@@ -772,10 +1363,16 @@
           "name": "VK_CUT"
         },
         {
+          "name": "VK_D"
+        },
+        {
           "name": "VK_DELETE"
         },
         {
           "name": "VK_DOWN"
+        },
+        {
+          "name": "VK_E"
         },
         {
           "name": "VK_END"
@@ -785,6 +1382,9 @@
         },
         {
           "name": "VK_ESCAPE"
+        },
+        {
+          "name": "VK_F"
         },
         {
           "name": "VK_F10"
@@ -838,7 +1438,13 @@
           "name": "VK_LEFT"
         },
         {
+          "name": "VK_N"
+        },
+        {
           "name": "VK_O"
+        },
+        {
+          "name": "VK_P"
         },
         {
           "name": "VK_PAGE_DOWN"
@@ -872,6 +1478,9 @@
         },
         {
           "name": "VK_V"
+        },
+        {
+          "name": "VK_W"
         },
         {
           "name": "VK_X"
@@ -1049,6 +1658,19 @@
       ]
     },
     {
+      "type": "java.awt.geom.Point2D$Double",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "double",
+            "double"
+          ]
+        }
+      ]
+    },
+    {
       "type": "java.awt.geom.Point2D$Float",
       "jniAccessible": true,
       "fields": [
@@ -1065,6 +1687,21 @@
           "parameterTypes": [
             "float",
             "float"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "java.awt.geom.Rectangle2D$Double",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "double",
+            "double",
+            "double",
+            "double"
           ]
         }
       ]
@@ -1093,6 +1730,15 @@
         },
         {
           "name": "<init>",
+          "parameterTypes": [
+            "float",
+            "float",
+            "float",
+            "float"
+          ]
+        },
+        {
+          "name": "setRect",
           "parameterTypes": [
             "float",
             "float",
@@ -1637,6 +2283,18 @@
       ]
     },
     {
+      "type": "java.lang.invoke.MethodHandle"
+    },
+    {
+      "type": "java.lang.invoke.MethodHandles"
+    },
+    {
+      "type": "java.lang.invoke.MethodHandles$Lookup"
+    },
+    {
+      "type": "java.lang.invoke.MethodType"
+    },
+    {
       "type": "java.lang.reflect.Method",
       "jniAccessible": true,
       "methods": [
@@ -1646,6 +2304,10 @@
         },
         {
           "name": "getReturnType",
+          "parameterTypes": []
+        },
+        {
+          "name": "isDefault",
           "parameterTypes": []
         }
       ]
@@ -1776,6 +2438,10 @@
       "methods": [
         {
           "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "<init>",
           "parameterTypes": [
             "int"
           ]
@@ -1789,6 +2455,12 @@
         {
           "name": "clear",
           "parameterTypes": []
+        },
+        {
+          "name": "contains",
+          "parameterTypes": [
+            "java.lang.Object"
+          ]
         }
       ]
     },
@@ -1818,6 +2490,14 @@
       "type": "java.util.Locale",
       "jniAccessible": true,
       "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String"
+          ]
+        },
         {
           "name": "forLanguageTag",
           "parameterTypes": [
@@ -3105,6 +3785,19 @@
       ]
     },
     {
+      "type": "sun.font.CFontManager",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "registerFont",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
       "type": "sun.font.CharToGlyphMapper",
       "jniAccessible": true,
       "methods": [
@@ -3717,6 +4410,69 @@
       ]
     },
     {
+      "type": "sun.java2d.loops.SetDrawLineANY",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.java2d.loops.SetDrawPathANY",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.java2d.loops.SetDrawPolygonsANY",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.java2d.loops.SetDrawRectANY",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.java2d.loops.SetFillPathANY",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.java2d.loops.SetFillRectANY",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.java2d.loops.SetFillSpansANY",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "sun.java2d.loops.SurfaceType",
       "jniAccessible": true,
       "fields": [
@@ -3852,6 +4608,43 @@
       ]
     },
     {
+      "type": "sun.java2d.metal.MTLLayer",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "drawInMTLContext",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.java2d.metal.MTLSurfaceData",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "nativeHeight"
+        },
+        {
+          "name": "nativeWidth"
+        }
+      ],
+      "methods": [
+        {
+          "name": "dispose",
+          "parameterTypes": [
+            "long",
+            "sun.java2d.metal.MTLGraphicsConfig"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.java2d.metal.MTLSurfaceData$MTLLayerSurfaceData"
+    },
+    {
+      "type": "sun.java2d.metal.MTLSurfaceData$MTLOffScreenSurfaceData"
+    },
+    {
       "type": "sun.java2d.pipe.Region",
       "jniAccessible": true,
       "fields": [
@@ -3956,6 +4749,153 @@
         {
           "name": "getApplicationClass",
           "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.lwawt.macosx.CImage",
+      "methods": [
+        {
+          "name": "getCreator",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.lwawt.macosx.CInputMethod",
+      "jniAccessible": true,
+      "fields": [
+        {
+          "name": "fCurrentText"
+        },
+        {
+          "name": "fCurrentTextLength"
+        }
+      ],
+      "methods": [
+        {
+          "name": "unmarkText",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.lwawt.macosx.CMenuItem",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "handleAction",
+          "parameterTypes": [
+            "long",
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.lwawt.macosx.CPlatformView",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "deliverKeyEvent",
+          "parameterTypes": [
+            "sun.lwawt.macosx.NSEvent"
+          ]
+        },
+        {
+          "name": "deliverMouseEvent",
+          "parameterTypes": [
+            "sun.lwawt.macosx.NSEvent"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.lwawt.macosx.CPlatformWindow",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "deliverMoveResizeEvent",
+          "parameterTypes": [
+            "int",
+            "int",
+            "int",
+            "int",
+            "boolean"
+          ]
+        },
+        {
+          "name": "deliverNCMouseDown",
+          "parameterTypes": []
+        },
+        {
+          "name": "deliverWindowClosingEvent",
+          "parameterTypes": []
+        },
+        {
+          "name": "deliverWindowFocusEvent",
+          "parameterTypes": [
+            "boolean",
+            "sun.lwawt.macosx.CPlatformWindow"
+          ]
+        },
+        {
+          "name": "isBlocked",
+          "parameterTypes": []
+        },
+        {
+          "name": "isSimpleWindowOwnedByEmbeddedFrame",
+          "parameterTypes": []
+        },
+        {
+          "name": "isVisible",
+          "parameterTypes": []
+        },
+        {
+          "name": "windowDidBecomeMain",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.lwawt.macosx.LWCToolkit",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "installToolkitThreadInJava",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.lwawt.macosx.NSEvent",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "int",
+            "int",
+            "int",
+            "int",
+            "int",
+            "int",
+            "int",
+            "int",
+            "double",
+            "double",
+            "int"
+          ]
+        },
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "int",
+            "int",
+            "short",
+            "java.lang.String",
+            "java.lang.String"
+          ]
         }
       ]
     },
@@ -4109,6 +5049,9 @@
       "glob": "META-INF/services/javax.xml.transform.TransformerFactory"
     },
     {
+      "glob": "com/sun/jna/darwin-x86-64/libjnidispatch.jnilib"
+    },
+    {
       "glob": "com/sun/jna/linux-x86-64/libjnidispatch.so"
     },
     {
@@ -4116,6 +5059,9 @@
     },
     {
       "glob": "org/fife/com/swabunga/spell/engine/configuration.properties"
+    },
+    {
+      "glob": "org/fife/ui/autocomplete/osx_sizegrip.png"
     },
     {
       "glob": "org/fife/ui/rsyntaxtextarea/RSyntaxTextArea.properties"
@@ -4165,6 +5111,22 @@
     {
       "module": "java.datatransfer",
       "glob": "sun/datatransfer/resources/flavormap.properties"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "com/apple/laf/icons/image-delayed.png"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "com/apple/laf/icons/image-failed.png"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "com/apple/laf/resources/aqua_en.properties"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "com/apple/laf/resources/aqua_en_US.properties"
     },
     {
       "module": "java.desktop",
@@ -4328,6 +5290,14 @@
     },
     {
       "module": "java.desktop",
+      "glob": "sun/awt/resources/awtosx_en.properties"
+    },
+    {
+      "module": "java.desktop",
+      "glob": "sun/awt/resources/awtosx_en_US.properties"
+    },
+    {
+      "module": "java.desktop",
       "glob": "sun/awt/resources/cursors/CopyDrop32x32.gif"
     },
     {
@@ -4363,6 +5333,9 @@
       "glob": "com/sun/org/apache/xml/internal/serializer/XMLEntities_en_US.properties"
     },
     {
+      "bundle": "com.apple.laf.resources.aqua"
+    },
+    {
       "bundle": "com.sun.org.apache.xml.internal.serializer.XMLEntities"
     },
     {
@@ -4382,6 +5355,9 @@
     },
     {
       "bundle": "sun.awt.resources.awt"
+    },
+    {
+      "bundle": "sun.awt.resources.awtosx"
     }
   ]
 }
