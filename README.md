@@ -110,6 +110,34 @@ log of every statement run isn't kept, and watchpoints don't stop the script (th
 protocol has no watchpoints yet); breakpoint conditions, hit counts, steps and editing
 variables work as before.
 
+## Debugging on another machine
+
+**Run > Debug Remote...** (both IDEs) debugs a script that runs on another machine. It asks for
+the machine, the port, and what to debug there:
+
+| | On the other machine | Here |
+|---|---|---|
+| The script in the editor, run there | fsh-loupe's adapter, listening: `java -cp ... us.bringardner.fsh.loupe.FshAdapterMain --listen 0.0.0.0:4711` | The editor's script is sent and runs there, with that machine's files and environment; its breakpoints are the editor's |
+| A script file on that machine | The same adapter | The script is read and run there (give its path there). The editor shows it while it is debugged, stopped before its first command: set breakpoints, then Resume |
+| A script waiting there for a debugger | The script itself: `fsh --wait-for-debugger 0.0.0.0:4711 script arguments` (fsh-loupe on fsh's class path) | The IDE attaches. The editor shows the script, stopped before its first command. Its output stays where it was started |
+
+While the editor shows another machine's script, the window's own script (and its breakpoints)
+is kept, and put back when the session ends; Save and the unsaved-changes question are still
+about the window's own script. The arguments field goes to a script the IDE starts there; the
+redirect fields must be empty (an attach ignores them). Stop ends the script, also one the IDE
+attached to; closing the connection without Stop (the IDE quits, the network drops) leaves an
+attached script running and ends one the IDE started.
+
+The connection has **no login and no encryption**, and whoever can reach the port can run
+commands as the user the adapter runs as: use it only on a network where everyone who can
+reach the port is trusted. The last settings are kept in `~/.fsh-ide/Config.xml`.
+`RemoteDebug` and `AdapterSession`, in `core`, hold the settings and the session and have no UI.
+
+As through the adapter in this JVM: no standard input for a script the IDE starts, no log of
+every statement, no watchpoints. In the Swing IDE the variables of a remote script are shown but
+can't be changed (the JavaFX IDE changes them through the adapter). A stop inside a sourced
+file shows that file's line number on the main script (only the main script's text is shown).
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).

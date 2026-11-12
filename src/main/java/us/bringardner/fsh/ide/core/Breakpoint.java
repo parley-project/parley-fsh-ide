@@ -45,6 +45,28 @@ public class Breakpoint {
 
 
 
+	/**
+	 * A breakpoint for line with this one's settings (enabled, condition, hit count): what is
+	 * kept while the editor shows another script, to put back on a breakpoint the editor makes
+	 * ({@link #copySettingsTo}).
+	 */
+	public Breakpoint snapshot() {
+		Breakpoint ret = new Breakpoint();
+		ret.setLine(line);
+		ret.setCode(code);
+		copySettingsTo(ret);
+		return ret;
+	}
+
+	/** Gives other this one's settings: enabled or not, the condition, the hit count. */
+	public void copySettingsTo(Breakpoint other) {
+		other.enabled = enabled;
+		other.isConditional = isConditional;
+		other.condition = condition;
+		other.isHitCount = isHitCount;
+		other.targetHitCount = targetHitCount;
+	}
+
 	public int getId() {
 		return id;
 	}

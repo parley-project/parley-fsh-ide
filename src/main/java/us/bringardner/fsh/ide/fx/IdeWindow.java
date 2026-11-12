@@ -1167,7 +1167,10 @@ public class IdeWindow {
 	/** Shows the script being debugged on another machine in place of the user's (which is kept). */
 	private void showRemoteScript(RemoteDebug how, AdapterSession.Started started) {
 		String body = editor.getText();
-		java.util.List<Breakpoint> bps = new java.util.ArrayList<>(editor.getBreakpoints().values());
+		java.util.List<Breakpoint> bps = new java.util.ArrayList<>();
+		for(Breakpoint bp : editor.getBreakpoints().values()) {
+			bps.add(bp.snapshot());
+		}
 		int caret = editor.getCodeArea().getCaretPosition();
 		String name = started.getPath() == null ? "script" : started.getPath();
 		// (set before the text: the document is the user's own from here on, see getDocument)
@@ -1186,11 +1189,7 @@ public class IdeWindow {
 		for(Breakpoint old : view.breakpoints) {
 			Breakpoint bp = editor.addBreakpoint(old.getLine());
 			if( bp != null ) {
-				bp.setEnabled(old.isEnabled(false));
-				bp.setConditional(old.isConditional());
-				bp.setCondition(old.getCondition());
-				bp.setHitCount(old.isHitCount());
-				bp.setHitCount(old.getHitCount());
+				old.copySettingsTo(bp);
 			}
 		}
 		if( !view.breakpoints.isEmpty()) {
@@ -1295,6 +1294,7 @@ public class IdeWindow {
 		}
 		// another machine: connecting can take a while, so the window is "running" (Stop gives up) from now
 		connecting = true;
+		int attempt = ++connectAttempt;
 		updateControls();
 		status.setText("Connecting to "+remote.where()+"...");
 		BACKGROUND.execute(()->{
@@ -1303,24 +1303,23 @@ public class IdeWindow {
 				session = remote.connect(listener);
 			} catch (Exception e) {
 				Platform.runLater(()->{
-					connecting = false;
-					showStartVariables();
-					updateControls();
-					status.setText("");
-					report("Can't connect to "+remote.where(), e);
+					if( connecting && attempt == connectAttempt ) {
+						connecting = false;
+						showStartVariables();
+						updateControls();
+						status.setText("");
+						report("Can't connect to "+remote.where(), e);
+					}
 				});
 				return;
 			}
 			Platform.runLater(()->{
-				boolean gaveUp = !connecting;
-				connecting = false;
-				if( gaveUp ) {
+				if( !connecting || attempt != connectAttempt ) {
 					// Stop was chosen while it connected
 					session.close();
-					updateControls();
-					status.setText("Stopped");
 					return;
 				}
+				connecting = false;
 				loupe = session;
 				updateControls();
 				status.setText("Debugging on "+remote.where()+"...");
@@ -1340,6 +1339,8 @@ public class IdeWindow {
 
 	// Debug Remote is connecting (no session yet)
 	private volatile boolean connecting;
+	// which Debug Remote is connecting (one given up on is not taken for the next)
+	private int connectAttempt;
 
 	private void adapterStartFailed(AdapterSession session, String title, Exception e) {
 		if( loupe == session ) {
@@ -1374,8 +1375,11 @@ public class IdeWindow {
 	/** Stops the script that's running, if any. */
 	void stop() {
 		if( connecting ) {
+			// (the connection is dropped when it is made)
 			connecting = false;
-			status.setText("Stopping...");
+			showStartVariables();
+			updateControls();
+			status.setText("Stopped");
 			return;
 		}
 		AdapterSession l = loupe;

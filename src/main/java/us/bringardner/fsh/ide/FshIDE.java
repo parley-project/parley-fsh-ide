@@ -605,7 +605,9 @@ public class FshIDE extends JFrame  {
 	static final String RUNNING_TITLE = "  (running: it can't be edited until the script ends)";
 
 	private void updateTitle() {
-		String title = (hasChanged() ? "* " : "") + (scriptFile == null ? "" : scriptFile.getName())
+		RemoteView view = remoteView;
+		String title = view != null ? view.title
+				: (hasChanged() ? "* " : "") + (scriptFile == null ? "" : scriptFile.getName())
 				+ (runState == IdeRunstate.Idel ? "" : RUNNING_TITLE);
 		if( !title.equals(getTitle())) {
 			setTitle(title);
@@ -1076,6 +1078,340 @@ public class FshIDE extends JFrame  {
 		}));
 	}
 
+	// ---- Run > Debug Remote...: a script debugged on another machine, through an adapter
+
+	private final JMenuItem debugRemoteItem = StandardMenus.item("Debug Remote...", null, this::actionDebugRemote);
+
+	// the session with the adapter (null: none), and whether its script is stopped
+	private volatile us.bringardner.fsh.ide.core.AdapterSession adapterSession;
+	private volatile boolean adapterPaused;
+	// Debug Remote is connecting (no session yet)
+	private volatile boolean adapterConnecting;
+	// which Debug Remote is connecting (one given up on is not taken for the next)
+	private int adapterAttempt;
+	// Stop was chosen: the adapter was asked to end the script (a second Stop doesn't wait for it)
+	private boolean adapterStopping;
+
+	private static final java.util.concurrent.ExecutorService ADAPTER = java.util.concurrent.Executors.newCachedThreadPool(r->{
+		Thread t = new Thread(r, "fsh-ide adapter requests");
+		t.setDaemon(true);
+		return t;
+	});
+
+	/**
+	 * What the editor held while it shows another machine's script for a debug session (a script
+	 * file there, or one a debugger attached to): the user's own script and its breakpoints, put
+	 * back when the session ends.
+	 */
+	private static final class RemoteView {
+		final String body;
+		final String title;
+		final List<Breakpoint> breakpoints;
+
+		RemoteView(String body, String title, List<Breakpoint> breakpoints) {
+			this.body = body;
+			this.title = title;
+			this.breakpoints = breakpoints;
+		}
+	}
+
+	private RemoteView remoteView;
+
+	/** True while the editor shows a script that is being debugged on another machine, not the user's own. */
+	boolean showsRemoteScript() {
+		return remoteView != null;
+	}
+
+	/** Run &gt; Debug Remote...: asks where and what (see RemoteDebug), and debugs there. */
+	protected void actionDebugRemote() {
+		if( runState != IdeRunstate.Idel ) {
+			return;
+		}
+		us.bringardner.fsh.ide.core.RemoteDebug how = askRemoteDebug(Configuration.getInstance().getRemoteDebug());
+		if( how != null ) {
+			debugRemote(how);
+		}
+	}
+
+	/** Asks for Debug Remote's settings (null: canceled); tests override it. */
+	protected us.bringardner.fsh.ide.core.RemoteDebug askRemoteDebug(us.bringardner.fsh.ide.core.RemoteDebug last) {
+		return RemoteDebugDialog.ask(this, last);
+	}
+
+	/** Debugs on another machine as how says, and keeps how for the next time. (On the event thread.) */
+	void debugRemote(us.bringardner.fsh.ide.core.RemoteDebug given) {
+		if( runState != IdeRunstate.Idel ) {
+			return;
+		}
+		us.bringardner.fsh.ide.core.RemoteDebug how = given.copy();
+		boolean runsAScript = how.getMode() != us.bringardner.fsh.ide.core.RemoteDebug.Mode.ATTACH;
+		if( runsAScript && (!stdInTextField.getText().isBlank() || !stdOutTextField.getText().isBlank() || !stdErrTextField.getText().isBlank())) {
+			showWarning("The adapter doesn't redirect the script's streams: clear the redirect fields");
+			return;
+		}
+		Configuration config = Configuration.getInstance();
+		config.setRemoteDebug(how);
+		ADAPTER.execute(()->{
+			try {
+				config.save();
+			} catch (IOException e) {
+				showError(e, "Can't keep the Debug Remote settings");
+			}
+		});
+		for(Breakpoint bp: editorPane.getBreakpoints().values()) {
+			bp.reset();
+		}
+		String code = ScriptText.clean(editorPane.getText());
+		String name = scriptFile != null ? scriptFile.getAbsolutePath() : "fsh";
+		List<String> args = ScriptText.splitArguments(argumentsTextField.getText());
+		List<Breakpoint> bps = new ArrayList<>(editorPane.getBreakpoints().values());
+
+		// as a debug run: the debug view and controls, the script not editable
+		editorPane.setHighlightCurrentLine(false);
+		debugSplitPane.setVisible(true);
+		centerSplitPane.resetToPreferredSizes();
+		showSyntaxTree();
+		scriptArgPanel.setVisible(false);
+		logBatcher.clear();
+		logView.setText("");
+		outputTextArea.clear();
+		debugControlPanel.setVisible(true);
+		debugControlPanel.setController(adapterControls);
+		debugVariablePanel.setContext(editorPane, null);
+		debugSession.setActive(false);
+		adapterConnecting = true;
+		int attempt = ++adapterAttempt;
+		adapterStopping = false;
+		adapterPaused = false;
+		runState = IdeRunstate.Debugging;
+		editorPane.setEditable(false);
+		updateTitle();
+		updateRunButtons();
+		logBatcher.add("Connecting to "+how.where()+"...\n");
+
+		us.bringardner.fsh.ide.core.AdapterSession.Listener listener = new us.bringardner.fsh.ide.core.AdapterSession.Listener() {
+			@Override
+			public void paused(int line, String reason, Map<String,Object> variables) {
+				SwingUtilities.invokeLater(()->adapterPausedAt(line, variables));
+			}
+
+			@Override
+			public void output(String category, String text) {
+				SwingUtilities.invokeLater(()->("stderr".equals(category) ? outputTextArea.getStdErr() : outputTextArea.getStdOut()).print(text));
+			}
+
+			@Override
+			public void breakpoint(Breakpoint bp, String status, int line, String message) {
+				if( "rejected".equals(status)) {
+					logBatcher.add("Breakpoint on line "+(bp.getLine()+1)+": "+message+"\n");
+				}
+			}
+
+			@Override
+			public void finished(int exitCode, boolean killed, Exception error) {
+				SwingUtilities.invokeLater(()->{
+					us.bringardner.fsh.ide.core.AdapterSession s = adapterSession;
+					if( s == null ) {
+						return;	// ended already (Stop, twice)
+					}
+					logBatcher.add((killed ? "Stopped" : "exitCode = "+exitCode)+"\n");
+					adapterEnded(s);
+					if( error != null ) {
+						showError(error, "The debug session failed");
+					}
+				});
+			}
+		};
+		ADAPTER.execute(()->{
+			us.bringardner.fsh.ide.core.AdapterSession session;
+			try {
+				session = how.connect(listener);
+			} catch (Exception e) {
+				SwingUtilities.invokeLater(()->{
+					if( adapterConnecting && attempt == adapterAttempt ) {
+						adapterConnecting = false;
+						stopTask();
+						showError(e, "Can't connect to "+how.where());
+					}
+				});
+				return;
+			}
+			SwingUtilities.invokeLater(()->{
+				if( !adapterConnecting || attempt != adapterAttempt ) {
+					// Stop was chosen while it connected
+					session.close();
+					return;
+				}
+				adapterConnecting = false;
+				adapterSession = session;
+				logBatcher.add("Debugging on "+how.where()+"\n");
+				ADAPTER.execute(()->{
+					us.bringardner.fsh.ide.core.AdapterSession.Started started;
+					try {
+						started = session.start(how, code, name, args, bps);
+					} catch (Exception e) {
+						SwingUtilities.invokeLater(()->{
+							// (a start that failed may have ended the session already: why is still said)
+							if( adapterSession == session ) {
+								adapterEnded(session);
+							}
+							showError(e, "Debugging couldn't start on "+how.where());
+						});
+						return;
+					}
+					SwingUtilities.invokeLater(()->adapterStarted(session, how, started));
+				});
+			});
+		});
+	}
+
+	/** A remote session has started: a script that isn't the editor's is shown, stopped before its first command. */
+	private void adapterStarted(us.bringardner.fsh.ide.core.AdapterSession session, us.bringardner.fsh.ide.core.RemoteDebug how,
+			us.bringardner.fsh.ide.core.AdapterSession.Started started) {
+		if( adapterSession != session ) {
+			return;	// it ended already
+		}
+		if( started.getText() != null ) {
+			String name = started.getPath() == null ? "script" : started.getPath();
+			// (set before the text: the document is the user's own from here on, see getDocument)
+			List<Breakpoint> own = new ArrayList<>();
+			for(Breakpoint bp : editorPane.getBreakpoints().values()) {
+				own.add(bp.snapshot());
+			}
+			remoteView = new RemoteView(editorPane.getText(), name+" on "+how.where(), own);
+			editorPane.setText(started.getText(), scriptFile);
+			updateTitle();
+		}
+		if( started.getNote() != null ) {
+			logBatcher.add(started.getNote()+"\n");
+		}
+		if( started.isStopped()) {
+			logBatcher.add("Stopped before the first command, line "+(started.getLine()+1)+": set breakpoints, then Resume\n");
+			adapterPausedAt(started.getLine(), started.getVariables());
+		}
+	}
+
+	private void adapterPausedAt(int line, Map<String,Object> variables) {
+		if( adapterSession == null ) {
+			return;
+		}
+		adapterPaused = true;
+		pausedVariables = variables;
+		logBatcher.flush();
+		editorPane.removeAllLineHighlights();
+		if( line >= 0 ) {
+			try {
+				editorPane.addLineHighlight(line, EditorColors.debugLine());
+			} catch (BadLocationException e) {
+				// (a line the editor doesn't have: a sourced file's)
+			}
+			editorPane.showLine(line);
+		}
+		// (shown, not edited: the script's context is on the other machine)
+		debugVariablePanel.setContext(editorPane, null, variables);
+	}
+
+	/** The session is over: the user's own script is put back, and the window is idle again. */
+	private void adapterEnded(us.bringardner.fsh.ide.core.AdapterSession session) {
+		if( adapterSession == session ) {
+			adapterSession = null;
+		}
+		adapterPaused = false;
+		adapterConnecting = false;
+		session.close();
+		RemoteView view = remoteView;
+		if( view != null ) {
+			editorPane.setText(view.body, scriptFile);
+			for(Breakpoint old : view.breakpoints) {
+				Breakpoint bp = editorPane.addBreakpoint(old.getLine());
+				if( bp != null ) {
+					old.copySettingsTo(bp);
+				}
+			}
+			remoteView = null;
+			debugVariablePanel.refreshBreakpoints();
+		}
+		debugControlPanel.setController(debugSession);
+		stopTask();
+	}
+
+	/** Sends the editor's breakpoints, then the request that lets the script go on. */
+	private void adapterContinues(java.util.function.Function<us.bringardner.fsh.ide.core.AdapterSession,java.util.concurrent.CompletableFuture<Void>> request) {
+		adapterContinues(new ArrayList<>(editorPane.getBreakpoints().values()), request);
+	}
+
+	private void adapterContinues(List<Breakpoint> bps,
+			java.util.function.Function<us.bringardner.fsh.ide.core.AdapterSession,java.util.concurrent.CompletableFuture<Void>> request) {
+		us.bringardner.fsh.ide.core.AdapterSession s = adapterSession;
+		if( s == null || !adapterPaused ) {
+			return;
+		}
+		adapterPaused = false;
+		pausedVariables = null;
+		editorPane.removeAllLineHighlights();
+		ADAPTER.execute(()->{
+			try {
+				s.syncBreakpoints(bps);
+				request.apply(s).get();
+			} catch (Exception e) {
+				if( adapterSession == s ) {
+					showError(e, "The adapter couldn't continue");
+				}
+			}
+		});
+	}
+
+	/** The debug controls (the buttons, the editor's debug menu) while the script is on an adapter. */
+	private final us.bringardner.fsh.DebugController adapterControls = new us.bringardner.fsh.DebugController() {
+		@Override
+		public void stepToReturn() {
+			adapterContinues(s->s.stepOut());
+		}
+
+		@Override
+		public void stepOver() {
+			adapterContinues(s->s.stepOver());
+		}
+
+		@Override
+		public void stepInto() {
+			adapterContinues(s->s.stepInto());
+		}
+
+		@Override
+		public void terminate() {
+			stopTask();
+		}
+
+		@Override
+		public void suspend() {
+			us.bringardner.fsh.ide.core.AdapterSession s = adapterSession;
+			if( s != null && !adapterPaused ) {
+				s.suspend();
+			}
+		}
+
+		@Override
+		public void resume() {
+			adapterContinues(s->s.resume());
+		}
+	};
+
+	/** Run to Line on the adapter: a breakpoint there for this once (the editor's are sent again the next time it goes on). */
+	private void adapterRunToLine(int line) {
+		List<Breakpoint> bps = new ArrayList<>();
+		for(Breakpoint bp : editorPane.getBreakpoints().values()) {
+			if( bp.getLine() != line ) {
+				bps.add(bp);
+			}
+		}
+		Breakpoint to = new Breakpoint();
+		to.setLine(line);
+		to.reset();
+		bps.add(to);
+		adapterContinues(bps, s->s.resume());
+	}
+
 	protected void actionDebug(boolean b) {
 
 		switch (runState) {
@@ -1172,6 +1508,7 @@ public class FshIDE extends JFrame  {
 		run.add(StandardMenus.item("Run", KeyEvent.VK_R, ()->actionExecute(true)));
 		// shift: the editor's own ⌘D deletes the line
 		run.add(StandardMenus.item("Debug", StandardMenus.keys(KeyEvent.VK_D, shift), ()->actionDebug(true)));
+		run.add(debugRemoteItem);
 		run.add(StandardMenus.item("Stop", KeyEvent.VK_PERIOD, this::actionStop));
 		run.addSeparator();
 		run.add(useSelectedCodeCheckItem);
@@ -1423,7 +1760,9 @@ public class FshIDE extends JFrame  {
 
 	/** The script as it would be saved: the code, and the run settings kept for it. */
 	protected ScriptDocument getDocument() {
-		return new ScriptDocument(editorPane.getText(), new RunSettings(argumentsTextField.getText(),
+		// (while another machine's script is shown for a debug session, the document is still the user's own)
+		RemoteView view = remoteView;
+		return new ScriptDocument(view != null ? view.body : editorPane.getText(), new RunSettings(argumentsTextField.getText(),
 				stdInTextField.getText(), stdOutTextField.getText(), stdErrTextField.getText()));
 	}
 
@@ -1469,6 +1808,7 @@ public class FshIDE extends JFrame  {
 	private void updateRunButtons() {
 		boolean running = runState != IdeRunstate.Idel;
 		debugButton.setEnabled(!running);
+		debugRemoteItem.setEnabled(!running);
 		executeButton.setEnabled(!running);
 		stopButton.setEnabled(running);
 	}
@@ -1484,8 +1824,21 @@ public class FshIDE extends JFrame  {
 
 	/** True while a debug run is stopped (at a breakpoint, a step, a watchpoint or Suspend). */
 	private boolean isPaused() {
+		if( adapterSession != null ) {
+			return adapterPaused;
+		}
 		return runState == IdeRunstate.Debugging && pausedContext != null
 				&& debugSession.getCurrentState() == us.bringardner.fsh.DebugContext.RunState.AtBreakpoint;
+	}
+
+	/** for the tests: a debug run is stopped (in this JVM, or on an adapter) */
+	boolean isScriptPaused() {
+		return isPaused();
+	}
+
+	/** for the tests: a script is running or being debugged */
+	boolean isScriptRunning() {
+		return runState != IdeRunstate.Idel;
 	}
 
 	private static JMenuItem popupItem(String text, boolean enabled, Runnable action) {
@@ -1523,7 +1876,13 @@ public class FshIDE extends JFrame  {
 		boolean paused = isPaused();
 		int line = editorPane.getLineOfOffset(offset);
 		if( line >= 0 ) {
-			items.add(popupItem("Run to Line "+(line+1), paused, ()->debugSession.runToLine(line)));
+			items.add(popupItem("Run to Line "+(line+1), paused, ()->{
+				if( adapterSession != null ) {
+					adapterRunToLine(line);
+				} else {
+					debugSession.runToLine(line);
+				}
+			}));
 			items.add(new JPopupMenu.Separator());
 			items.add(popupItem("Toggle Breakpoint", true, ()->editorPane.toggleBreakpoint(line)));
 			Breakpoint bp = editorPane.getBreakpoint(line);
@@ -1546,9 +1905,11 @@ public class FshIDE extends JFrame  {
 		if( variable != null || show != null ) {
 			items.add(new JPopupMenu.Separator());
 		}
-		items.add(popupItem("Resume", paused, debugSession::resume));
-		items.add(popupItem("Step Over", paused, debugSession::stepOver));
-		items.add(popupItem("Step Into", paused, debugSession::stepInto));
+		// (the in-process debugger's, or the adapter's while Debug Remote runs)
+		us.bringardner.fsh.DebugController controls = adapterSession != null ? adapterControls : debugSession;
+		items.add(popupItem("Resume", paused, controls::resume));
+		items.add(popupItem("Step Over", paused, controls::stepOver));
+		items.add(popupItem("Step Into", paused, controls::stepInto));
 		items.add(stop);
 		items.add(new JPopupMenu.Separator());
 		items.add(copy);
@@ -1560,6 +1921,27 @@ public class FshIDE extends JFrame  {
 	 * text area under the variables, as a clicked variable shows: "text = value", or why it has none.
 	 */
 	void showValue(String text) {
+		us.bringardner.fsh.ide.core.AdapterSession session = adapterSession;
+		if( session != null ) {
+			if( !adapterPaused ) {
+				return;
+			}
+			String name = text.trim();
+			ADAPTER.execute(()->{
+				String line;
+				try {
+					line = name+" = "+session.evaluate(us.bringardner.fsh.ide.core.DebugVariables.expression(name));
+				} catch (Exception e) {
+					line = e.getMessage();
+				}
+				String shown = line;
+				SwingUtilities.invokeLater(()->{
+					logBatcher.flush();
+					appendLog(shown+"\n");
+				});
+			});
+			return;
+		}
 		ShellContext ctx = pausedContext;
 		if( ctx == null || !isPaused()) {
 			return;
@@ -1592,6 +1974,21 @@ public class FshIDE extends JFrame  {
 
 	private void stopTask () {
 		if( SwingUtilities.isEventDispatchThread()) {
+			us.bringardner.fsh.ide.core.AdapterSession session = adapterSession;
+			if( session != null ) {
+				if( !adapterStopping ) {
+					// the adapter ends the script and says so (finished): the window is idle then
+					adapterStopping = true;
+					session.terminate();
+					return;
+				}
+				// Stop again: not waiting for the adapter
+				logBatcher.add("Stopped\n");
+				adapterEnded(session);
+				return;
+			}
+			// (Stop while Debug Remote connects: the connection is dropped when it is made)
+			adapterConnecting = false;
 			ScriptRun run = currentRun;
 			if(run !=null && run.isRunning() ) {
 				run.cancel();
@@ -1624,6 +2021,7 @@ public class FshIDE extends JFrame  {
 			runState = IdeRunstate.Idel;
 			pausedContext = null;
 			pausedVariables = null;
+			debugControlPanel.setController(debugSession);
 			// the script can be edited again
 			editorPane.setEditable(true);
 			updateTitle();
@@ -1762,6 +2160,8 @@ public class FshIDE extends JFrame  {
 
 	/** Shows a script read from file (null for a new script). */
 	protected void setDocument(ScriptDocument doc, FileSource file) {
+		// (a script opened over another machine's: there is nothing to put back)
+		remoteView = null;
 		scriptFile = file;
 		argumentsTextField.setText(doc.arguments());
 		stdInTextField.setText(doc.stdIn());

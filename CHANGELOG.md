@@ -4,6 +4,18 @@
 
 ### Added
 
+- **Run > Debug Remote...**, in both IDEs: debugs a script on another machine, through fsh-loupe's
+  adapter listening there (`FshAdapterMain --listen address:port`) or by attaching to a script
+  started there with `fsh --wait-for-debugger address:port script`. The dialog asks for the machine,
+  the port and what to debug: the script in the editor, run there; a script file on that machine;
+  or a script waiting there for a debugger. A script that isn't the editor's is shown in the editor
+  while it is debugged, stopped before its first command (set breakpoints, then Resume), and the
+  window's own script and breakpoints are put back when the session ends. The connection has no
+  login and no encryption (the dialog says so). The last settings are kept. In `core`:
+  `RemoteDebug` (the settings), `AdapterSession` (what the IDEs drive; `LoupeSession` is one).
+- The Swing IDE can debug through a Loupe adapter (it had no adapter path): Debug Remote's
+  sessions use the debug view, the debug controls and the editor's debug menu (Run to Line and
+  Show Value included).
 - While a script is being debugged, a right-click in the editor shows a debug menu in place of
   the edit menu, in both IDEs, for the line and the text clicked: **Run to Line** (the script
   runs and stops when it reaches that line, this once, or sooner at a breakpoint or a watchpoint),
