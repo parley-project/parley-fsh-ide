@@ -2,6 +2,13 @@
 
 ## 1.1.0 (unreleased)
 
+### Removed (2026-11-12: the JavaFX IDE)
+
+- The JavaFX IDE (`us.bringardner.fsh.ide.fx`, started by `FshIdeFx`) is no longer part of fsh-ide,
+  with its tests, its stylesheet and its libraries (JavaFX, RichTextFX, fx-widgets, parley-files-fx).
+  fsh-ide is the Swing IDE. The tag `javafx-final` is the last commit that has the JavaFX IDE, as it
+  was. Entries below that speak of "both IDEs" or of the JavaFX IDE describe it as it was then.
+
 ### Changed (2026-11-12: the native image's settings redone)
 
 - **Native image**: the recorded `reachability-metadata.json` no longer names fsh-ide's or Parley's
