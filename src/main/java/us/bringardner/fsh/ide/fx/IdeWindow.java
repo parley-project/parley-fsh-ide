@@ -57,7 +57,9 @@ import us.bringardner.fsh.ide.core.DebugSession;
 import us.bringardner.fsh.ide.core.DebugVariables;
 import us.bringardner.fsh.ide.core.ExitChoice;
 import us.bringardner.fsh.ide.core.LogBatcher;
+import us.bringardner.fsh.ide.core.AdapterSession;
 import us.bringardner.fsh.ide.core.LoupeSession;
+import us.bringardner.fsh.ide.core.RemoteDebug;
 import us.bringardner.fsh.ide.core.RecentFiles;
 import us.bringardner.fsh.ide.core.RunSettings;
 import us.bringardner.fsh.ide.core.RunSettingsStore;
@@ -114,6 +116,7 @@ public class IdeWindow {
 	private final HBox debugControls = new HBox(6);
 	private final MenuItem runItem = new MenuItem("Run");
 	private final MenuItem debugItem = new MenuItem("Debug");
+	private final MenuItem debugRemoteItem = new MenuItem("Debug Remote...");
 	private final MenuItem stopItem = new MenuItem("Stop");
 	private final MenuItem resumeItem = new MenuItem("Resume");
 	private final MenuItem stepOverItem = new MenuItem("Step Over");
@@ -144,7 +147,7 @@ public class IdeWindow {
 	private RecentFiles recent;
 	private ScriptRun currentRun;
 	// a debug run on a Loupe adapter (instead of currentRun's debug session), and whether it's stopped
-	private volatile LoupeSession loupe;
+	private volatile AdapterSession loupe;
 	private volatile boolean loupePaused;
 	private final CheckMenuItem useAdapter = new CheckMenuItem("Debug Through the Loupe Adapter");
 	// why the script is stopping, when a watchpoint stopped it (script's thread)
@@ -383,6 +386,7 @@ public class IdeWindow {
 		// shift: as in the Swing IDE, whose editor keeps ⌘D for deleting a line
 		debugItem.setAccelerator(KeyCombination.keyCombination("Shortcut+Shift+D"));
 		debugItem.setOnAction(e->debug());
+		debugRemoteItem.setOnAction(e->debugRemote());
 		stopItem.setAccelerator(KeyCombination.keyCombination("Shortcut+PERIOD"));
 		stopItem.setOnAction(e->stop());
 		resumeItem.setAccelerator(KeyCombination.keyCombination("F8"));
@@ -392,7 +396,7 @@ public class IdeWindow {
 		stepIntoItem.setAccelerator(KeyCombination.keyCombination("F5"));
 		stepIntoItem.setOnAction(e->stepIntoScript());
 		suspendItem.setOnAction(e->suspendScript());
-		Menu run = new Menu("Run", null, runItem, debugItem, stopItem, new SeparatorMenuItem(),
+		Menu run = new Menu("Run", null, runItem, debugItem, debugRemoteItem, stopItem, new SeparatorMenuItem(),
 				resumeItem, stepOverItem, stepIntoItem, suspendItem, new SeparatorMenuItem(),
 				item("Toggle Breakpoint", "Shortcut+B", ()->editor.toggleBreakpoint(editor.getCaretLine())),
 				new SeparatorMenuItem(), useSelection, useAdapter, new SeparatorMenuItem(),
@@ -569,7 +573,9 @@ public class IdeWindow {
 
 	/** The script as it would be saved: the code, and the run settings kept for it. */
 	ScriptDocument getDocument() {
-		return new ScriptDocument(editor.getText(), new RunSettings(arguments.getText(), stdIn.getText(),
+		// (while another machine's script is shown for a debug session, the document is still the user's own)
+		RemoteView view = remoteView;
+		return new ScriptDocument(view != null ? view.body : editor.getText(), new RunSettings(arguments.getText(), stdIn.getText(),
 				stdOut.getText(), stdErr.getText()));
 	}
 
@@ -601,6 +607,8 @@ public class IdeWindow {
 
 	/** Shows a script read from file (null for a new script). */
 	void setDocument(ScriptDocument doc, FileSource file) {
+		// (a script opened over another machine's: there is nothing to put back)
+		remoteView = null;
 		scriptFile = file;
 		showStartVariables();
 		arguments.setText(doc.arguments());
@@ -659,6 +667,11 @@ public class IdeWindow {
 	}
 
 	private void updateTitle() {
+		RemoteView view = remoteView;
+		if( view != null ) {
+			stage.setTitle(view.title+" - fsh-ide");
+			return;
+		}
 		String name = scriptFile == null ? "Untitled" : scriptFile.getName();
 		stage.setTitle((hasChanged() ? "* " : "")+name+" - fsh-ide");
 	}
@@ -962,7 +975,7 @@ public class IdeWindow {
 
 	/** Lets the paused script finish without stopping at any more breakpoints. */
 	void runToEnd() {
-		LoupeSession l = loupe;
+		AdapterSession l = loupe;
 		if( l == null ) {
 			if( pausedContext != null ) {
 				debugSession.runToEnd();
@@ -979,7 +992,7 @@ public class IdeWindow {
 	}
 
 	private void start(boolean debug) {
-		if( currentRun != null || loupe != null ) {
+		if( isRunning()) {
 			return;
 		}
 		String all = ScriptText.clean(editor.getText());
@@ -989,7 +1002,7 @@ public class IdeWindow {
 		// what environment scripts get, in the Log tab (after a debug run's clearing of it)
 		Platform.runLater(()->us.bringardner.fsh.ide.core.ShellEnvironment.logStatus(log::add));
 		if( debug && useAdapter.isSelected()) {
-			startWithAdapter(selection ? ScriptText.atLine(selected, editor.getSelectionStartLine()) : all);
+			startWithAdapter(selection ? ScriptText.atLine(selected, editor.getSelectionStartLine()) : all, null);
 			return;
 		}
 		debugging = debug;
@@ -1040,7 +1053,7 @@ public class IdeWindow {
 
 	/** The debug controls: for the script on the adapter if there is one, else the in-process session. */
 	private void resumeScript() {
-		LoupeSession l = loupe;
+		AdapterSession l = loupe;
 		if( l == null ) {
 			debugSession.resume();
 		} else {
@@ -1049,7 +1062,7 @@ public class IdeWindow {
 	}
 
 	private void stepOverScript() {
-		LoupeSession l = loupe;
+		AdapterSession l = loupe;
 		if( l == null ) {
 			debugSession.stepOver();
 		} else {
@@ -1058,7 +1071,7 @@ public class IdeWindow {
 	}
 
 	private void stepIntoScript() {
-		LoupeSession l = loupe;
+		AdapterSession l = loupe;
 		if( l == null ) {
 			debugSession.stepInto();
 		} else {
@@ -1067,7 +1080,7 @@ public class IdeWindow {
 	}
 
 	private void suspendScript() {
-		LoupeSession l = loupe;
+		AdapterSession l = loupe;
 		if( l == null ) {
 			debugSession.suspend();
 		} else {
@@ -1076,12 +1089,12 @@ public class IdeWindow {
 	}
 
 	/** Sends the editor's breakpoints, then the request that lets the script go on. */
-	private void adapterContinues(LoupeSession l, java.util.function.Supplier<java.util.concurrent.CompletableFuture<Void>> request) {
+	private void adapterContinues(AdapterSession l, java.util.function.Supplier<java.util.concurrent.CompletableFuture<Void>> request) {
 		adapterContinues(l, new java.util.ArrayList<>(editor.getBreakpoints().values()), request);
 	}
 
 	/** Sends these breakpoints, then the request that lets the script go on. */
-	private void adapterContinues(LoupeSession l, java.util.List<Breakpoint> bps, java.util.function.Supplier<java.util.concurrent.CompletableFuture<Void>> request) {
+	private void adapterContinues(AdapterSession l, java.util.List<Breakpoint> bps, java.util.function.Supplier<java.util.concurrent.CompletableFuture<Void>> request) {
 		loupePaused = false;
 		editor.setCurrentLine(-1);
 		debugPanel.freezeVariables();
@@ -1097,9 +1110,109 @@ public class IdeWindow {
 		});
 	}
 
-	/** Debugs code on the fsh Loupe adapter in this JVM instead of in-process. */
-	private void startWithAdapter(String code) {
-		if( !stdIn.getText().isBlank() || !stdOut.getText().isBlank() || !stdErr.getText().isBlank()) {
+	/**
+	 * Run &gt; Debug Remote...: asks where and what (see {@link RemoteDebug}), and debugs there.
+	 */
+	void debugRemote() {
+		if( isRunning()) {
+			return;
+		}
+		askRemoteDebug(us.bringardner.fsh.ide.core.Configuration.getInstance().getRemoteDebug()).ifPresent(this::debugRemote);
+	}
+
+	/** Asks for Debug Remote's settings (empty: canceled); tests override it. */
+	protected java.util.Optional<RemoteDebug> askRemoteDebug(RemoteDebug last) {
+		return RemoteDebugDialog.ask(stage, last);
+	}
+
+	/** Debugs on another machine as how says, and keeps how for the next time. */
+	void debugRemote(RemoteDebug how) {
+		if( isRunning()) {
+			return;
+		}
+		us.bringardner.fsh.ide.core.Configuration config = us.bringardner.fsh.ide.core.Configuration.getInstance();
+		config.setRemoteDebug(how);
+		BACKGROUND.execute(()->{
+			try {
+				config.save();
+			} catch (IOException e) {
+				Platform.runLater(()->report("Can't keep the Debug Remote settings", e));
+			}
+		});
+		console.clear();
+		startWithAdapter(ScriptText.clean(editor.getText()), how.copy());
+	}
+
+	/**
+	 * What the editor held while it shows another machine's script for a debug session (a script
+	 * file there, or one a debugger attached to): the user's own script and its breakpoints, put
+	 * back when the session ends.
+	 */
+	private static final class RemoteView {
+		final String body;
+		final String title;
+		final java.util.List<Breakpoint> breakpoints;
+		final int caret;
+
+		RemoteView(String body, String title, java.util.List<Breakpoint> breakpoints, int caret) {
+			this.body = body;
+			this.title = title;
+			this.breakpoints = breakpoints;
+			this.caret = caret;
+		}
+	}
+
+	private RemoteView remoteView;
+
+	/** Shows the script being debugged on another machine in place of the user's (which is kept). */
+	private void showRemoteScript(RemoteDebug how, AdapterSession.Started started) {
+		String body = editor.getText();
+		java.util.List<Breakpoint> bps = new java.util.ArrayList<>(editor.getBreakpoints().values());
+		int caret = editor.getCodeArea().getCaretPosition();
+		String name = started.getPath() == null ? "script" : started.getPath();
+		// (set before the text: the document is the user's own from here on, see getDocument)
+		remoteView = new RemoteView(body, name+" on "+how.where(), bps, caret);
+		editor.setText(started.getText());
+		updateTitle();
+	}
+
+	/** Puts the user's own script (and its breakpoints) back after a session that showed another machine's. */
+	private void restoreOwnScript() {
+		RemoteView view = remoteView;
+		if( view == null ) {
+			return;
+		}
+		editor.setText(view.body);
+		for(Breakpoint old : view.breakpoints) {
+			Breakpoint bp = editor.addBreakpoint(old.getLine());
+			if( bp != null ) {
+				bp.setEnabled(old.isEnabled(false));
+				bp.setConditional(old.isConditional());
+				bp.setCondition(old.getCondition());
+				bp.setHitCount(old.isHitCount());
+				bp.setHitCount(old.getHitCount());
+			}
+		}
+		if( !view.breakpoints.isEmpty()) {
+			editor.breakpointChanged();
+		}
+		editor.getCodeArea().moveTo(Math.min(view.caret, editor.getText().length()));
+		remoteView = null;
+		updateTitle();
+	}
+
+	/** True while the editor shows a script that is being debugged on another machine, not the user's own. */
+	boolean showsRemoteScript() {
+		return remoteView != null;
+	}
+
+	/**
+	 * Debugs on a Loupe adapter instead of in-process: the fsh adapter in this JVM (remote null),
+	 * or as remote says, on another machine.
+	 */
+	private void startWithAdapter(String code, RemoteDebug remote) {
+		boolean runsAScript = remote == null || remote.getMode() != RemoteDebug.Mode.ATTACH;
+		if( runsAScript && (!stdIn.getText().isBlank() || !stdOut.getText().isBlank() || !stdErr.getText().isBlank())) {
 			status.setText("The adapter doesn't redirect the script's streams: clear the redirect fields");
 			return;
 		}
@@ -1112,9 +1225,7 @@ public class IdeWindow {
 		debugPanel.clearLog();
 		debugPanel.clearVariables();
 		showDebugPanel.setSelected(true);
-		LoupeSession session;
-		try {
-			session = LoupeSession.inProcess(new LoupeSession.Listener() {
+		AdapterSession.Listener listener = new AdapterSession.Listener() {
 				@Override
 				public void paused(int line, String reason, Map<String,Object> variables) {
 					Platform.runLater(()->{
@@ -1141,51 +1252,133 @@ public class IdeWindow {
 				@Override
 				public void finished(int exitCode, boolean killed, Exception error) {
 					Platform.runLater(()->{
-						LoupeSession l = loupe;
+						AdapterSession l = loupe;
 						loupe = null;
 						loupePaused = false;
 						editor.setCurrentLine(-1);
 						debugPanel.freezeVariables();
+						restoreOwnScript();
 						showStartVariables();
 						if( error != null ) {
 							report("The debug session failed", error);
 						}
 						updateControls();
-						status.setText((killed ? "Stopped" : "Finished")+", exit code "+exitCode);
+						status.setText((killed ? "Stopped" : "Finished")+(exitCode < 0 && killed ? "" : ", exit code "+exitCode));
 						if( l != null ) {
 							l.close();
 						}
 					});
 				}
-			});
-		} catch (java.io.IOException e) {
-			report("Can't start the adapter", e);
-			return;
-		}
-		loupe = session;
-		updateControls();
-		status.setText("Debugging...");
+		};
 		String name = scriptFile != null ? scriptFile.getAbsolutePath() : "fsh";
 		java.util.List<String> args = us.bringardner.fsh.ide.core.ScriptText.splitArguments(arguments.getText());
 		java.util.List<Breakpoint> bps = new java.util.ArrayList<>(editor.getBreakpoints().values());
-		BACKGROUND.execute(()->{
+		if( remote == null ) {
+			LoupeSession session;
 			try {
-				session.start(code, name, args, bps);
+				session = LoupeSession.inProcess(listener);
+			} catch (java.io.IOException e) {
+				report("Can't start the adapter", e);
+				return;
+			}
+			loupe = session;
+			updateControls();
+			status.setText("Debugging...");
+			BACKGROUND.execute(()->{
+				try {
+					session.start(code, name, args, bps);
+				} catch (Exception e) {
+					Platform.runLater(()->adapterStartFailed(session, "The script couldn't start on the adapter", e));
+				}
+			});
+			return;
+		}
+		// another machine: connecting can take a while, so the window is "running" (Stop gives up) from now
+		connecting = true;
+		updateControls();
+		status.setText("Connecting to "+remote.where()+"...");
+		BACKGROUND.execute(()->{
+			AdapterSession session;
+			try {
+				session = remote.connect(listener);
 			} catch (Exception e) {
 				Platform.runLater(()->{
-					loupe = null;
-					session.close();
+					connecting = false;
 					showStartVariables();
 					updateControls();
-					report("The script couldn't start on the adapter", e);
+					status.setText("");
+					report("Can't connect to "+remote.where(), e);
 				});
+				return;
 			}
+			Platform.runLater(()->{
+				boolean gaveUp = !connecting;
+				connecting = false;
+				if( gaveUp ) {
+					// Stop was chosen while it connected
+					session.close();
+					updateControls();
+					status.setText("Stopped");
+					return;
+				}
+				loupe = session;
+				updateControls();
+				status.setText("Debugging on "+remote.where()+"...");
+				BACKGROUND.execute(()->{
+					AdapterSession.Started started;
+					try {
+						started = session.start(remote, code, name, args, bps);
+					} catch (Exception e) {
+						Platform.runLater(()->adapterStartFailed(session, "Debugging couldn't start on "+remote.where(), e));
+						return;
+					}
+					Platform.runLater(()->remoteStarted(session, remote, started));
+				});
+			});
 		});
+	}
+
+	// Debug Remote is connecting (no session yet)
+	private volatile boolean connecting;
+
+	private void adapterStartFailed(AdapterSession session, String title, Exception e) {
+		if( loupe == session ) {
+			loupe = null;
+		}
+		session.close();
+		restoreOwnScript();
+		showStartVariables();
+		updateControls();
+		status.setText("");
+		report(title, e);
+	}
+
+	/** A remote session has started: a script that isn't the editor's is shown, stopped before its first command. */
+	private void remoteStarted(AdapterSession session, RemoteDebug remote, AdapterSession.Started started) {
+		if( loupe != session ) {
+			return;	// it ended already
+		}
+		if( started.getText() != null ) {
+			showRemoteScript(remote, started);
+		}
+		if( started.isStopped()) {
+			loupePaused = true;
+			editor.setCurrentLine(started.getLine());
+			debugPanel.setVariables(started.getVariables(), true);
+			status.setText(started.getNote() != null ? started.getNote()
+					: "Stopped before the first command, line "+(started.getLine()+1)+": set breakpoints, then Resume");
+		}
+		updateControls();
 	}
 
 	/** Stops the script that's running, if any. */
 	void stop() {
-		LoupeSession l = loupe;
+		if( connecting ) {
+			connecting = false;
+			status.setText("Stopping...");
+			return;
+		}
+		AdapterSession l = loupe;
 		if( l != null ) {
 			status.setText("Stopping...");
 			l.terminate();
@@ -1200,7 +1393,7 @@ public class IdeWindow {
 
 	/** Enables what can be done now: idle, running, debugging, or paused. */
 	private void updateControls() {
-		boolean running = currentRun != null || loupe != null;
+		boolean running = currentRun != null || loupe != null || connecting;
 		boolean paused = running && (pausedContext != null || loupePaused);
 		// while paused, Run lets the script run to its end without stopping at breakpoints
 		runButton.setDisable(running && !paused);
@@ -1208,6 +1401,7 @@ public class IdeWindow {
 		runButton.setTooltip(paused ? new Tooltip("Run to the end, without stopping at breakpoints") : null);
 		debugButton.setDisable(running);
 		debugItem.setDisable(running);
+		debugRemoteItem.setDisable(running);
 		stopButton.setDisable(!running);
 		stopItem.setDisable(!running);
 		for(javafx.scene.control.ButtonBase b : new javafx.scene.control.ButtonBase[] {resumeButton, stepOverButton, stepIntoButton}) {
@@ -1314,7 +1508,7 @@ public class IdeWindow {
 		if( !isPaused()) {
 			return;
 		}
-		LoupeSession l = loupe;
+		AdapterSession l = loupe;
 		if( l == null ) {
 			debugSession.runToLine(line);
 			return;
@@ -1342,7 +1536,7 @@ public class IdeWindow {
 			return;
 		}
 		String name = text.trim();
-		LoupeSession l = loupe;
+		AdapterSession l = loupe;
 		if( l != null ) {
 			BACKGROUND.execute(()->{
 				String line;
@@ -1449,7 +1643,7 @@ public class IdeWindow {
 
 	/** Sets a variable of the paused script to what was typed. */
 	void setVariable(Variable v, String value) {
-		LoupeSession l = loupe;
+		AdapterSession l = loupe;
 		if( l != null ) {
 			if( !loupePaused ) {
 				return;
@@ -1502,7 +1696,7 @@ public class IdeWindow {
 	}
 
 	boolean isRunning() {
-		return currentRun != null || loupe != null;
+		return currentRun != null || loupe != null || connecting;
 	}
 
 	DebugSession debugSession() {

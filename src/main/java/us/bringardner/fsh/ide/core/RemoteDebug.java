@@ -52,6 +52,25 @@ public final class RemoteDebug {
 		}
 	}
 
+	/** What the dialogs say about the connection. */
+	public static final String WARNING = "The connection has no login and no encryption: use it only on a network where"
+			+" everyone who can reach the port is trusted.";
+
+	/** What has to be running on the other machine for mode, for the dialogs. */
+	public static String hint(Mode mode) {
+		switch(mode == null ? Mode.EDITOR_SCRIPT : mode) {
+		case REMOTE_FILE:
+			return "On that machine: fsh-loupe's adapter, started with --listen address:port. The script is read and run"
+					+" there, and shown here while it is debugged; it stops before its first command.";
+		case ATTACH:
+			return "On that machine: the script, started with fsh --wait-for-debugger address:port script. It is shown"
+					+" here while it is debugged, and stops before its first command.";
+		default:
+			return "On that machine: fsh-loupe's adapter, started with --listen address:port. The script in the editor"
+					+" is sent there and runs with that machine's files and environment.";
+		}
+	}
+
 	/** The port fsh-loupe's examples use. */
 	public static final int DEFAULT_PORT = 4711;
 
