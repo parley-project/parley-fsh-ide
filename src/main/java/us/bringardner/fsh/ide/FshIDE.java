@@ -220,7 +220,17 @@ public class FshIDE extends JFrame  {
 	}
 
 
-	protected static final Preferences prefs = LegacyPreferences.forPackage(FshIDE.class);
+	/** Where the IDE keeps what it remembers (the recent scripts, the window's place, the settings): the user's own, unless a test gave its own. */
+	protected static Preferences prefs = LegacyPreferences.forPackage(FshIDE.class);
+
+	/**
+	 * For tests: the IDE's windows keep what they remember in these, not in the user's own
+	 * preferences, so a test's window doesn't open the user's most recent script (or change
+	 * their recent list or window place). Call it before the first window is made.
+	 */
+	static void usePreferences(Preferences testPreferences) {
+		prefs = testPreferences;
+	}
 
 	private static final long serialVersionUID = 1L;
 

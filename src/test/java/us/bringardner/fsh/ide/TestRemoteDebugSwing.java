@@ -56,6 +56,8 @@ public class TestRemoteDebugSwing {
 	@BeforeAll
 	public static void quietHome() {
 		System.setProperty("user.home", home.toString());
+		// no recent script of the user's: the window shows only the script the test gives it
+		FshIDE.usePreferences(new MemoryPreferences());
 	}
 
 	private static final String THERE = "x=1\nfor i in 1 2 3\ndo\n  x=$((x+i))\ndone\necho \"x is $x $1\"\nexit 3\n";

@@ -50,6 +50,8 @@ public class TestFshIDERunMenus {
 	@BeforeAll
 	public static void quietHome() {
 		System.setProperty("user.home", home.toString());
+		// no recent script of the user's: the window shows only the script the test gives it
+		FshIDE.usePreferences(new MemoryPreferences());
 	}
 
 	private static <T> T onEdt(Callable<T> code) throws Exception {
