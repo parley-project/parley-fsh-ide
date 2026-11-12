@@ -19,31 +19,22 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.ServerSocket;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.Console;
 import us.bringardner.fsh.ide.core.RemoteDebug.Mode;
-import us.bringardner.fsh.loupe.FshAdapterMain;
 
 /**
  * Debug Remote's three ways, against what would be on the other machine: fsh-loupe's adapter
@@ -61,11 +52,9 @@ public class TestRemoteDebug {
 	private final BlockingQueue<Map<String,Object>> variables = new LinkedBlockingQueue<>();
 	private final StringBuilder output = new StringBuilder();
 	private AdapterSession session;
-	private ServerSocket adapter;
-	private CompletableFuture<Void> served;
-	private CompletableFuture<Integer> shell;
-	private final ByteArrayOutputStream shellOut = new ByteArrayOutputStream();
-	private final ByteArrayOutputStream shellErr = new ByteArrayOutputStream();
+	// what would be on the other machine: closed (and waited for) after each test
+	private final List<RemoteSide> remotes = new java.util.ArrayList<>();
+	private RemoteSide waiting;
 
 	private final AdapterSession.Listener listener = new AdapterSession.Listener() {
 		@Override
@@ -98,56 +87,23 @@ public class TestRemoteDebug {
 		if( session != null ) {
 			session.close();
 		}
-		if( adapter != null ) {
-			adapter.close();
-			served.get(20, TimeUnit.SECONDS);
-		}
-		if( shell != null ) {
-			shell.get(20, TimeUnit.SECONDS);
+		for(RemoteSide r : remotes) {
+			r.close();
 		}
 	}
 
 	/** FshAdapterMain --listen 0 */
 	private int listen() throws IOException {
-		adapter = FshAdapterMain.open("0");
-		served = CompletableFuture.runAsync(() -> {
-			try {
-				FshAdapterMain.serve(adapter);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
-		return adapter.getLocalPort();
+		RemoteSide r = RemoteSide.listening();
+		remotes.add(r);
+		return r.port();
 	}
 
 	/** fsh --wait-for-debugger 0 script arg */
 	private int waitingShell(Path script) throws Exception {
-		Console.exitJvm = false;
-		shell = new CompletableFuture<>();
-		Thread t = new Thread(() -> {
-			try {
-				Console c = new Console();
-				c.setStdOut(new PrintStream(shellOut, true));
-				c.setStdErr(new PrintStream(shellErr, true));
-				c.setStdIn(new ByteArrayInputStream(new byte[0]));
-				shell.complete(c.execute("--wait-for-debugger", "0", script.toString(), "arg"));
-			} catch (Throwable e) {
-				shell.completeExceptionally(e);
-			}
-		}, "test-shell");
-		t.setDaemon(true);
-		t.start();
-		Pattern port = Pattern.compile("waiting for a debugger on port (\\d+)");
-		long end = System.currentTimeMillis()+20000;
-		for(;;) {
-			Matcher m = port.matcher(new String(shellErr.toByteArray(), StandardCharsets.UTF_8));
-			if( m.find()) {
-				return Integer.parseInt(m.group(1));
-			}
-			assertFalse(shell.isDone(), "the shell ended without waiting: "+shellErr);
-			assertTrue(System.currentTimeMillis() < end, "the shell never said where it waits: "+shellErr);
-			Thread.sleep(20);
-		}
+		waiting = RemoteSide.waiting(script);
+		remotes.add(waiting);
+		return waiting.port();
 	}
 
 	private String next() throws Exception {
@@ -233,7 +189,7 @@ public class TestRemoteDebug {
 		assertEquals(SCRIPT, started.getText());
 		assertEquals(script.toAbsolutePath().normalize().toString(), started.getPath());
 		assertEquals(0, started.getLine());
-		assertEquals("", shellOut.toString(), "nothing has run");
+		assertEquals("", waiting.out(), "nothing has run");
 
 		session.syncBreakpoints(List.of(breakpoint(5)));
 		session.stepOver().get(10, TimeUnit.SECONDS);
@@ -243,9 +199,9 @@ public class TestRemoteDebug {
 		assertEquals("paused 5 breakpoint", next());
 		session.resume().get(10, TimeUnit.SECONDS);
 		assertEquals("finished 3", next());
-		assertEquals(3, shell.get(20, TimeUnit.SECONDS).intValue());
+		assertEquals(3, waiting.status());
 		// its output is the shell's own (the WHO is this JVM's environment's, if any)
-		assertTrue(shellOut.toString().startsWith("x is 7 ["), shellOut.toString());
+		assertTrue(waiting.out().startsWith("x is 7 ["), waiting.out());
 		assertEquals("", output());
 	}
 
@@ -257,8 +213,8 @@ public class TestRemoteDebug {
 		session = how.connect(listener);
 		assertTrue(session.start(how, "", "editor.fsh", List.of(), List.of()).isStopped());
 		session.close();
-		assertEquals(3, shell.get(20, TimeUnit.SECONDS).intValue());
-		assertTrue(shellOut.toString().startsWith("x is 7 ["), shellOut.toString());
+		assertEquals(3, waiting.status());
+		assertTrue(waiting.out().startsWith("x is 7 ["), waiting.out());
 	}
 
 	@Test

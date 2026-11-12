@@ -120,7 +120,38 @@ public final class RemoteSide implements AutoCloseable {
 			served.get(20, TimeUnit.SECONDS);
 		}
 		if( shell != null ) {
+			if( !shell.isDone()) {
+				// a test that failed before it attached: the shell would wait for ever (with its port and
+				// thread), so a debugger attaches and lets it run to its end
+				release();
+			}
 			shell.get(20, TimeUnit.SECONDS);
+		}
+	}
+
+	private void release() {
+		RemoteDebug how = new RemoteDebug("127.0.0.1", port, RemoteDebug.Mode.ATTACH, "");
+		try (AdapterSession s = how.connect(new AdapterSession.Listener() {
+			@Override
+			public void paused(int line, String reason, java.util.Map<String,Object> variables) {
+			}
+
+			@Override
+			public void output(String category, String text) {
+			}
+
+			@Override
+			public void breakpoint(Breakpoint bp, String status, int line, String message) {
+			}
+
+			@Override
+			public void finished(int exitCode, boolean killed, Exception error) {
+			}
+		})) {
+			s.start(how, "", "", java.util.List.of(), java.util.List.of());
+			// (closing the session lets it run on)
+		} catch (Exception e) {
+			// a debugger attached already (the port is closed): it runs on when that one goes
 		}
 	}
 }

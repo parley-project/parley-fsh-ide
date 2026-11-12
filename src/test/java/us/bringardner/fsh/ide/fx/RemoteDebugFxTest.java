@@ -80,9 +80,25 @@ public class RemoteDebugFxTest {
 		}
 	}
 
-	private static TestWindow window(String code) throws Exception {
+	private final List<TestWindow> windows = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+	/** Stops whatever a test left running and closes its windows, however the test ended. */
+	@org.junit.jupiter.api.AfterEach
+	public void closeWindows() throws Exception {
+		for(TestWindow w : windows) {
+			Fx.run(()->{
+				if( w.isRunning()) {
+					w.stop();
+				}
+				w.stage().hide();
+			});
+		}
+	}
+
+	private TestWindow window(String code) throws Exception {
 		return Fx.call(()->{
 			TestWindow w = new TestWindow();
+			windows.add(w);
 			w.setCode(code, null);
 			return w;
 		});
@@ -203,7 +219,6 @@ public class RemoteDebugFxTest {
 			// kept for the next time
 			RemoteDebug kept = Configuration.getInstance().getRemoteDebug();
 			assertEquals(how.where(), kept.where());
-			Fx.run(()->w.stage().hide());
 		}
 	}
 
@@ -259,7 +274,6 @@ public class RemoteDebugFxTest {
 			assertEquals(1, Fx.call(()->w.editor().getBreakpoints().size()));
 			assertTrue(Fx.call(()->w.editor().isEditable()));
 			assertEquals(List.of(), w.problems);
-			Fx.run(()->w.stage().hide());
 		}
 	}
 
@@ -288,7 +302,6 @@ public class RemoteDebugFxTest {
 			assertEquals(List.of(), w.problems);
 			remote.status();
 			assertEquals("", remote.out(), "the script was ended before it wrote anything");
-			Fx.run(()->w.stage().hide());
 		}
 	}
 
@@ -313,7 +326,6 @@ public class RemoteDebugFxTest {
 			Fx.waitFor(()->w.console().getArea().getText().contains("x is 7 arg"));
 			assertEquals("Finished, exit code 3", w.statusText());
 			assertEquals(List.of(), w.problems);
-			Fx.run(()->w.stage().hide());
 		}
 	}
 
@@ -341,6 +353,5 @@ public class RemoteDebugFxTest {
 			assertEquals("echo mine\n", Fx.call(()->w.editor().getText()));
 			assertTrue(Fx.call(()->w.editor().isEditable()));
 		}
-		Fx.run(()->w.stage().hide());
 	}
 }
