@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * formatted with JxBeauty (c) johann.langhofer@nextra.at
  */
 /*
- * Modified for fsh-studio: the constructors and addDictionary that take a File close the file they
+ * Modified for Fsh Studio: the constructors and addDictionary that take a File close the file they
  * open (see createDictionaryFrom). Everything else is as in spellchecker 3.0.0.
  */
 
@@ -222,7 +222,7 @@ public boolean addWord(String word) {
    * load the data in. I suspect that we could speed this up quite allot.
    */
   /**
-   * fsh-studio: reads a word list file and closes it (the Jazzy original left the FileReader open until it
+   * Fsh Studio: reads a word list file and closes it (the Jazzy original left the FileReader open until it
    * was garbage collected, so Windows could not delete the file).
    */
   private void createDictionaryFrom(File wordList) throws IOException {

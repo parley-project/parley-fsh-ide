@@ -2,7 +2,7 @@
 <!DOCTYPE RSyntaxTheme SYSTEM "theme.dtd">
 
 <!--
-	The editor colors for fsh-studio in a dark theme (an RSyntaxTextArea theme): an ink
+	The editor colors for Fsh Studio in a dark theme (an RSyntaxTextArea theme): an ink
 	background, gold keywords, and enough other hues to tell tokens apart. Light themes use
 	RSyntaxTextArea's default colors.
 -->

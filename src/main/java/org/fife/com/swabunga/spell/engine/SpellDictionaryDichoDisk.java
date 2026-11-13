@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 /*
- * Modified for fsh-studio: the files this class opens are closed (try-with-resources); the original left some
+ * Modified for Fsh Studio: the files this class opens are closed (try-with-resources); the original left some
  * open until garbage collection, or when an exception was thrown. Everything else is as in spellchecker 3.0.0.
  */
 
@@ -119,7 +119,7 @@ public class SpellDictionaryDichoDisk extends SpellDictionaryASpell {
   }
 
   /**
-   * fsh-studio: closes the dictionary file, which is kept open for the lookups (the original had no way
+   * Fsh Studio: closes the dictionary file, which is kept open for the lookups (the original had no way
    * to close it, so it stayed open until the dictionary was garbage collected). The dictionary can't
    * be used afterwards.
    * @throws IOException if the file can't be closed

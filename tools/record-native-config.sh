@@ -1,5 +1,5 @@
 #!/bin/sh
-# Records what the native image of fsh-studio needs of the JDK (AWT and Swing) and the other libraries
+# Records what the native image of Fsh Studio needs of the JDK (AWT and Swing) and the other libraries
 # (reflection, JNI, resources), by running the real IDE on a JVM under GraalVM's tracing agent, into
 # resources/META-INF/native-image/us.bringardner/parley-fsh-studio/reachability-metadata.json. Run it on each
 # platform the native image is built for (the AWT/Swing entries are platform specific: each platform
@@ -7,7 +7,7 @@
 #
 #   tools/record-native-config.sh
 #
-# fsh-studio's and Parley's own classes and files are not kept in that file: the native build lists
+# Fsh Studio's and Parley's own classes and files are not kept in that file: the native build lists
 # them from the class path (tools/NativeMetadata.java), and they are taken out of the recording
 # when the IDE closes.
 #

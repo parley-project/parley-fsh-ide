@@ -31,7 +31,7 @@ public class TestEditorFont {
 
 	@BeforeEach
 	public void node() {
-		prefs = Preferences.userRoot().node("us/bringardner/fsh/ide/test/font-" + System.nanoTime());
+		prefs = Preferences.userRoot().node("us/bringardner/fsh/studio/test/font-" + System.nanoTime());
 	}
 
 	@AfterEach
