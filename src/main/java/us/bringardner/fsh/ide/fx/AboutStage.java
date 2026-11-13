@@ -55,7 +55,7 @@ public class AboutStage extends Stage {
 	}
 
 	public AboutStage() {
-		setTitle("About fsh-ide");
+		setTitle("About Fsh Studio");
 		setResizable(false);
 		FxBrand.apply(this);
 
@@ -67,7 +67,7 @@ public class AboutStage extends Stage {
 		VBox text = new VBox();
 		text.setAlignment(Pos.CENTER_LEFT);
 		text.setPrefWidth(270);
-		text.getChildren().add(label("fsh-ide", FontWeight.BOLD, FontPosture.REGULAR, 22, FxBrand.GOLD_BRIGHT));
+		text.getChildren().add(label("Fsh Studio", FontWeight.BOLD, FontPosture.REGULAR, 22, FxBrand.GOLD_BRIGHT));
 		String version = AboutWindow.version();
 		if( version != null ) {
 			text.getChildren().add(label("Version " + version, FontWeight.NORMAL, FontPosture.REGULAR, 13, FxBrand.GOLD));

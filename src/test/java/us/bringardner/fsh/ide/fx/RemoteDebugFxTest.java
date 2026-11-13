@@ -246,7 +246,7 @@ public class RemoteDebugFxTest {
 			assertTrue(Fx.call(w::showsRemoteScript));
 			assertEquals(THERE, Fx.call(()->w.editor().getText()));
 			assertEquals(0, Fx.call(()->w.editor().getCurrentLine()));
-			assertEquals(script+" on 127.0.0.1:"+remote.port()+" - fsh-ide", Fx.call(()->w.stage().getTitle()));
+			assertEquals(script+" on 127.0.0.1:"+remote.port()+" - Fsh Studio", Fx.call(()->w.stage().getTitle()));
 			assertFalse(Fx.call(()->w.editor().isEditable()));
 			assertTrue(w.statusText().startsWith("Stopped before the first command"), w.statusText());
 			// the document is still the user's own: it is what a save or the exit question is about

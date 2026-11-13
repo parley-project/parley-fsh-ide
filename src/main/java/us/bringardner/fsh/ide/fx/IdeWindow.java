@@ -434,7 +434,7 @@ public class IdeWindow {
 	}
 
 	/** The application's name: the macOS application menu and Help > About show it. */
-	static final String APP_NAME = "fsh-ide";
+	static final String APP_NAME = "Fsh Studio";
 
 	/** The IDE windows open now, for Quit. */
 	private static final java.util.List<IdeWindow> OPEN = new java.util.ArrayList<>();
@@ -683,11 +683,11 @@ public class IdeWindow {
 	private void updateTitle() {
 		RemoteView view = remoteView;
 		if( view != null ) {
-			stage.setTitle(view.title+" - fsh-ide");
+			stage.setTitle(view.title+" - Fsh Studio");
 			return;
 		}
 		String name = scriptFile == null ? "Untitled" : scriptFile.getName();
-		stage.setTitle((hasChanged() ? "* " : "")+name+" - fsh-ide");
+		stage.setTitle((hasChanged() ? "* " : "")+name+" - Fsh Studio");
 	}
 
 	/** True if there are no unsaved changes or the user agrees to discard them. */

@@ -78,7 +78,7 @@ public class AboutWindow extends JFrame {
 	}
 
 	public AboutWindow() {
-		setTitle("About fsh-ide");
+		setTitle("About Fsh Studio");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setIconImages(ParleyBrand.appIcons("terminal"));
 		setResizable(false);
@@ -98,7 +98,7 @@ public class AboutWindow extends JFrame {
 		contentPane.add(text, BorderLayout.CENTER);
 
 		text.add(Box.createVerticalGlue());
-		text.add(label("fsh-ide", Font.BOLD, 22f, ParleyBrand.GOLD_BRIGHT));
+		text.add(label("Fsh Studio", Font.BOLD, 22f, ParleyBrand.GOLD_BRIGHT));
 		String version = version();
 		if( version != null ) {
 			text.add(label("Version " + version, Font.PLAIN, 13f, ParleyBrand.GOLD));

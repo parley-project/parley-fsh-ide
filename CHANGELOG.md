@@ -2,6 +2,11 @@
 
 ## 1.1.0 (unreleased)
 
+### Changed (2026-11-13: the name)
+
+- The IDE is named **Fsh Studio** in the application menu, Help > About and the JavaFX IDE's window
+  titles. The project, jar, native binary and `~/.fsh-ide` folder keep the name fsh-ide.
+
 ### Changed (2026-11-12: the native image's settings redone)
 
 - **Native image**: the recorded `reachability-metadata.json` no longer names fsh-ide's or Parley's

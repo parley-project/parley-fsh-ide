@@ -1460,7 +1460,7 @@ public class FshIDE extends JFrame  {
 
 
 	/** The application's name: the macOS application menu and Help > About show it. */
-	static final String APP_NAME = "fsh-ide";
+	static final String APP_NAME = "Fsh Studio";
 
 	/**
 	 * The window's menus, laid out as in every Parley application (StandardMenus): File, Edit, View,
