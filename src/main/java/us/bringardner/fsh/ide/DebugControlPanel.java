@@ -89,7 +89,7 @@ public class DebugControlPanel extends JPanel {
 				actionStepToReturn();
 			}
 		});
-		stepToReturnButton.setToolTipText("Step return");
+		stepToReturnButton.setToolTipText("Step Out");
 		add(stepToReturnButton);
 
 	}
