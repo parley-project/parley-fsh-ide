@@ -41,7 +41,7 @@
 	</properties>
 
 	<profiles>
-		<!-- Native binary named fsh-ide: mvn -Pnative package -->
+		<!-- Native binary named studio: mvn -Pnative package -->
 		<profile>
 			<id>native</id>
 			<build>
@@ -61,7 +61,7 @@
 							</execution>
 						</executions>
 						<configuration>
-							<imageName>fsh-ide</imageName>
+							<imageName>studio</imageName>
 							<mainClass>us.bringardner.fsh.ide.FshIDE</mainClass>
 							<buildArgs>
 								<!-- fsh (a dependency) ships native-image.properties with -Djava.awt.headless=true; this is a window app -->
