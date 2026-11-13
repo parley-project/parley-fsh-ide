@@ -2,6 +2,32 @@
 
 ## 1.1.0 (unreleased)
 
+### Changed (2026-11-13: the debug view's variables, the toolbar, Step Out, Clear Run Settings)
+
+- **Variables tables** (Swing IDE): the Type column is gone; the tables show Name and Value.
+- **A changed variable keeps its type**: what is typed in a variable's editor becomes a value of the
+  type the variable has (`DebugVariables.parseValue`). A number stays a number of the same class and
+  true/false stays a Boolean (other text is refused, with why, and the editor opens again); an array
+  stays an array, edited one element to a line, and an associative array stays one, edited as
+  `key=value` lines (`DebugVariables.editText`). An array with a line break in an element, or a map
+  with one or an `=` in a key, is only shown (`DebugVariables.editProblem`). Text stays text. An
+  array used to become text, and a number text.
+- **Table headings** on the debug view (both variables tables, Breakpoints, Watchpoints) are drawn in
+  the theme's header colors, text and background: on the Mac the theme's white header text was on
+  the system's light heading.
+- The text under the debug view's variables has a right-click menu, **Clear Log**: it clears the
+  text and leaves `Cleared...` at the top.
+- **Toolbar**: Run is the first button, then Debug and Stop. Run, Debug, Stop and the debugger's
+  Resume, Suspend and step buttons have double-size icons (their `@2x` images, 32 x 32); the
+  redirects' icons are 10% larger (`ToolbarIcons`).
+- The debugger's Step return button is **Step Out**, and it works for a script debugged in the IDE
+  (`DebugSession.stepToReturn`: it did nothing unless the script was on a remote adapter): it runs
+  the rest of the function and stops at the first statement back in the caller, sooner at a
+  breakpoint or a watchpoint; outside a function the script runs on.
+- **Run > Clear Run Settings...** (Swing IDE) empties the arguments and redirects of the script in
+  the window, and nothing more: nothing is asked or said, and what's kept for other scripts stays
+  (it forgot every script's). The script counts as changed until it's saved.
+
 ### Changed (2026-11-12: the native image's settings redone)
 
 - **Native image**: the recorded `reachability-metadata.json` no longer names fsh-ide's or Parley's
