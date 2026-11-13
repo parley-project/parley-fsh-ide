@@ -33,7 +33,7 @@ MINGW*|MSYS*|CYGWIN*) sep=';' ;;
 esac
 
 java -agentlib:native-image-agent=config-merge-dir="$out" \
-	-cp "target/classes$sep$cp" us.bringardner.fsh.ide.FshIDE
+	-cp "target/classes$sep$cp" us.bringardner.fsh.studio.FshStudio
 
 java tools/NativeMetadata.java strip "$out/reachability-metadata.json" "target/classes$sep$cp"
 

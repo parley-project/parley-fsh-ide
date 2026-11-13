@@ -62,7 +62,7 @@
 						</executions>
 						<configuration>
 							<imageName>fshstudio</imageName>
-							<mainClass>us.bringardner.fsh.ide.FshIDE</mainClass>
+							<mainClass>us.bringardner.fsh.studio.FshStudio</mainClass>
 							<buildArgs>
 								<!-- fsh (a dependency) ships native-image.properties with -Djava.awt.headless=true; this is a window app -->
 								<buildArg>-Djava.awt.headless=false</buildArg>
@@ -248,10 +248,10 @@
 				<configuration>
 					<archive>
 						<manifestEntries>
-							<Automatic-Module-Name>us.bringardner.fsh.ide</Automatic-Module-Name>
+							<Automatic-Module-Name>us.bringardner.fsh.studio</Automatic-Module-Name>
 						</manifestEntries>
 						<manifest>
-							<mainClass>us.bringardner.fsh.ide.FshIDE</mainClass>
+							<mainClass>us.bringardner.fsh.studio.FshStudio</mainClass>
 							<addClasspath>true</addClasspath>
 						</manifest>
 					</archive>
@@ -271,7 +271,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<mainClass>us.bringardner.fsh.ide.FshIDE</mainClass>
+					<mainClass>us.bringardner.fsh.studio.FshStudio</mainClass>
 					<options>
 						<!-- (fsh's options, as fsh's installers give it: it runs fsh scripts) -->
 						<option>-Xss16m</option>

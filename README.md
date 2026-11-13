@@ -26,12 +26,12 @@ Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ## The IDE
 
-`us.bringardner.fsh.ide.FshIDE` (the jar's main class) is the IDE, a Swing application. Running
+`us.bringardner.fsh.studio.FshStudio` (the jar's main class) is the IDE, a Swing application. Running
 and debugging scripts, and the arguments and redirects each is run with, come from
 [parley-fsh-debug](https://github.com/parley-project/parley-fsh-debug) (`us.bringardner.fsh.debug`),
 which [fshdb](https://github.com/parley-project/parley-fshdb), the terminal debugger, also uses.
 The rest of the IDE's logic that needs no user interface (settings, templates, remote debugging,
-the outline) is in `us.bringardner.fsh.ide.core`.
+the outline) is in `us.bringardner.fsh.studio.core`.
 
 A JavaFX IDE was built beside it until November 2026. It is no longer part of Fsh Studio; the tag
 `javafx-final` is the last commit that has it.
@@ -49,7 +49,7 @@ mvn package                 # jar in target/
 mvn -Pjdbc package          # also bundle the JDBC file system
 mvn -Pnative package        # GraalVM native binary named fshstudio
 xvfb-run -a mvn test        # the tests on a virtual display (Linux, with xvfb): no window shows
-java -cp ... us.bringardner.fsh.ide.FshIDE
+java -cp ... us.bringardner.fsh.studio.FshStudio
 ```
 
 ## Settings

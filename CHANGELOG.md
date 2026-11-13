@@ -9,7 +9,7 @@
   (it used to use Fsh Studio's jar for them). `ScriptText`, `ScriptDocument`, `ScriptRun`,
   `RunSettings`, `RunSettingsStore`, `DebugSession`, `DebugVariables`, `Breakpoint`, `Watchpoint`,
   `Variable`, `ShellEnvironment`, `Completions` and `Template` are now in `us.bringardner.fsh.debug`
-  (they were in `us.bringardner.fsh.ide.core`), with their tests.
+  (they were in `us.bringardner.fsh.studio.core`), with their tests.
 
 ### Changed (2026-11-13: the settings folder)
 
@@ -19,7 +19,7 @@
 
 ### Removed (2026-11-12: the JavaFX IDE)
 
-- The JavaFX IDE (`us.bringardner.fsh.ide.fx`, started by `FshIdeFx`) is no longer part of fsh-ide,
+- The JavaFX IDE (`us.bringardner.fsh.studio.fx`, started by `FshIdeFx`) is no longer part of fsh-ide,
   with its tests, its stylesheet and its libraries (JavaFX, RichTextFX, fx-widgets, parley-files-fx).
   fsh-ide is the Swing IDE. The tag `javafx-final` is the last commit that has the JavaFX IDE, as it
   was. Entries below that speak of "both IDEs" or of the JavaFX IDE describe it as it was then.
@@ -298,18 +298,18 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 - The sources are now the IDE that had grown inside BjlShell, which was ahead of
   this repository's copy (more templates, the recent-files menu, "Show Position",
   editable debug variables, output in an embedded console). It moved here from fsh.
-- Package `us.bringardner.shell.ide` → `us.bringardner.fsh.ide`;
+- Package `us.bringardner.shell.ide` → `us.bringardner.fsh.studio`;
   `BjlShellIDE` → `FshIDE`, `BjlShellIDETextArea` → `FshIDETextArea`,
   `BjlShellTreeViewPanel` → `FshTreeViewPanel`.
 - Depends on fsh and parley-files instead of bjl_shell and bjl_file_system, and on
   parley-files-swing for the Swing IDE's file chooser.
 - The debug-variables table has a Type column (from this repository's old copy).
 - Fixed the `native` profile's main class (it named a package that didn't exist).
-- The IDE's logic is in a new package, `us.bringardner.fsh.ide.core`, that uses no UI
+- The IDE's logic is in a new package, `us.bringardner.fsh.studio.core`, that uses no UI
   toolkit, so a JavaFX (or other) front end can share it: running scripts (`ScriptRun`), the
   debugger (`DebugSession`), the settings saved in scripts (`ScriptDocument`), recent files,
   the syntax check, settings and templates. `Breakpoint`, `Template`, `Configuration` and
-  `LegacyPreferences` moved there from `us.bringardner.fsh.ide`; the Swing IDE uses the core.
+  `LegacyPreferences` moved there from `us.bringardner.fsh.studio`; the Swing IDE uses the core.
 - Faster and lighter:
   - The syntax check runs once typing pauses, instead of copying and re-checking the
     script every 100 ms in a thread per window that kept running after the window closed.
@@ -324,7 +324,7 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
     system no longer freezes the window.
   - Waiting for a script to end no longer polls every 10 ms.
 
-- A JavaFX IDE, `us.bringardner.fsh.ide.fx.FshIdeFx`, beside the Swing one and sharing its core.
+- A JavaFX IDE, `us.bringardner.fsh.studio.fx.FshIdeFx`, beside the Swing one and sharing its core.
   First stage: the editor (RichTextFX, with line numbers and shell colouring), open, save and
   reload on any file system (parley-files-fx's chooser, which can connect to remote ones), recent
   files shared with the Swing IDE, the script's arguments and redirect files, Run (or only the

@@ -4995,7 +4995,7 @@
       "type": "sun.util.resources.cldr.TimeZoneNames_en_US"
     },
     {
-      "type": "us.bringardner.fsh.ide.FshIDE",
+      "type": "us.bringardner.fsh.studio.FshStudio",
       "jniAccessible": true
     },
     {
