@@ -25,6 +25,7 @@ import us.bringardner.fsh.ide.core.ExitChoice;
 import us.bringardner.fsh.ide.core.LogBatcher;
 import us.bringardner.fsh.ide.core.RecentFiles;
 import us.bringardner.fsh.ide.core.RunSettings;
+import us.bringardner.fsh.ide.core.RunSettingsStore;
 import us.bringardner.fsh.ide.core.ScriptDocument;
 import us.bringardner.fsh.ide.core.ScriptParser;
 import us.bringardner.fsh.ide.core.ScriptRun;
@@ -1530,7 +1531,7 @@ public class FshIDE extends JFrame  {
 		run.add(StandardMenus.item("Clear Console", KeyEvent.VK_K, this::actionClearConsole));
 		run.addSeparator();
 		JMenuItem clearRunSettings = StandardMenus.item("Clear Run Settings...", null, this::actionClearRunSettings);
-		clearRunSettings.setToolTipText("Empty this script's arguments and redirects");
+		clearRunSettings.setToolTipText("Forget the arguments and redirects kept for every script");
 		run.add(clearRunSettings);
 
 		// what environment scripts get (see ShellEnvironment)
@@ -2135,23 +2136,49 @@ public class FshIDE extends JFrame  {
 
 
 
-	/**
-	 * Run > Clear Run Settings: empties this window's arguments and redirects (stdin, stdout and
-	 * stderr), as deleting what's in the four fields does, and nothing more: nothing is asked or
-	 * said, what's kept for other scripts stays, and the script counts as changed until it's saved
-	 * (saving it is what keeps the settings, or here that it has none).
-	 */
+	/** Forgets the arguments and redirects kept for every script (this window's stay until saved). */
 	protected void actionClearRunSettings() {
+		RunSettingsStore store = Configuration.getInstance().runSettings();
+		int n;
+		try {
+			n = store.size();
+		} catch (IOException e) {
+			showError(e, "Can't read the run settings");
+			return;
+		}
+		if( n == 0 ) {
+			JOptionPane.showMessageDialog(contentPane, "No scripts have arguments or redirects kept.");
+			return;
+		}
+		if( JOptionPane.showConfirmDialog(contentPane, "Forget the arguments and redirects kept for "+n
+				+(n == 1 ? " script?" : " scripts?"), "Clear Run Settings", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION ) {
+			return;
+		}
+		try {
+			store.clear();
+		} catch (IOException e) {
+			showError(e, "Can't clear the run settings");
+			return;
+		}
+		// the open windows' too: what they show is what's kept, and saving them would keep it again
+		for(FshIDE w : new ArrayList<>(ideWindows)) {
+			w.clearRunSettingsFields();
+		}
+		JOptionPane.showMessageDialog(contentPane, "Cleared the run settings of "+n+(n == 1 ? " script." : " scripts."),
+				"Clear Run Settings", JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	/**
+	 * Clear Run Settings, in this window: no arguments or redirects; as the script was kept, so it
+	 * doesn't count as changed (its code still does, if it was).
+	 */
+	void clearRunSettingsFields() {
 		argumentsTextField.setText("");
 		stdInTextField.setText("");
 		stdOutTextField.setText("");
 		stdErrTextField.setText("");
+		original = new ScriptDocument(original.body(), RunSettings.NONE);
 		updateTitle();
-	}
-
-	/** for the tests: the arguments and the stdin, stdout and stderr redirects' fields */
-	JTextField[] runSettingsFields() {
-		return new JTextField[] {argumentsTextField, stdInTextField, stdOutTextField, stdErrTextField};
 	}
 
 	protected void actionExit() {

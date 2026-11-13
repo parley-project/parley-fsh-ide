@@ -14,7 +14,6 @@ package us.bringardner.fsh.ide;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -104,59 +103,6 @@ public class TestFshIDEClearConsole {
 			});
 		} finally {
 			SwingUtilities.invokeAndWait(()->w[0].dispose());
-		}
-	}
-
-	/**
-	 * Run > Clear Run Settings empties this window's arguments and redirects and nothing more: no
-	 * question, no message, and what's kept for other scripts stays.
-	 */
-	@Test
-	public void clearRunSettingsEmptiesThisScriptsOnly() throws Exception {
-		Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "needs a screen");
-		us.bringardner.fsh.ide.core.RunSettingsStore store = us.bringardner.fsh.ide.core.Configuration.getInstance().runSettings();
-		// (a script that is there: the IDE drops what's kept for local scripts that are gone)
-		String other = java.nio.file.Files.writeString(home.resolve("another-script.fsh"), "echo other\n").toString();
-		store.put(other, new us.bringardner.fsh.ide.core.RunSettings("kept", "", "", ""));
-		FshIDE[] w = new FshIDE[1];
-		SwingUtilities.invokeAndWait(()->{
-			w[0] = new FshIDE();
-			w[0].setSize(900, 700);
-			w[0].setVisible(true);
-			w[0].setDocument(new us.bringardner.fsh.ide.core.ScriptDocument("echo hi\n",
-					new us.bringardner.fsh.ide.core.RunSettings("a b", "in.txt", "out.txt", "err.txt")), null);
-		});
-		try {
-			SwingUtilities.invokeAndWait(()->{
-				assertEquals("a b", w[0].runSettingsFields()[0].getText());
-				assertTrue(!w[0].hasChanged());
-				JMenuItem item = null;
-				JMenuBar bar = w[0].getJMenuBar();
-				for(int i=0; i < bar.getMenuCount(); i++ ) {
-					JMenu m = bar.getMenu(i);
-					if( m != null && "Run".equals(m.getText())) {
-						item = item(m.getPopupMenu(), "Clear Run Settings...");
-					}
-				}
-				assertNotNull(item, "Run > Clear Run Settings...");
-				// (a question or a message would block here: the test would not go on)
-				item.doClick();
-				for(javax.swing.JTextField field : w[0].runSettingsFields()) {
-					assertEquals("", field.getText());
-				}
-				// as deleting the fields' text: changed until it's saved, and the code is as it was
-				assertTrue(w[0].hasChanged());
-				assertEquals("echo hi\n", w[0].editor().getText());
-				// no dialog was opened
-				for(java.awt.Window dialog : java.awt.Window.getWindows()) {
-					assertTrue(!(dialog instanceof javax.swing.JDialog && dialog.isShowing()), String.valueOf(dialog));
-				}
-			});
-			// the other scripts' are still kept
-			assertEquals("kept", store.get(other).arguments());
-		} finally {
-			SwingUtilities.invokeAndWait(()->w[0].dispose());
-			store.remove(other);
 		}
 	}
 

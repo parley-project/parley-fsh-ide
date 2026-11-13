@@ -90,9 +90,8 @@ none has nothing kept, and clearing them and saving removes what was kept. fshdb
 What's kept for scripts that were deleted, renamed outside the IDE or are on servers you no
 longer use cleans itself up: settings not used for 180 days go, at most 500 scripts are kept
 (the least recently used go first), and at start the IDE drops those of local scripts that are
-gone. `runSettingsMaxAgeDays` and `runSettingsMaxEntries` in `Config.xml` change the limits.
-Run > Clear Run Settings... empties the arguments and redirects of the script in the window
-(save it to keep it that way); what's kept for other scripts stays.
+gone. `runSettingsMaxAgeDays` and `runSettingsMaxEntries` in `Config.xml` change the limits;
+File > Clear Run Settings forgets them all.
 
 Scripts saved by earlier versions carry them in comment lines (`#BjlIdeScriptArgs=` ...); those
 are read, and the next save moves them out of the script.
