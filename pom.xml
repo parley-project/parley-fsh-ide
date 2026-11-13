@@ -3,14 +3,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<!-- fsh-ide: edit, run and debug shell scripts, using fsh as the interpreter -->
+	<!-- parley-fsh-studio (Fsh Studio): edit, run and debug shell scripts, using fsh as the interpreter -->
 	<groupId>us.bringardner</groupId>
-	<artifactId>fsh-ide</artifactId>
+	<artifactId>parley-fsh-studio</artifactId>
 	<version>2.0.0-SNAPSHOT</version>
 	<name>Fsh Studio - editor and debugger for shell scripts</name>
 	<description>Edits, runs and debugs bash/POSIX-style scripts, using fsh (the FileSource Shell)
 		as the interpreter. Formerly us.bringardner:bjl_shell_ide (BjlShellIde).</description>
-	<url>https://github.com/parley-project/parley-fsh-ide</url>
+	<url>https://github.com/parley-project/parley-fsh-studio</url>
 	<inceptionYear>2004</inceptionYear>
 
 	<licenses>
@@ -28,9 +28,9 @@
 		</developer>
 	</developers>
 	<scm>
-		<connection>scm:git:https://github.com/parley-project/parley-fsh-ide.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/parley-project/parley-fsh-ide.git</developerConnection>
-		<url>https://github.com/parley-project/parley-fsh-ide/tree/master</url>
+		<connection>scm:git:https://github.com/parley-project/parley-fsh-studio.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/parley-project/parley-fsh-studio.git</developerConnection>
+		<url>https://github.com/parley-project/parley-fsh-studio/tree/master</url>
 	</scm>
 
 	<properties>
@@ -68,7 +68,7 @@
 								<buildArg>-Djava.awt.headless=false</buildArg>
 								<!-- JNA and others look the platform charset (Cp1252) up by name -->
 								<buildArg>-H:+AddAllCharsets</buildArg>
-								<!-- fsh-ide's and Parley's own classes and files, listed below as the image is built -->
+								<!-- Fsh Studio's and Parley's own classes and files, listed below as the image is built -->
 								<buildArg>-H:ConfigurationFileDirectories=${project.build.directory}/native-config</buildArg>
 							</buildArgs>
 						</configuration>
@@ -315,7 +315,7 @@
 		<repository>
 			<id>github</id>
 			<name>parley-project</name>
-			<url>https://maven.pkg.github.com/parley-project/parley-fsh-ide</url>
+			<url>https://maven.pkg.github.com/parley-project/parley-fsh-studio</url>
 		</repository>
 	</distributionManagement>
 

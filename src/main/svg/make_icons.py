@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """fsh-ide icon set, each drawn from what its button does.
 
-Run from the fsh-ide project folder:  python3 src/main/svg/make_icons.py
+Run from the parley-fsh-studio project folder:  python3 src/main/svg/make_icons.py
 Writes each icon's SVG (32x32 viewBox) to src/main/svg and renders its 16 px png and
 32 px @2x png into resources/img. Rendering uses cairosvg (pip install cairosvg) when
 it is installed, otherwise the rsvg-convert command.
@@ -121,7 +121,7 @@ def render(svg_path, png_path, size):
 if __name__ == "__main__":
     for d in (SVG_DIR, PNG_DIR):
         if not os.path.isdir(d):
-            sys.exit(f"{d} not found: run this from the fsh-ide project folder")
+            sys.exit(f"{d} not found: run this from the parley-fsh-studio project folder")
     for name, body in ICONS.items():
         p = os.path.join(SVG_DIR, name + ".svg")
         with open(p, "w") as f:

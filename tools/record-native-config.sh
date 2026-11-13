@@ -1,7 +1,7 @@
 #!/bin/sh
 # Records what the native image of fsh-ide needs of the JDK (AWT and Swing) and the other libraries
 # (reflection, JNI, resources), by running the real IDE on a JVM under GraalVM's tracing agent, into
-# resources/META-INF/native-image/us.bringardner/fsh-ide/reachability-metadata.json. Run it on each
+# resources/META-INF/native-image/us.bringardner/parley-fsh-studio/reachability-metadata.json. Run it on each
 # platform the native image is built for (the AWT/Swing entries are platform specific: each platform
 # adds its own), then commit the updated file.
 #
@@ -21,7 +21,7 @@ set -e
 project=$(cd "$(dirname "$0")/.." && pwd)
 cd "$project"
 
-out=$project/resources/META-INF/native-image/us.bringardner/fsh-ide
+out=$project/resources/META-INF/native-image/us.bringardner/parley-fsh-studio
 mkdir -p "$out"
 
 mvn -B -q compile
