@@ -9,8 +9,13 @@
   (it used to use Fsh Studio's jar for them). `ScriptText`, `ScriptDocument`, `ScriptRun`,
   `RunSettings`, `RunSettingsStore`, `DebugSession`, `DebugVariables`, `Breakpoint`, `Watchpoint`,
   `Variable`, `ShellEnvironment`, `Completions` and `Template` are now in `us.bringardner.fsh.debug`
-  (they were in `us.bringardner.fsh.ide.core`), with their tests. Nothing the user sees changes:
-  the settings are still in `~/.fsh-ide`.
+  (they were in `us.bringardner.fsh.ide.core`), with their tests.
+
+### Changed (2026-11-13: the settings folder)
+
+- Settings are kept in `~/.fsh-studio` (`Config.xml`, `run-settings` and `words.txt`); they were in
+  `~/.fsh-ide`. Nothing is copied from `~/.fsh-ide`, and a configuration in `~/.bjlshellIde` is no
+  longer copied either: Fsh Studio starts with its default settings.
 
 ### Removed (2026-11-12: the JavaFX IDE)
 

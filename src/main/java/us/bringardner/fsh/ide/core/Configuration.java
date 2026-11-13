@@ -13,6 +13,7 @@
 package us.bringardner.fsh.ide.core;
 
 import us.bringardner.fsh.debug.RunSettingsStore;
+import us.bringardner.fsh.debug.SettingsFolder;
 import us.bringardner.fsh.debug.Template;
 import java.io.File;
 import java.io.IOException;
@@ -136,30 +137,11 @@ public class Configuration {
 		return configFile;
 	}
 
-	/** The folder in the user's home that held the configuration before BjlShellIde became fsh-ide. */
-	static final String LEGACY_DIR = ".bjlshellIde";
-	static final String DIR = RunSettingsStore.SETTINGS_DIR;
 	static final String FILE = "Config.xml";
 
-	/**
-	 * home/.fsh-ide/Config.xml. The first time, a configuration saved under the old
-	 * folder (home/.bjlshellIde) is copied across, so templates and settings carry over.
-	 */
+	/** home/.fsh-studio/Config.xml (see SettingsFolder). */
 	static File configFileIn(File home) {
-		File dir = new File(home,DIR);
-		if(!dir.exists()) {
-			dir.mkdirs();
-		}
-		File file = new File(dir,FILE);
-		File legacy = new File(new File(home,LEGACY_DIR),FILE);
-		if( !file.exists() && legacy.isFile()) {
-			try {
-				java.nio.file.Files.copy(legacy.toPath(), file.toPath());
-			} catch (IOException e) {
-				// Start with a fresh configuration rather than fail
-			}
-		}
-		return file;
+		return new File(SettingsFolder.in(home),FILE);
 	}
 
 	public void save () throws IOException {

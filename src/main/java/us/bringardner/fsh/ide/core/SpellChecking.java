@@ -30,6 +30,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import us.bringardner.fsh.debug.SettingsFolder;
+
 // Jazzy, the spelling engine inside RSyntaxTextArea's spellchecker: no UI of its own
 import org.fife.com.swabunga.spell.engine.SpellDictionary;
 import org.fife.com.swabunga.spell.engine.SpellDictionaryHashMap;
@@ -93,9 +95,9 @@ public final class SpellChecking {
 		return dict != null ? dict : new SpellDictionaryHashMap();
 	}
 
-	/** Where the user's own words are kept: ~/.fsh-ide/words.txt, one a line. */
+	/** Where the user's own words are kept: ~/.fsh-studio/words.txt, one a line. */
 	public static File userWordsFile() {
-		return new File(new File(System.getProperty("user.home"), Configuration.DIR), "words.txt");
+		return new File(SettingsFolder.forUser(), "words.txt");
 	}
 
 	static List<String> userWords() {

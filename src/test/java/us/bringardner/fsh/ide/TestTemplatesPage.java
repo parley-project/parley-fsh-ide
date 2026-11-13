@@ -103,7 +103,7 @@ public class TestTemplatesPage {
 				assertTrue(c.getTemplates().stream().anyMatch(t->"hello".equals(t.getName())));
 				assertTrue(c.getTemplates().stream().noneMatch(t->"while-loop".equals(t.getDescription())),
 						"a deleted built-in stays deleted");
-				File saved = new File(System.getProperty("user.home"), ".fsh-ide/Config.xml");
+				File saved = new File(System.getProperty("user.home"), ".fsh-studio/Config.xml");
 				assertTrue(saved.isFile());
 				assertTrue(Files.readString(saved.toPath()).contains("hello"));
 			} catch (Exception e) {

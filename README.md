@@ -54,7 +54,7 @@ java -cp ... us.bringardner.fsh.ide.FshIDE
 
 ## Settings
 
-Templates and settings are kept in `~/.fsh-ide/Config.xml`; window positions and
+Templates and settings are kept in `~/.fsh-studio/Config.xml`; window positions and
 recent files in Java preferences. Both are copied across from BjlShellIde's
 locations the first time Fsh Studio starts.
 
@@ -79,7 +79,7 @@ Folding is on the bracket keys: ⌥⌘[ folds the block the caret is in and
 A script's arguments and its stdin, stdout and stderr files are not written into the script:
 the script file holds only its code, so it runs the same (and `$LINENO` and error messages give
 the same lines) in Fsh Studio, fshdb, fsh or bash. They're kept per user in
-`~/.fsh-ide/run-settings`, by the script's full path, when you save the script; a script with
+`~/.fsh-studio/run-settings`, by the script's full path, when you save the script; a script with
 none has nothing kept, and clearing them and saving removes what was kept. fshdb uses them too.
 
 What's kept for scripts that were deleted, renamed outside the IDE or are on servers you no
@@ -133,7 +133,7 @@ terms (`source`, `script`, `args`), which another language's adapter won't know.
 
 The connection has **no login and no encryption**, and whoever can reach the port can run
 commands as the user the adapter runs as: use it only on a network where everyone who can
-reach the port is trusted. The last settings are kept in `~/.fsh-ide/Config.xml`.
+reach the port is trusted. The last settings are kept in `~/.fsh-studio/Config.xml`.
 `RemoteDebug` and `AdapterSession`, in `core`, hold the settings and the session and have no UI
 (`LoupeSession` and `DapSession` are the two sessions).
 

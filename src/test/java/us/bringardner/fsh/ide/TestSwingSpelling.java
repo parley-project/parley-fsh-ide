@@ -30,7 +30,7 @@ import us.bringardner.fsh.ide.core.SpellChecking;
 
 /**
  * The editor's spelling: the words that are flagged, the menu
- * (suggestions, Ignore, Add to Dictionary), and the user's own words (~/.fsh-ide/words.txt).
+ * (suggestions, Ignore, Add to Dictionary), and the user's own words (~/.fsh-studio/words.txt).
  */
 public class TestSwingSpelling {
 
@@ -44,7 +44,7 @@ public class TestSwingSpelling {
 		System.setProperty("java.awt.headless", "true");
 		System.setProperty("user.home", home.toString());
 		// a word added earlier
-		Path words = home.resolve(".fsh-ide").resolve("words.txt");
+		Path words = home.resolve(".fsh-studio").resolve("words.txt");
 		Files.createDirectories(words.getParent());
 		Files.writeString(words, "fshide\n");
 	}

@@ -36,7 +36,7 @@ import us.bringardner.fsh.ide.core.SpellChecking;
 /**
  * Spell checking for the editor: the words
  * SpellChecking.misspelled finds in the comments and quoted text, against the one dictionary
- * SpellChecking.english() reads (with the user's words in ~/.fsh-ide/words.txt), underlined; the
+ * SpellChecking.english() reads (with the user's words in ~/.fsh-studio/words.txt), underlined; the
  * right-click menu offers suggestions, "Ignore" (until the IDE closes) and "Add to Dictionary".
  */
 class FshSpellingParser extends AbstractParser {
@@ -130,7 +130,7 @@ class FshSpellingParser extends AbstractParser {
 		area.forceReparsing(this);
 	}
 
-	/** Adds word to the user's dictionary (~/.fsh-ide/words.txt). */
+	/** Adds word to the user's dictionary (~/.fsh-studio/words.txt). */
 	void addToDictionary(String word) throws IOException {
 		SpellChecking.addUserWord(dictionary, word);
 		area.forceReparsing(this);

@@ -12,36 +12,33 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** The configuration moved from ~/.bjlshellIde to ~/.fsh-ide (BJL-88). */
+/** The configuration is ~/.fsh-studio/Config.xml. */
 public class TestConfigurationLocation {
 
 	@TempDir
 	Path home;
 
 	@Test
-	public void usesTheNewFolder() {
+	public void usesTheSettingsFolder() {
 		File file = Configuration.configFileIn(home.toFile());
-		assertEquals(home.resolve(".fsh-ide").resolve("Config.xml").toFile(), file);
+		assertEquals(home.resolve(".fsh-studio").resolve("Config.xml").toFile(), file);
 		assertTrue(file.getParentFile().isDirectory());
 		assertFalse(file.exists());
 	}
 
 	@Test
-	public void copiesTheOldConfigurationTheFirstTime() throws IOException {
-		Path old = home.resolve(".bjlshellIde");
-		Files.createDirectories(old);
-		Files.writeString(old.resolve("Config.xml"), "<old/>");
-
+	public void doesNotCopyOldConfigurations() throws IOException {
+		for(String old : new String[] {".bjlshellIde", ".fsh-ide"}) {
+			Files.createDirectories(home.resolve(old));
+			Files.writeString(home.resolve(old).resolve("Config.xml"), "<old/>");
+		}
 		File file = Configuration.configFileIn(home.toFile());
-		assertEquals("<old/>", Files.readString(file.toPath()));
+		assertFalse(file.exists());
 	}
 
 	@Test
-	public void keepsTheNewConfigurationOnceItExists() throws IOException {
-		Path old = home.resolve(".bjlshellIde");
-		Files.createDirectories(old);
-		Files.writeString(old.resolve("Config.xml"), "<old/>");
-		Path now = home.resolve(".fsh-ide");
+	public void keepsTheConfigurationOnceItExists() throws IOException {
+		Path now = home.resolve(".fsh-studio");
 		Files.createDirectories(now);
 		Files.writeString(now.resolve("Config.xml"), "<new/>");
 
