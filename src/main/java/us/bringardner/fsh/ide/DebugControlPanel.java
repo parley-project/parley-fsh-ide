@@ -17,7 +17,6 @@ import javax.swing.JPanel;
 import us.bringardner.fsh.DebugController;
 import java.awt.FlowLayout;
 import javax.swing.JButton;
-import javax.swing.ImageIcon;
 import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -47,7 +46,7 @@ public class DebugControlPanel extends JPanel {
 				actionResume();
 			}
 		});
-		resumeButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/resume.png")));
+		resumeButton.setIcon(ToolbarIcons.icon("resume"));
 		resumeButton.setToolTipText("Resume");
 		add(resumeButton);
 
@@ -58,13 +57,13 @@ public class DebugControlPanel extends JPanel {
 			}
 		});
 		suspendButton.setForeground(Color.YELLOW);
-		suspendButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/suspend.png")));
+		suspendButton.setIcon(ToolbarIcons.icon("suspend"));
 		suspendButton.setToolTipText("Suspend");
 		add(suspendButton);
 		// (no Terminate here: the toolbar's Stop ends the script)
 
 		JButton stepIntoButton = new JButton("");
-		stepIntoButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/step_into.png")));
+		stepIntoButton.setIcon(ToolbarIcons.icon("step_into"));
 		stepIntoButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionStepInto();
@@ -74,7 +73,7 @@ public class DebugControlPanel extends JPanel {
 		add(stepIntoButton);
 
 		JButton stepOverButton = new JButton("");
-		stepOverButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/step_over.png")));
+		stepOverButton.setIcon(ToolbarIcons.icon("step_over"));
 		stepOverButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionStepOver();
@@ -84,7 +83,7 @@ public class DebugControlPanel extends JPanel {
 		add(stepOverButton);
 
 		JButton stepToReturnButton = new JButton("");
-		stepToReturnButton.setIcon(new ImageIcon(DebugControlPanel.class.getResource("/img/step_return.png")));
+		stepToReturnButton.setIcon(ToolbarIcons.icon("step_return"));
 		stepToReturnButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionStepToReturn();

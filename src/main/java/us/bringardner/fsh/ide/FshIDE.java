@@ -61,7 +61,6 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -776,8 +775,13 @@ public class FshIDE extends JFrame  {
 		executePanel.add(horizontalStrut);
 
 
+		// Run first, then Debug and Stop
+		executeButton = new JButton("");
+		executeButton.setIcon(ToolbarIcons.icon("run"));
+		executePanel.add(executeButton);
+
 		debugButton = new JButton("");
-		debugButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/debug.png")));
+		debugButton.setIcon(ToolbarIcons.icon("debug"));
 		executePanel.add(debugButton);
 		debugButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -786,11 +790,7 @@ public class FshIDE extends JFrame  {
 		});
 
 
-		executeButton = new JButton("");
-		executeButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/run.png")));
-		executePanel.add(executeButton);
-
-		stopButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/terminate.png")));
+		stopButton.setIcon(ToolbarIcons.icon("terminate"));
 		stopButton.setToolTipText("Stop");
 		stopButton.addActionListener(e->actionStop());
 		executePanel.add(stopButton);
@@ -809,7 +809,7 @@ public class FshIDE extends JFrame  {
 		panel.setBorder(new TitledBorder(null, "stdin", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		JButton btnNewButton = new JButton("");
-		btnNewButton.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_in.png")));
+		btnNewButton.setIcon(ToolbarIcons.icon("redirect_in"));
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionBrowse(stdInTextField, false);
@@ -826,7 +826,7 @@ public class FshIDE extends JFrame  {
 		panel_1.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "stdout", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		JButton btnNewButton_1 = new JButton("");
-		btnNewButton_1.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_out.png")));
+		btnNewButton_1.setIcon(ToolbarIcons.icon("redirect_out"));
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionBrowse(stdOutTextField, true);
@@ -843,7 +843,7 @@ public class FshIDE extends JFrame  {
 		panel_1_1.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null), "stderr", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
 		JButton btnNewButton_1_1 = new JButton("");
-		btnNewButton_1_1.setIcon(new ImageIcon(FshIDE.class.getResource("/img/redirect_out.png")));
+		btnNewButton_1_1.setIcon(ToolbarIcons.icon("redirect_out"));
 		btnNewButton_1_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionBrowse(stdErrTextField, true);
@@ -1996,6 +1996,11 @@ public class FshIDE extends JFrame  {
 	/** for the tests: the debugger, to step and resume a paused script */
 	DebugSession debugSession() {
 		return debugSession;
+	}
+
+	/** for the tests: the toolbar's Run, Debug and Stop buttons */
+	JButton[] runButtons() {
+		return new JButton[] {executeButton, debugButton, stopButton};
 	}
 
 	/** for the tests: [Debug, Run, Stop] enabled */
