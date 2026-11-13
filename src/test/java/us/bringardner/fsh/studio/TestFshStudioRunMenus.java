@@ -44,7 +44,7 @@ import us.bringardner.fsh.studio.FshStudioTextArea;
  * is the run's (Stop, Copy) or the debugger's (Run to Line, breakpoints, the variable clicked,
  * the steps) in place of the edit menu.
  */
-public class TestFshIDERunMenus {
+public class TestFshStudioRunMenus {
 
 	@TempDir
 	static Path home;

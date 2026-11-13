@@ -34,7 +34,7 @@ import us.bringardner.fsh.studio.FshStudio;
  * While debugging in the Swing IDE, the line the script stopped on shows: the editor scrolls to
  * it when it isn't in view, and stays where it is when it is.
  */
-public class TestFshIDEShowsPausedLine {
+public class TestFshStudioShowsPausedLine {
 
 	@TempDir
 	static Path home;

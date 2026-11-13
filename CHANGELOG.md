@@ -2,6 +2,16 @@
 
 ## 1.1.0 (unreleased)
 
+### Changed (2026-11-13: the name Fsh Studio everywhere)
+
+- The dark editor theme (`editor-dark.xml`) is beside `EditorColors` again, in
+  `us/bringardner/fsh/studio`: after the packages were renamed it was left in
+  `us/bringardner/fsh/ide`, so the editor didn't get its dark colors.
+- The settings ids are `fsh-studio.templates`, `fsh-studio.editorFont` and the theme prefix
+  `fsh-studio.editor` (they were `fsh-ide.*`). Settings saved under the old ids aren't read.
+- The tests named `TestFshIDE...` are `TestFshStudio...`, and what was left of the name fsh-ide in
+  comments and documents says Fsh Studio.
+
 ### Changed (2026-11-13: parley-fsh-debug)
 
 - Running and debugging scripts moved to a new library,

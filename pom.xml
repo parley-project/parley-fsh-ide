@@ -119,7 +119,7 @@
 						</executions>
 					</plugin>
 					<!-- AWT reads its font configuration from java.home/lib, and the image's java.home is
-					     its own folder (see FshIDE.main): ship the JDK's file beside the exe -->
+					     its own folder (see FshStudio.main): ship the JDK's file beside the exe -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-resources-plugin</artifactId>

@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 /*
- * Modified for fsh-ide: the pre-cache file is closed (try-with-resources) also when an exception is thrown, and
+ * Modified for Fsh Studio: the pre-cache file is closed (try-with-resources) also when an exception is thrown, and
  * the converted line endings. Everything else is as in spellchecker 3.0.0.
  */
 

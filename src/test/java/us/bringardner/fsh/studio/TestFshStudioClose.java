@@ -23,7 +23,7 @@ import us.bringardner.parley.files.FileSource;
 import us.bringardner.parley.files.FileSourceFactory;
 
 /** Closing the window is left to FshStudio.close(), which may keep it open (if the user says no or Cancel). */
-public class TestFshIDEClose {
+public class TestFshStudioClose {
 
 	@TempDir
 	static Path home;

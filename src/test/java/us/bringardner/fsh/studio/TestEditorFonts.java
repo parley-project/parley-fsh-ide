@@ -52,7 +52,7 @@ public class TestEditorFonts {
 	@BeforeEach
 	public void setUp() {
 		Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "needs a display");
-		prefs = Preferences.userRoot().node("us/bringardner/fsh/ide/test/fonts-" + System.nanoTime());
+		prefs = Preferences.userRoot().node("us/bringardner/fsh/studio/test/fonts-" + System.nanoTime());
 		GradientLook.install();
 	}
 

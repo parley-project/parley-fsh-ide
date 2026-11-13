@@ -34,7 +34,7 @@ import us.bringardner.fsh.studio.FshStudio;
  * While the Swing IDE's debug view shows and no script runs, its fsh Variables tab shows what
  * the next run starts with.
  */
-public class TestFshIDEStartVariables {
+public class TestFshStudioStartVariables {
 
 	@TempDir
 	static Path home;

@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * The script editors' syntax colors: one color for each part of the editor ({@link #ROLES}), as
  * 0xRRGGBB. They are part of the appearance theme: the Swing IDE adds a "Script editor" page to the
- * theme designer, and a theme keeps them as {@code fsh-ide.editor.<key>} settings
+ * theme designer, and a theme keeps them as {@code fsh-studio.editor.<key>} settings
  * ({@link #EXTENSION_ID}, {@link #KEYS}). A theme without them, such as a built-in one, gets colors
  * that match it ({@link #matching}): a background tinted with its light color, and its accent for
  * the line numbers, selection and caret, so they change with the theme. A new theme starts with
@@ -33,7 +33,7 @@ import java.util.Map;
 public final class SyntaxColors {
 
 	/** The prefix of the syntax colors' settings in a theme. */
-	public static final String EXTENSION_ID = "fsh-ide.editor";
+	public static final String EXTENSION_ID = "fsh-studio.editor";
 
 	/** The name of colors that aren't one of the ready-made schemes. */
 	public static final String CUSTOM = "Custom";

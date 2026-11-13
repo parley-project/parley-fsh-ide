@@ -49,13 +49,13 @@ public class TestSwingSpelling {
 		// a word added earlier
 		Path words = home.resolve(".fsh-studio").resolve("words.txt");
 		Files.createDirectories(words.getParent());
-		Files.writeString(words, "fshide\n");
+		Files.writeString(words, "fshstudio\n");
 	}
 
 	@Test
 	public void readsTheUsersWords() throws Exception {
 		SpellDictionary dict = SpellChecking.english().get(60, TimeUnit.SECONDS);
-		assertTrue(dict.isCorrect("fshide"));
+		assertTrue(dict.isCorrect("fshstudio"));
 	}
 
 	private FshStudioTextArea area(String text) {
@@ -107,7 +107,7 @@ public class TestSwingSpelling {
 		assertEquals(List.of(), flagged(parser, area));
 		String saved = Files.readString(SpellChecking.userWordsFile().toPath());
 		assertTrue(saved.contains("zzyzx"), saved);
-		assertTrue(saved.contains("fshide"), saved);
+		assertTrue(saved.contains("fshstudio"), saved);
 	}
 
 	@Test

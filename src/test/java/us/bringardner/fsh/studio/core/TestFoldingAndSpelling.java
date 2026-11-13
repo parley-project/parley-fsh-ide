@@ -79,9 +79,9 @@ public class TestFoldingAndSpelling {
 			assertFalse(dict.isCorrect("wrold"));
 			assertTrue(SpellChecking.suggestions(dict, "wrold", 5).contains("world"), SpellChecking.suggestions(dict, "wrold", 5).toString());
 
-			SpellChecking.addUserWord(dict, "fshide");
-			assertTrue(dict.isCorrect("fshide"));
-			assertEquals(List.of("fshide"), Files.readAllLines(SpellChecking.userWordsFile().toPath()));
+			SpellChecking.addUserWord(dict, "fshstudio");
+			assertTrue(dict.isCorrect("fshstudio"));
+			assertEquals(List.of("fshstudio"), Files.readAllLines(SpellChecking.userWordsFile().toPath()));
 		} finally {
 			System.setProperty("user.home", was);
 		}

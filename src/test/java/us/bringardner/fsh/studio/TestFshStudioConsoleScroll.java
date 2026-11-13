@@ -36,7 +36,7 @@ import us.bringardner.fsh.ConsolePanel;
 import us.bringardner.fsh.studio.FshStudio;
 
 /** The script output (stdout and stderr) under the editor scrolls with the mouse wheel. */
-public class TestFshIDEConsoleScroll {
+public class TestFshStudioConsoleScroll {
 
 	@TempDir
 	static Path home;

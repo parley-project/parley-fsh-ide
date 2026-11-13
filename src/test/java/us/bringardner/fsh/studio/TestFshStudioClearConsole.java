@@ -36,7 +36,7 @@ import us.bringardner.fsh.ConsolePanel;
 import us.bringardner.fsh.studio.FshStudio;
 
 /** Clear Console, from the Run menu and from the console's right-click menu, clears the script output. */
-public class TestFshIDEClearConsole {
+public class TestFshStudioClearConsole {
 
 	@TempDir
 	static Path home;

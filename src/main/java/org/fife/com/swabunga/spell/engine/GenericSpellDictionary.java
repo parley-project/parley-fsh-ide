@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 /*
- * Modified for fsh-ide: the constructor that takes a File closes the word list it opens (the original
+ * Modified for Fsh Studio: the constructor that takes a File closes the word list it opens (the original
  * left the FileReader open until it was garbage collected). Everything else is as in spellchecker 3.0.0.
  */
 
