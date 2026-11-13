@@ -18,11 +18,10 @@ import java.util.prefs.Preferences;
 /**
  * The font of the script editors and the console: a fixed-width family (or the platform's standard
  * monospaced font) and a size. It is the IDE's own, apart from the appearance font that menus and
- * tables use, and kept in the IDE's preferences, where both IDEs find it. View &gt; Bigger Text and
+ * tables use, and kept in the IDE's preferences, where the IDE finds it. View &gt; Bigger Text and
  * Smaller Text change the size a step at a time; Reset Text Size goes back to {@link #DEFAULT_SIZE}.
  * <p>
- * No UI toolkit here: the Swing IDE makes a java.awt.Font of it, the JavaFX IDE a stylesheet
- * ({@link #css()}).
+ * No UI toolkit here: the IDE makes a java.awt.Font of it.
  */
 public final class EditorFont {
 
@@ -34,9 +33,6 @@ public final class EditorFont {
 	public static final int DEFAULT_SIZE = 13;
 	public static final int MIN_SIZE = 8;
 	public static final int MAX_SIZE = 48;
-
-	/** The style class the JavaFX IDE puts on its root when it uses {@link #css()}. */
-	public static final String CSS_CLASS = "editor-font";
 
 	private static final EditorFont DEFAULTS = new EditorFont(null, DEFAULT_SIZE);
 
@@ -122,32 +118,6 @@ public final class EditorFont {
 
 	public EditorFont withFamily(String family) {
 		return new EditorFont(family, size);
-	}
-
-	/**
-	 * A stylesheet giving the JavaFX IDE's script editor and console this font (for a root with
-	 * {@link #CSS_CLASS}); the line numbers are a little smaller, as they always were. The standard
-	 * font is JavaFX's logical monospaced font.
-	 */
-	public String css() {
-		return css(null);
-	}
-
-	/**
-	 * As {@link #css()}, with the family the standard font is on this computer.
-	 *
-	 * @param standardFamily the family of the standard monospaced font, or null for JavaFX's logical one
-	 */
-	public String css(String standardFamily) {
-		// one family: JavaFX's CSS takes no list of them (a list falls back to the System font)
-		String name = family != null ? family : standardFamily;
-		String f = name == null ? "monospace" : "\"" + name.replace("\"", "") + "\"";
-		String p = ".root." + CSS_CLASS;
-		// .text too: RichTextFX's text doesn't take the font from the area
-		return p + " .script-editor, " + p + " .script-editor .text, " + p + " .console, " + p + " .console .text"
-				+ " { -fx-font-family: " + f + "; -fx-font-size: " + size
-				+ "px; }\n" + p + " .script-editor .lineno, " + p + " .script-editor .lineno .text { -fx-font-family: " + f + "; -fx-font-size: "
-				+ Math.max(MIN_SIZE, size - 2) + "px; }\n";
 	}
 
 	@Override

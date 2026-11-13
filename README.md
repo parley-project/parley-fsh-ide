@@ -24,29 +24,19 @@ Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   be edited while paused
 - Parse-tree views of the script
 
-## Two front ends
+## The IDE
 
-- **Swing**: `us.bringardner.fsh.ide.FshIDE` (the jar's main class), the full IDE.
-- **JavaFX**: `us.bringardner.fsh.ide.fx.FshIdeFx`. The editor (line numbers, shell colouring,
-  syntax errors marked as you type), find and replace, go to line, completion of templates and
-  variables (Ctrl+Space), open/save on any file system through parley-files-fx's chooser, recent
-  files (shared with the Swing IDE), script arguments and redirects, Run/Stop, a console that
-  takes typed input, debugging (breakpoints with conditions and hit counts that follow their
-  line, watchpoints on variables, stepping, the paused line marked, variables editable while
-  paused, the statement log)
-  the script's syntax tree, folding of if/for/while/case/{} blocks, and spell checking of
-  comments and quoted text (suggestions on right-click; your own words go in
-  `~/.fsh-ide/words.txt`).
+`us.bringardner.fsh.ide.FshIDE` (the jar's main class) is the IDE, a Swing application. It uses
+the UI-free `us.bringardner.fsh.ide.core` package for running, debugging, files and settings.
 
-Both use the UI-free `us.bringardner.fsh.ide.core` package for running, debugging, files and
-settings.
+A JavaFX IDE was built beside it until November 2026. It is no longer part of fsh-ide; the tag
+`javafx-final` is the last commit that has it.
 
 ## Requirements
 
 - Java 11 or later, like fsh and the rest of the library
 - fsh, which brings parley-files and its FTP and SFTP file systems
-- For the Swing IDE: parley-files-swing
-- For the JavaFX IDE: JavaFX 17 LTS (17.0.20), RichTextFX and parley-files-fx
+- parley-files-swing and swing-widgets
 
 ## Build and run
 
@@ -64,19 +54,19 @@ recent files in Java preferences. Both are copied across from BjlShellIde's
 locations the first time fsh-ide starts.
 
 Settings… (⌘, on macOS, in the application menu; Ctrl+, at the end of the File menu elsewhere) sets the look: the theme and font, shared with the other Parley applications,
-and kept in Java preferences, so both IDEs share it; each has its own Settings dialog. The script editors'
+and kept in Java preferences. The script editors'
 syntax colors are part of the theme: New theme... and Edit theme... there have a Script editor
 page, where a ready-made scheme can be loaded and any color changed. A new theme starts with the
 colors of the theme it is made from; the built-in themes have the light colors, or the Parley dark
 ones for the Dark theme.
 
 The script editors and the console have their own font, apart from the look's. View > Editor
-Font... chooses it, a fixed-width family and a size, for every window, and both IDEs keep it in Java
+Font... chooses it, a fixed-width family and a size, for every window, kept in Java
 preferences. View > Bigger Text and Smaller Text (⌘+ and ⌘−, Ctrl on Windows and Linux) change the
 size in the window you're in, for now only: other windows and the font kept don't change. Reset Text
 Size (⌘0) puts the window back to the font chosen with Editor Font....
 
-Folding is on the bracket keys, the same in both IDEs: ⌥⌘[ folds the block the caret is in and
+Folding is on the bracket keys: ⌥⌘[ folds the block the caret is in and
 ⌥⌘] unfolds it; with Shift, all blocks (Ctrl and Alt on Windows and Linux).
 
 ## Arguments and redirects
@@ -112,7 +102,7 @@ variables work as before.
 
 ## Debugging on another machine
 
-**Run > Debug Remote...** (both IDEs) debugs a script that runs on another machine. It asks for
+**Run > Debug Remote...** debugs a script that runs on another machine. It asks for
 the machine, the port, and what to debug there:
 
 | | On the other machine | Here |
@@ -143,8 +133,8 @@ reach the port is trusted. The last settings are kept in `~/.fsh-ide/Config.xml`
 (`LoupeSession` and `DapSession` are the two sessions).
 
 As through the adapter in this JVM: no standard input for a script the IDE starts, no log of
-every statement, no watchpoints. In the Swing IDE the variables of a remote script are shown but
-can't be changed (the JavaFX IDE changes them through the adapter). A stop inside a sourced
+every statement, no watchpoints. The variables of a remote script are shown but
+can't be changed. A stop inside a sourced
 file shows that file's line number on the main script (only the main script's text is shown).
 
 ## License

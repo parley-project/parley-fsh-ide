@@ -35,9 +35,8 @@ import javax.swing.border.EmptyBorder;
 import us.bringardner.parley.brand.ParleyBrand;
 
 /**
- * Help &gt; About for the Swing IDE: Margot on the Parley tower beside fsh-ide's name and
- * version, in the Parley palette (ink background, gold text). The JavaFX IDE has its own,
- * {@code fx.AboutStage}, which looks the same.
+ * Help &gt; About: Margot on the Parley tower beside fsh-ide's name and
+ * version, in the Parley palette (ink background, gold text).
  */
 public class AboutWindow extends JFrame {
 

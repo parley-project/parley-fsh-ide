@@ -36,7 +36,7 @@ import us.bringardner.fsh.ide.core.RemoteDebug.Mode;
 
 /**
  * Run &gt; Debug Remote...: the machine and port, the protocol, what to debug there, and (for
- * a script file there) its path; as the JavaFX IDE's dialog. Debug gives the settings; closing it any other
+ * a script file there) its path. Debug gives the settings; closing it any other
  * way gives nothing.
  */
 public class RemoteDebugDialog extends JDialog {

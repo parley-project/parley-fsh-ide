@@ -2,10 +2,16 @@
 
 ## 1.1.0 (unreleased)
 
+### Removed (2026-11-12: the JavaFX IDE)
+
+- The JavaFX IDE (`us.bringardner.fsh.ide.fx`, started by `FshIdeFx`) is no longer part of fsh-ide,
+  with its tests, its stylesheet and its libraries (JavaFX, RichTextFX, fx-widgets, parley-files-fx).
+  fsh-ide is the Swing IDE. The tag `javafx-final` is the last commit that has the JavaFX IDE, as it
+  was. Entries below that speak of "both IDEs" or of the JavaFX IDE describe it as it was then.
+
 ### Changed (2026-11-13: the name)
 
-- The IDE is named **Fsh Studio** in the application menu, Help > About and the JavaFX IDE's window
-  titles. The project, jar, native binary and `~/.fsh-ide` folder keep the name fsh-ide.
+- The IDE is named **Fsh Studio** in the application menu, Help > About. The project, jar, native binary and `~/.fsh-ide` folder keep the name fsh-ide.
 
 ### Changed (2026-11-12: the native image's settings redone)
 

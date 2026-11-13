@@ -16,7 +16,7 @@ import us.bringardner.fsh.FshList;
 import us.bringardner.fsh.ShellContext;
 import us.bringardner.fsh.Argument;
 
-/** Showing and changing a paused script's variables, the same in both IDEs. */
+/** Showing and changing a paused script's variables. */
 public class TestDebugVariables {
 
 	/**

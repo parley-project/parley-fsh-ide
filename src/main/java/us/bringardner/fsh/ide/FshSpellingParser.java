@@ -34,7 +34,7 @@ import org.fife.ui.rsyntaxtextarea.parser.ParserNotice;
 import us.bringardner.fsh.ide.core.SpellChecking;
 
 /**
- * Spell checking for the Swing editor, the same as the JavaFX editor's (fx.ScriptEditor): the words
+ * Spell checking for the editor: the words
  * SpellChecking.misspelled finds in the comments and quoted text, against the one dictionary
  * SpellChecking.english() reads (with the user's words in ~/.fsh-ide/words.txt), underlined; the
  * right-click menu offers suggestions, "Ignore" (until the IDE closes) and "Add to Dictionary".
@@ -92,7 +92,7 @@ class FshSpellingParser extends AbstractParser {
 		return result;
 	}
 
-	/** The squiggle's colour: the JavaFX editor's, light or dark. */
+	/** The squiggle's colour, light or dark. */
 	private Color underline() {
 		Color bg = area.getBackground();
 		boolean dark = bg != null && (bg.getRed()*299 + bg.getGreen()*587 + bg.getBlue()*114)/1000 < 128;

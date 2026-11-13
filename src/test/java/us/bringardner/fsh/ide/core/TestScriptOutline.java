@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-/** The outline both IDEs show: the script's functions and variables, with their lines. */
+/** The outline the IDE shows: the script's functions and variables, with their lines. */
 public class TestScriptOutline {
 
 	private static ScriptOutline outline(String code) {

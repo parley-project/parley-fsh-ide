@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
-/** The core is shared by the Swing IDE and a JavaFX one, so it mustn't use either toolkit. */
+/** The core is shared with fshdb, which has no display, so it mustn't use a UI toolkit. */
 public class TestCoreHasNoUi {
 
 	// fsh's DebugContext.isBreakpoint takes a java.awt.Point (a plain value, no UI)

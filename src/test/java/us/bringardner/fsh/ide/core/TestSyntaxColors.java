@@ -67,17 +67,6 @@ public class TestSyntaxColors {
 	}
 
 	@Test
-	public void theConsoleGetsTheEditorsBackgroundAndText() {
-		SyntaxColors gold = SyntaxColors.matching(0xF2CE71, 0x967B28, 0xFFFFFF, 0x000000, false);
-		String css = gold.css();
-		assertTrue(css.contains(".root.syntax-colors .console { -fx-background-color: #FDF6E5; }"), css);
-		assertTrue(css.contains(".root.syntax-colors .console .text { -fx-fill: " + gold.hex(SyntaxColors.TEXT) + "; }"));
-		// .text first: prompts and errors are .text too, and the later rule wins
-		assertTrue(css.indexOf(".console .text") < css.indexOf(".console .error"));
-		assertTrue(SyntaxColors.PARLEY_DARK.css().contains(".console .error { -fx-fill: #E06C5A; }"));
-	}
-
-	@Test
 	public void theSchemesHaveEveryColor() {
 		assertEquals(8, SyntaxColors.SCHEMES.size());
 		assertEquals(SyntaxColors.ROLES.size(), SyntaxColors.KEYS.size());
@@ -134,17 +123,6 @@ public class TestSyntaxColors {
 		assertEquals(0xFFFFFF, c.rgb(0), "a copy");
 		assertThrows(IllegalArgumentException.class, ()->SyntaxColors.custom(new int[3]));
 		assertThrows(IllegalArgumentException.class, ()->SyntaxColors.custom(null));
-	}
-
-	@Test
-	public void theJavaFxStylesheetHasTheColors() {
-		SyntaxColors c = SyntaxColors.named("Monokai").withColor(SyntaxColors.KEYWORDS, 0x00C0FF);
-		String css = c.css();
-		assertTrue(css.contains(".root.syntax-colors .script-editor .keyword { -fx-fill: #00C0FF; }"), css);
-		assertTrue(css.contains(".script-editor { -fx-background-color: #2E2E2E; }"), css);
-		assertTrue(css.contains(".current-line { -fx-background-color: #33401C; }"), "dark: a dark debug line");
-		assertTrue(css.indexOf(" .text {") < css.indexOf(" .keyword {"), "keywords after plain text");
-		assertTrue(SyntaxColors.LIGHT.css().contains(".current-line { -fx-background-color: #D9F2D9; }"));
 	}
 
 	@Test
