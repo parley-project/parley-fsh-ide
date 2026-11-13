@@ -143,6 +143,84 @@ public class TestDebugSession {
 		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
 	}
 
+	/** Step Out runs the rest of the function and stops at the first statement after the call. */
+	@Test
+	public void stepOutRunsTheRestOfTheFunction() throws Exception {
+		breakpoint(1);
+		start("f() {\n  x=1\n  x=2\n  x=3\n}\nf\ny=2\nz=3\n");
+		assertEquals(1, nextPause().line());
+		session.stepToReturn();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(6, p.line(), "the statement after the call");
+		assertEquals("3", var(p, "x"));
+		assertEquals("null", var(p, "y"));
+		// the step is over: the next one is an ordinary Step Over
+		session.stepOver();
+		assertEquals(7, nextPause().line());
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	/** From a function another function called: out to that one, not to the script. */
+	@Test
+	public void stepOutGoesBackOneFunction() throws Exception {
+		breakpoint(1);
+		start("g() {\n  a=1\n  a=2\n}\nf() {\n  g\n  b=1\n  b=2\n}\nf\nc=1\n");
+		assertEquals(1, nextPause().line());
+		session.stepToReturn();
+		RecordingListener.Pause p = nextPause();
+		assertEquals(6, p.line(), "in f, after the call of g");
+		assertEquals("2", var(p, "a"));
+		assertEquals("null", var(p, "b"));
+		session.stepToReturn();
+		p = nextPause();
+		assertEquals(10, p.line(), "in the script, after the call of f");
+		assertEquals("2", var(p, "b"));
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+	}
+
+	/** A breakpoint on the way stops it sooner; then the step is over. */
+	@Test
+	public void stepOutStopsAtABreakpointOnTheWay() throws Exception {
+		breakpoint(1);
+		breakpoint(3);
+		start("f() {\n  x=1\n  x=2\n  x=3\n}\nf\ny=2\n");
+		assertEquals(1, nextPause().line());
+		session.stepToReturn();
+		assertEquals(3, nextPause().line());
+		// (resumed: it doesn't stop after the call, the step out having ended at the breakpoint)
+		session.resume();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	/** Outside a function there's nothing to step out of: the script runs to a breakpoint or its end. */
+	@Test
+	public void stepOutOutsideAFunctionRunsOn() throws Exception {
+		breakpoint(0);
+		breakpoint(3);
+		start("x=1\nx=2\nx=3\nx=4\nx=5\n");
+		assertEquals(0, nextPause().line());
+		session.stepToReturn();
+		assertEquals(3, nextPause().line());
+		session.stepToReturn();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
+	/** Nothing after the call: the script ends. */
+	@Test
+	public void stepOutWhenTheCallIsTheLastStatementRunsToTheEnd() throws Exception {
+		breakpoint(1);
+		start("f() {\n  x=1\n}\nf\n");
+		assertEquals(1, nextPause().line());
+		session.stepToReturn();
+		assertEquals(0, finished.get(10, TimeUnit.SECONDS));
+		assertNull(listener.pauses.poll());
+	}
+
 	@Test
 	public void stepOverAtAFunctionsEndGoesBackToTheCaller() throws Exception {
 		breakpoint(1);

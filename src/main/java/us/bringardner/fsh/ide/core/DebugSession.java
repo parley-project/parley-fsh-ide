@@ -119,6 +119,8 @@ public class DebugSession extends DebugContext {
 	private final java.util.TreeMap<Integer,Visit> visits = new java.util.TreeMap<>();
 	// Step Over: the call depth it started at (it ends when that depth's visit does)
 	private boolean steppingOver;
+	// Step Out: it ends at the first statement in a caller of the function at stepDepth
+	private boolean steppingOut;
 	private int stepDepth;
 
 	/**
@@ -169,8 +171,10 @@ public class DebugSession extends DebugContext {
 		resume();
 	}
 
+	// (a Step Over or a Step Out that hasn't ended is given up)
 	private synchronized void endStepOver() {
 		steppingOver = false;
+		steppingOut = false;
 	}
 
 	public boolean isActive() {
@@ -276,6 +280,25 @@ public class DebugSession extends DebugContext {
 		}
 	}
 
+	/**
+	 * Step Out: runs the rest of the function it stopped in (or of the file it sourced), and stops
+	 * at the first statement after the call, back in the caller; sooner at a breakpoint or a
+	 * watchpoint on the way. Outside a function there is nothing to step out of: the script runs
+	 * on, to its next breakpoint or its end (as Loupe's and other debuggers' Step Out).
+	 */
+	@Override
+	public void stepToReturn() {
+		listener.resuming();
+		synchronized (this) {
+			endStepOver();
+			if( currentCtx != null ) {
+				steppingOut = true;
+				stepDepth = currentCtx.callFrames.size();
+			}
+			setCurrentState(RunState.Running);
+		}
+	}
+
 	/** Step Into: stops at the next statement, the next one on the same line or in a function it calls. */
 	@Override
 	public void stepInto() {
@@ -367,6 +390,11 @@ public class DebugSession extends DebugContext {
 			breakpointHit(linePt, ctx);
 			return true;
 		}
+		if( steppingOut && depth < stepDepth ) {
+			// Step Out is done: back in a caller (a breakpoint here counts its hit too)
+			breakpointHit(linePt, ctx);
+			return true;
+		}
 		if( runToLine >= 0 && editorLine(linePt.x) == runToLine ) {
 			// Run to Line's line (a breakpoint here counts its hit too)
 			breakpointHit(linePt, ctx);
@@ -438,6 +466,7 @@ public class DebugSession extends DebugContext {
 			// stopped (at the step's end, a breakpoint, a watchpoint or Suspend): the step is
 			// over (and Run to Line, wherever it stopped), and the script is visiting this line
 			steppingOver = false;
+			steppingOut = false;
 			runToLine = -1;
 			pausedStatement = steppingInto ? statementOnLine(current, currentSource) : null;
 			steppingInto = false;
