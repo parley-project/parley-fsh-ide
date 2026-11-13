@@ -11,7 +11,7 @@
 
 ### Changed (2026-11-13: the name)
 
-- The IDE is named **Fsh Studio** in the application menu, Help > About. The native binary is `studio` (`studio.exe`); the project, jar, the native archives'
+- The IDE is named **Fsh Studio** in the application menu, Help > About. The native binary is `fshstudio` (`fshstudio.exe`); the project, jar, the native archives'
   names and the `~/.fsh-ide` folder keep the name fsh-ide.
 
 ### Changed (2026-11-12: the native image's settings redone)

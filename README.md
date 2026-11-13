@@ -43,7 +43,7 @@ A JavaFX IDE was built beside it until November 2026. It is no longer part of fs
 ```sh
 mvn package                 # jar in target/
 mvn -Pjdbc package          # also bundle the JDBC file system
-mvn -Pnative package        # GraalVM native binary named studio
+mvn -Pnative package        # GraalVM native binary named fshstudio
 java -cp ... us.bringardner.fsh.ide.FshIDE
 ```
 

@@ -57,7 +57,7 @@ jobs:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
       NAME: fsh-ide
       # (the native binary; the archives keep NAME)
-      BINARY: studio
+      BINARY: fshstudio
 
     steps:
       - uses: actions/checkout@v4
