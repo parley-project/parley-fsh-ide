@@ -187,7 +187,7 @@ public final class DapSession implements AdapterSession {
 			throw new IllegalStateException("Already started");
 		}
 		started = true;
-		Capabilities caps = get(adapter.initialize(new InitializeRequestArguments().setClientID("fsh-ide").setClientName("fsh-ide")
+		Capabilities caps = get(adapter.initialize(new InitializeRequestArguments().setClientID("fshstudio").setClientName("Fsh Studio")
 				.setAdapterID("fsh").setLinesStartAt1(true).setColumnsStartAt1(true).setPathFormat("path")));
 		canTerminate = caps != null && Boolean.TRUE.equals(caps.getSupportsTerminateRequest());
 		Map<String,Object> args = new LinkedHashMap<>();

@@ -124,7 +124,7 @@ public final class ShellEnvironment {
 			forScripts();
 			String s = status;
 			if( s != null ) {
-				log.accept("fsh-ide: "+s+" (Help > Script Environment... says more)\n");
+				log.accept("Fsh Studio: "+s+" (Help > Script Environment... says more)\n");
 			}
 		}, "script-environment-status").start();
 	}

@@ -54,7 +54,7 @@ public class TestShellEnvironment {
 			for(int run=0; run < 2; run++) {
 				ShellEnvironment.logStatus(log::add);
 				String line = assertDoesNotThrow(()->log.poll(10, java.util.concurrent.TimeUnit.SECONDS));
-				assertTrue(line != null && line.startsWith("fsh-ide: Scripts run with the environment of the login shell"), line);
+				assertTrue(line != null && line.startsWith("Fsh Studio: Scripts run with the environment of the login shell"), line);
 			}
 			String report = ShellEnvironment.report();
 			assertTrue(report.contains("FSH_ENV: /x/env.fsh"), report);

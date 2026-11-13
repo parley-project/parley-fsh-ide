@@ -1,9 +1,9 @@
-# When a release is published, a native (GraalVM) build of fsh-ide (the fsh script editor and
+# When a release is published, a native (GraalVM) build of Fsh Studio (the fsh script editor and
 # debugger) is made on each platform and attached to that release as a separate download:
 #
-#   fsh-ide-VERSION-windows-x86_64.zip
-#   fsh-ide-VERSION-linux-x86_64.tar.gz
-#   fsh-ide-VERSION-macos-aarch64.tar.gz       fsh-ide-VERSION-macos-x86_64.tar.gz
+#   fshstudio-VERSION-windows-x86_64.zip
+#   fshstudio-VERSION-linux-x86_64.tar.gz
+#   fshstudio-VERSION-macos-aarch64.tar.gz       fshstudio-VERSION-macos-x86_64.tar.gz
 #
 # each with a .sha256 beside it. Run by hand (Actions > release-binaries > Run workflow) it builds
 # the same and keeps them as workflow artifacts so they can be tested before anything is published;
@@ -55,9 +55,7 @@ jobs:
 
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
-      NAME: fsh-ide
-      # (the native binary; the archives keep NAME)
-      BINARY: fshstudio
+      NAME: fshstudio
 
     steps:
       - uses: actions/checkout@v4
@@ -122,11 +120,11 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath ".\target\$($env:BINARY).exe" -WorkingDirectory .\target -PassThru
+          $p = Start-Process -FilePath ".\target\$($env:NAME).exe" -WorkingDirectory .\target -PassThru
           Start-Sleep -Seconds 20
-          if ($p.HasExited) { throw "$($env:BINARY).exe exited with code $($p.ExitCode)" }
+          if ($p.HasExited) { throw "$($env:NAME).exe exited with code $($p.ExitCode)" }
           Stop-Process -Id $p.Id -Force
-          Write-Output "$($env:BINARY).exe stayed up"
+          Write-Output "$($env:NAME).exe stayed up"
 
       - name: Smoke test (Linux, macOS)
         if: matrix.platform != 'windows'
@@ -134,11 +132,11 @@ jobs:
         run: |
           set -e
           if [ "${{ matrix.platform }}" = linux ]; then
-            xvfb-run -a sh -c "cd target && ./$BINARY & pid=\$!; sleep 20; kill -0 \$pid; kill \$pid"
+            xvfb-run -a sh -c "cd target && ./$NAME & pid=\$!; sleep 20; kill -0 \$pid; kill \$pid"
           else
-            (cd target && ./$BINARY & pid=$!; sleep 20; kill -0 $pid; kill $pid)
+            (cd target && ./$NAME & pid=$!; sleep 20; kill -0 $pid; kill $pid)
           fi
-          echo "$BINARY stayed up"
+          echo "$NAME stayed up"
 
       # The executable, the JDK's AWT libraries it loads, and lib/fontconfig.bfc, kept together
       - name: Package (Windows)
@@ -149,10 +147,10 @@ jobs:
           $name = "$($env:NAME)-$v-windows-x86_64"
           $stage = Join-Path $env:RUNNER_TEMP $name
           New-Item -ItemType Directory -Force "$stage\lib" | Out-Null
-          Copy-Item "target\$($env:BINARY).exe", target\*.dll $stage
+          Copy-Item "target\$($env:NAME).exe", target\*.dll $stage
           if (Test-Path target\lib\fontconfig.bfc) { Copy-Item target\lib\fontconfig.bfc "$stage\lib" }
           if (Test-Path LICENSE) { Copy-Item LICENSE $stage }
-          "Run $($env:BINARY).exe. Keep the files in this folder together (the .dll files and lib\fontconfig.bfc are loaded by it)." | Set-Content "$stage\README.txt"
+          "Run $($env:NAME).exe. Keep the files in this folder together (the .dll files and lib\fontconfig.bfc are loaded by it)." | Set-Content "$stage\README.txt"
           New-Item -ItemType Directory -Force dist | Out-Null
           Compress-Archive -Path "$stage\*" -DestinationPath "dist\$name.zip"
           $h = (Get-FileHash "dist\$name.zip" -Algorithm SHA256).Hash.ToLower()
@@ -167,17 +165,17 @@ jobs:
           name="$NAME-$v-${{ matrix.platform }}-${{ matrix.arch }}"
           stage="$RUNNER_TEMP/$name"
           mkdir -p "$stage/lib" dist
-          cp "target/$BINARY" "$stage/"
+          cp "target/$NAME" "$stage/"
           cp target/*.so target/*.dylib "$stage/" 2>/dev/null || true
           if [ -f target/lib/fontconfig.bfc ]; then cp target/lib/fontconfig.bfc "$stage/lib/"; fi
           if [ -f LICENSE ]; then cp LICENSE "$stage/"; fi
-          printf 'Run ./%s. Keep the files in this folder together (the shared libraries and lib/fontconfig.bfc are loaded by it).\n' "$BINARY" > "$stage/README.txt"
+          printf 'Run ./%s. Keep the files in this folder together (the shared libraries and lib/fontconfig.bfc are loaded by it).\n' "$NAME" > "$stage/README.txt"
           tar -czf "dist/$name.tar.gz" -C "$RUNNER_TEMP" "$name"
           (cd dist && shasum -a 256 "$name.tar.gz" > "$name.tar.gz.sha256")
 
       - uses: actions/upload-artifact@v4
         with:
-          name: fsh-ide-${{ matrix.platform }}-${{ matrix.arch }}
+          name: fshstudio-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/*
           if-no-files-found: error
 

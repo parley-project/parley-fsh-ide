@@ -58,7 +58,7 @@ public class RunSettingsStore {
 	private static final long DAY_MS = 24L*60*60*1000;
 	/** Using a script updates its entry's last-used time at most this often. */
 	static final long TOUCH_MS = 24L*60*60*1000;
-	private static final String HEADER = "# fsh-ide and fshdb: the arguments and redirects scripts are run with,"
+	private static final String HEADER = "# Fsh Studio and fshdb: the arguments and redirects scripts are run with,"
 			+ " one script per line (last used, script, arguments, stdin, stdout, stderr; tab-separated)";
 
 	private static volatile RunSettingsStore user;

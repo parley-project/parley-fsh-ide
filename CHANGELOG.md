@@ -11,8 +11,11 @@
 
 ### Changed (2026-11-13: the name)
 
-- The IDE is named **Fsh Studio** in the application menu, Help > About. The native binary is `fshstudio` (`fshstudio.exe`); the project, jar, the native archives'
-  names and the `~/.fsh-ide` folder keep the name fsh-ide.
+- The IDE is named **Fsh Studio** (it was fsh-ide): in the application menu, Help > About, the
+  README, the log lines and the header of `~/.fsh-ide/run-settings`, and to a debug adapter as its
+  client. Its command, native binary (`fshstudio`, `fshstudio.exe`) and release archives
+  (`fshstudio-V-PLATFORM-ARCH`) are named `fshstudio`. The project, the Maven artifact `fsh-ide`,
+  the settings ids and the `~/.fsh-ide` folder keep their names, so nothing saved is lost.
 
 ### Changed (2026-11-12: the native image's settings redone)
 

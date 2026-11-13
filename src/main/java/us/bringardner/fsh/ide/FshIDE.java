@@ -1107,7 +1107,7 @@ public class FshIDE extends JFrame  {
 	private boolean adapterStopping;
 
 	private static final java.util.concurrent.ExecutorService ADAPTER = java.util.concurrent.Executors.newCachedThreadPool(r->{
-		Thread t = new Thread(r, "fsh-ide adapter requests");
+		Thread t = new Thread(r, "Fsh Studio adapter requests");
 		t.setDaemon(true);
 		return t;
 	});

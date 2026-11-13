@@ -1,4 +1,4 @@
-# fsh-ide
+# Fsh Studio
 
 An editor and debugger for shell scripts. It uses
 [fsh](https://github.com/parley-project/parley-fsh), the FileSource Shell, as the
@@ -6,10 +6,10 @@ interpreter. fsh aims to be close to bash/POSIX, so the IDE works for those scri
 too. Scripts can be opened from and saved to any
 [parley-files](https://github.com/parley-project/parley-files) file system.
 
-<img src="https://raw.githubusercontent.com/parley-project/parley-brand/master/src/main/resources/us/bringardner/parley/brand/parley-icon-terminal-128.png" alt="The fsh-ide icon: the Parley tower with a terminal badge" width="96" align="right">
+<img src="https://raw.githubusercontent.com/parley-project/parley-brand/master/src/main/resources/us/bringardner/parley/brand/parley-icon-terminal-128.png" alt="The Fsh Studio icon: the Parley tower with a terminal badge" width="96" align="right">
 
 **An example of what [Parley](https://github.com/parley-project/parley-parent#what-parley-can-help-you-build)
-can help you build.** fsh-ide is an application, not part of the Parley library: it uses Parley
+can help you build.** Fsh Studio is an application, not part of the Parley library: it uses Parley
 the same way your own application would. It wears the Parley brand from
 [parley-brand](https://github.com/parley-project/parley-brand), with a terminal badge.
 
@@ -29,7 +29,7 @@ Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 `us.bringardner.fsh.ide.FshIDE` (the jar's main class) is the IDE, a Swing application. It uses
 the UI-free `us.bringardner.fsh.ide.core` package for running, debugging, files and settings.
 
-A JavaFX IDE was built beside it until November 2026. It is no longer part of fsh-ide; the tag
+A JavaFX IDE was built beside it until November 2026. It is no longer part of Fsh Studio; the tag
 `javafx-final` is the last commit that has it.
 
 ## Requirements
@@ -51,7 +51,7 @@ java -cp ... us.bringardner.fsh.ide.FshIDE
 
 Templates and settings are kept in `~/.fsh-ide/Config.xml`; window positions and
 recent files in Java preferences. Both are copied across from BjlShellIde's
-locations the first time fsh-ide starts.
+locations the first time Fsh Studio starts.
 
 Settings… (⌘, on macOS, in the application menu; Ctrl+, at the end of the File menu elsewhere) sets the look: the theme and font, shared with the other Parley applications,
 and kept in Java preferences. The script editors'
@@ -73,7 +73,7 @@ Folding is on the bracket keys: ⌥⌘[ folds the block the caret is in and
 
 A script's arguments and its stdin, stdout and stderr files are not written into the script:
 the script file holds only its code, so it runs the same (and `$LINENO` and error messages give
-the same lines) in fsh-ide, fshdb, fsh or bash. They're kept per user in
+the same lines) in Fsh Studio, fshdb, fsh or bash. They're kept per user in
 `~/.fsh-ide/run-settings`, by the script's full path, when you save the script; a script with
 none has nothing kept, and clearing them and saving removes what was kept. fshdb uses them too.
 
