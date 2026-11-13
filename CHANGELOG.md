@@ -9,6 +9,12 @@
   fsh-ide is the Swing IDE. The tag `javafx-final` is the last commit that has the JavaFX IDE, as it
   was. Entries below that speak of "both IDEs" or of the JavaFX IDE describe it as it was then.
 
+### Changed (2026-11-13: tests)
+
+- The tests' JVM is a macOS agent (`-Dapple.awt.UIElement=true`): no Dock icon, and it doesn't take
+  the focus from what you are doing. The windows the tests open still show on a Mac (its JDK has no
+  virtual display); on Linux, `xvfb-run -a mvn test` keeps them off the screen.
+
 ### Changed (2026-11-13: the name)
 
 - The IDE is named **Fsh Studio** (it was fsh-ide): in the application menu, Help > About, the

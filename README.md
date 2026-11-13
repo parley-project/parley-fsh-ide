@@ -44,6 +44,7 @@ A JavaFX IDE was built beside it until November 2026. It is no longer part of Fs
 mvn package                 # jar in target/
 mvn -Pjdbc package          # also bundle the JDBC file system
 mvn -Pnative package        # GraalVM native binary named fshstudio
+xvfb-run -a mvn test        # the tests on a virtual display (Linux, with xvfb): no window shows
 java -cp ... us.bringardner.fsh.ide.FshIDE
 ```
 

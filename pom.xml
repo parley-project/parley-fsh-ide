@@ -304,6 +304,10 @@
 						<!-- A JVM per test class (first needed by the JavaFX IDE's tests; kept, so the
 						     Swing tests go on running apart from each other) -->
 						<reuseForks>false</reuseForks>
+						<!-- macOS: the tests' JVM is an agent, with no Dock icon, and doesn't take the
+						     focus from what you are doing (the windows the tests open still show; no
+						     virtual display is possible with the macOS JDK). Other systems ignore it. -->
+						<argLine>-Dapple.awt.UIElement=true</argLine>
 					</configuration>
 				</plugin>
 			</plugins>
