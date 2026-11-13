@@ -77,6 +77,112 @@ public class TestDebugVariables {
 		assertEquals(List.of(), DebugVariables.list(null));
 	}
 
+	/** What an editor's text sets is a value of the type the variable has. */
+	@Test
+	public void changedValuesKeepTheVariablesType() {
+		// text stays text, whatever it looks like (and a variable with no value yet gets text)
+		assertEquals("12", DebugVariables.parseValue("x", "12"));
+		assertEquals(" a\nb ", DebugVariables.parseValue("x", " a\nb "));
+		assertEquals("true", DebugVariables.parseValue(null, "true"));
+
+		assertEquals(Boolean.TRUE, DebugVariables.parseValue(Boolean.FALSE, " TRUE "));
+		assertThrows(IllegalArgumentException.class, ()->DebugVariables.parseValue(Boolean.FALSE, "1"));
+
+		// numbers: the same class of number
+		assertEquals(Long.valueOf(-42), DebugVariables.parseValue(Long.valueOf(7), " -42\n"));
+		assertEquals(Integer.valueOf(500), DebugVariables.parseValue(Integer.valueOf(7), "500"));
+		assertEquals(Double.valueOf(1.5), DebugVariables.parseValue(Double.valueOf(7), "1.5"));
+		assertEquals(new java.math.BigInteger("123456789012345678901234567890"),
+				DebugVariables.parseValue(java.math.BigInteger.ONE, "123456789012345678901234567890"));
+		IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()->DebugVariables.parseValue(Long.valueOf(7), "seven"));
+		assertTrue(e.getMessage().contains("whole number") && e.getMessage().contains("seven"), e.getMessage());
+		assertThrows(IllegalArgumentException.class, ()->DebugVariables.parseValue(Long.valueOf(7), "1.5"));
+		assertThrows(IllegalArgumentException.class, ()->DebugVariables.parseValue(Long.valueOf(7), ""));
+		e = assertThrows(IllegalArgumentException.class, ()->DebugVariables.parseValue(Integer.valueOf(7), "99999999999"));
+		assertTrue(e.getMessage().contains("too big"), e.getMessage());
+		assertThrows(IllegalArgumentException.class, ()->DebugVariables.parseValue(Double.valueOf(7), "x"));
+	}
+
+	/** An array is edited one element to a line and stays an array. */
+	@Test
+	public void aChangedArrayStaysAnArray() {
+		FshList old = new FshList();
+		old.add("a b");
+		old.add("c");
+		assertEquals("a b\nc", DebugVariables.editText(old));
+		assertEquals(null, DebugVariables.editProblem(old));
+
+		Object changed = DebugVariables.parseValue(old, "a b\nsee\r\nd\n");
+		assertTrue(changed instanceof FshList, String.valueOf(changed.getClass()));
+		assertEquals(List.of("a b", "see", "d"), ((FshList) changed).getValues());
+		assertEquals(List.of(0, 1, 2), ((FshList) changed).getIndexes());
+		// no lines: no elements
+		assertEquals(0, ((FshList) DebugVariables.parseValue(old, "")).size());
+
+		// an array with holes keeps its indexes while it has as many elements
+		FshList holes = new FshList();
+		holes.set(2, "x");
+		holes.set(9, "y");
+		FshList same = (FshList) DebugVariables.parseValue(holes, "x\nz");
+		assertEquals(List.of(2, 9), same.getIndexes());
+		assertEquals(List.of("x", "z"), same.getValues());
+		assertEquals(List.of(0, 1, 2), ((FshList) DebugVariables.parseValue(holes, "x\ny\nz")).getIndexes());
+
+		// unchanged text changes nothing (one empty element isn't lost), and it's a copy
+		FshList empty = new FshList();
+		empty.add("");
+		FshList copy = (FshList) DebugVariables.parseValue(empty, DebugVariables.editText(empty));
+		assertEquals(1, copy.size());
+		assertTrue(copy != empty);
+
+		// an element with a line break can't be told from two: not changed as text
+		FshList lines = new FshList();
+		lines.add("one\ntwo");
+		assertTrue(DebugVariables.editProblem(lines) != null);
+		assertEquals(null, DebugVariables.editProblem("one\ntwo"));
+	}
+
+	/** An associative array is edited as key=value lines and stays one, of the same kind of map. */
+	@Test
+	public void aChangedAssociativeArrayStaysOne() {
+		Map<Object,Object> old = new java.util.TreeMap<>();
+		old.put("k", "v");
+		old.put("b", "x=y");
+		assertEquals("b=x=y\nk=v", DebugVariables.editText(old));
+		assertEquals(null, DebugVariables.editProblem(old));
+
+		Object changed = DebugVariables.parseValue(old, "k=v2\nnew=\nb=x=y\n");
+		assertTrue(changed instanceof java.util.TreeMap, String.valueOf(changed.getClass()));
+		assertEquals(Map.of("k", "v2", "new", "", "b", "x=y"), changed);
+		assertTrue(DebugVariables.parseValue(new java.util.LinkedHashMap<>(old), "a=1") instanceof java.util.LinkedHashMap);
+
+		IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()->DebugVariables.parseValue(old, "k=v\nnonsense"));
+		assertTrue(e.getMessage().contains("Line 2"), e.getMessage());
+		assertThrows(IllegalArgumentException.class, ()->DebugVariables.parseValue(old, "=v"));
+
+		Map<Object,Object> odd = new java.util.TreeMap<>();
+		odd.put("a=b", "v");
+		assertTrue(DebugVariables.editProblem(odd) != null);
+	}
+
+	/** Set in a script's context, a changed number and array are what the script then reads. */
+	@Test
+	public void theScriptReadsAChangedValueAsItsType() {
+		ShellContext ctx = new ShellContext(new Console());
+		ctx.setVariable("n", Long.valueOf(7));
+		FshList arr = new FshList();
+		arr.add("a");
+		ctx.setVariable("arr", arr);
+
+		DebugVariables.set(ctx, "n", DebugVariables.parseValue(ctx.getVariables().get("n"), "8"));
+		DebugVariables.set(ctx, "arr", DebugVariables.parseValue(ctx.getVariables().get("arr"), "a\nb c"));
+
+		assertEquals(Long.valueOf(8), ctx.getVariables().get("n"));
+		Object now = ctx.getVariables().get("arr");
+		assertTrue(now instanceof FshList, String.valueOf(now.getClass()));
+		assertEquals(List.of("a", "b c"), ((FshList) now).getValues());
+	}
+
 	@Test
 	public void setsVariablesAndPositionalParameters() {
 		Console console = new Console();

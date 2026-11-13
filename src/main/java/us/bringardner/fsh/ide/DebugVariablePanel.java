@@ -65,14 +65,6 @@ public class DebugVariablePanel extends JPanel  {
 	// shows a clicked variable (as "name = value") in the IDE's text area
 	private Consumer<String> onShowVariable = s->{};
 
-	/** Simple class name of a variable's value (the Type column), or "" for null. */
-	static String typeName(Object value) {
-		if( value == null ) {
-			return "";
-		}
-		return value.getClass().getSimpleName();
-	}
-
 	/** A variable's value as text ("" for null). */
 	static String valueText(Object value) {
 		return value == null ? "" : String.valueOf(value);
@@ -84,19 +76,81 @@ public class DebugVariablePanel extends JPanel  {
 	}
 
 	/**
-	 * The value a dialog's text sets: true or false for a Boolean variable, otherwise the text.
+	 * The value a dialog's text sets: one of the type the variable has now (see DebugVariables).
+	 *
+	 * @throws IllegalArgumentException with why, for text that isn't a value of that type
 	 */
 	static Object parseValue(Object oldValue, String text) {
 		return DebugVariables.parseValue(oldValue, text);
 	}
 
 	/**
-	 * One tab of variables: Name, Type and Value. The table is as wide as its widest value (it
+	 * A table's column headings in the theme's header colors: its header text on its header
+	 * background. (The look and feel's own renderer takes only the text's color from the theme: on
+	 * the Mac it draws the system's light heading behind it, where the theme's white header text
+	 * couldn't be read.) With the arrow of the column the table is sorted by, as the look's has.
+	 */
+	static class HeadingRenderer extends DefaultTableCellRenderer {
+		private static final long serialVersionUID = 1L;
+		// the column (the model's) whose heading is at the left, or -1: the others are centered
+		private final int leadingColumn;
+
+		HeadingRenderer(int leadingColumn) {
+			this.leadingColumn = leadingColumn;
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+			super.getTableCellRendererComponent(table, value, false, false, row, column);
+			javax.swing.table.JTableHeader header = table.getTableHeader();
+			// (read each time, so a theme chosen while the window is open shows)
+			java.awt.Color background = javax.swing.UIManager.getColor("TableHeader.background");
+			java.awt.Color foreground = javax.swing.UIManager.getColor("TableHeader.foreground");
+			if( background == null || foreground == null ) {
+				// no theme: the look's own pair
+				background = header.getBackground();
+				foreground = header.getForeground();
+			}
+			setOpaque(true);
+			setBackground(background);
+			setForeground(foreground);
+			setFont(header.getFont());
+			int modelColumn = table.convertColumnIndexToModel(column);
+			setHorizontalAlignment(modelColumn == leadingColumn ? javax.swing.SwingConstants.LEADING : javax.swing.SwingConstants.CENTER);
+			setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+			setIcon(sortIcon(table, modelColumn));
+			// a line under the headings and between them, in the text's color so it shows on the background
+			setBorder(javax.swing.BorderFactory.createCompoundBorder(
+					javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 1, foreground),
+					javax.swing.BorderFactory.createEmptyBorder(2, 6, 2, 6)));
+			return this;
+		}
+
+		// the arrow for the column the table is sorted by first, or null
+		private static javax.swing.Icon sortIcon(JTable table, int modelColumn) {
+			if( table.getRowSorter() == null || table.getRowSorter().getSortKeys().isEmpty()) {
+				return null;
+			}
+			javax.swing.RowSorter.SortKey key = table.getRowSorter().getSortKeys().get(0);
+			if( key.getColumn() != modelColumn ) {
+				return null;
+			}
+			switch (key.getSortOrder()) {
+			case ASCENDING: return javax.swing.UIManager.getIcon("Table.ascendingSortIcon");
+			case DESCENDING: return javax.swing.UIManager.getIcon("Table.descendingSortIcon");
+			default: return null;
+			}
+		}
+	}
+
+	/**
+	 * One tab of variables: Name and Value. The table is as wide as its widest value (it
 	 * scrolls sideways when that's wider than the tab), a click shows the variable in the text
 	 * area, and a double click opens its value in an editor.
 	 */
 	private class VariableTable {
-		private final String [] columnNames = {"Name","Type","Value"};
+		private static final int VALUE_COLUMN = 1;
+		private final String [] columnNames = {"Name","Value"};
 		private List<Variable> rows = new ArrayList<>();
 		private final AbstractTableModel model = new AbstractTableModel() {
 			private static final long serialVersionUID = 1L;
@@ -121,8 +175,7 @@ public class DebugVariablePanel extends JPanel  {
 				Variable val = rows.get(row);
 				switch (col) {
 				case 0: return val.getName();
-				case 1: return typeName(val.getValue());
-				case 2: return val.getValue();
+				case 1: return val.getValue();
 				default:
 					throw new IllegalArgumentException("Unexpected value: " + col);
 				}
@@ -189,14 +242,7 @@ public class DebugVariablePanel extends JPanel  {
 			table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 			table.setAutoCreateRowSorter(true);
 			// the Value column can be very wide: its heading at the left, where it can be seen
-			TableCellRenderer headings = table.getTableHeader().getDefaultRenderer();
-			table.getTableHeader().setDefaultRenderer((t, value, isSelected, hasFocus, row, column)->{
-				Component c = headings.getTableCellRendererComponent(t, value, isSelected, hasFocus, row, column);
-				if( c instanceof javax.swing.JLabel ) {
-					((javax.swing.JLabel) c).setHorizontalAlignment(t.convertColumnIndexToModel(column) == 2 ? javax.swing.SwingConstants.LEADING : javax.swing.SwingConstants.CENTER);
-				}
-				return c;
-			});
+			table.getTableHeader().setDefaultRenderer(new HeadingRenderer(VALUE_COLUMN));
 			table.getColumn("Value").setCellRenderer(new DefaultTableCellRenderer() {
 				private static final long serialVersionUID = 1L;
 
@@ -270,13 +316,19 @@ public class DebugVariablePanel extends JPanel  {
 			for(int col=0; col < table.getColumnCount(); col++ ) {
 				TableColumn column = table.getColumnModel().getColumn(col);
 				TableCellRenderer header = table.getTableHeader().getDefaultRenderer();
-				int width = header.getTableCellRendererComponent(table, column.getHeaderValue(), false, false, -1, col).getPreferredSize().width;
+				Component heading = header.getTableCellRendererComponent(table, column.getHeaderValue(), false, false, -1, col);
+				int width = heading.getPreferredSize().width;
+				javax.swing.Icon arrow = javax.swing.UIManager.getIcon("Table.ascendingSortIcon");
+				if( arrow != null && heading instanceof javax.swing.JLabel && ((javax.swing.JLabel) heading).getIcon() == null ) {
+					// room for the arrow the heading gets when the table is sorted by this column
+					width += arrow.getIconWidth()+((javax.swing.JLabel) heading).getIconTextGap();
+				}
 				for(int row=0; row < table.getRowCount(); row++ ) {
 					Component c = table.prepareRenderer(table.getCellRenderer(row, col), row, col);
 					width = Math.max(width, c.getPreferredSize().width);
 				}
 				width += 2*table.getIntercellSpacing().width + 8;
-				if( col == 2 ) {
+				if( table.convertColumnIndexToModel(col) == VALUE_COLUMN ) {
 					width = Math.max(width, 200);
 				}
 				column.setPreferredWidth(width);
@@ -461,6 +513,7 @@ public class DebugVariablePanel extends JPanel  {
 		panel.setLayout(new BorderLayout(0, 0));
 
 		JTable btable = new JTable(breakpointsTableModel);
+		btable.getTableHeader().setDefaultRenderer(new HeadingRenderer(-1));
 		breakpointsTable = btable;
 		btable.setToolTipText(EDIT_BREAKPOINT_HINT);
 		btable.addMouseListener(new MouseAdapter() {
@@ -526,6 +579,7 @@ public class DebugVariablePanel extends JPanel  {
 				}
 			}
 		});
+		watchpointsTable.getTableHeader().setDefaultRenderer(new HeadingRenderer(-1));
 		watchPanel.add(new JScrollPane(watchpointsTable), BorderLayout.CENTER);
 		tabbedPane.addTab("Watchpoints", null, watchPanel, "Stop when the script reads or writes a variable");
 
@@ -654,10 +708,36 @@ public class DebugVariablePanel extends JPanel  {
 		onShowVariable = handler == null ? s->{} : handler;
 	}
 
-	/** Opens a variable's value in a multi-line editor and sets what is typed there. */
+	/**
+	 * Opens a variable's value in a multi-line editor until what is typed there is a value of the
+	 * variable's type (it's said why it isn't) or the editor is cancelled.
+	 *
+	 * @return the text to set, or null for none
+	 */
+	private String askValue(Component parent, Variable v) {
+		// (an array one element to a line; one that can't be changed that way is only shown)
+		String problem = DebugVariables.editProblem(v.getValue());
+		String title = problem == null ? v.getName() : v.getName()+" (can't be changed here: "+problem+")";
+		String shown = DebugVariables.editText(v.getValue());
+		while( true ) {
+			String text = new VariableValueDialog(parent, title, shown, ctx != null && problem == null).showDialog();
+			if( text == null || ctx == null ) {
+				return null;
+			}
+			try {
+				parseValue(v.getValue(), text);
+				return text;
+			} catch (IllegalArgumentException e) {
+				javax.swing.JOptionPane.showMessageDialog(parent, e.getMessage(), v.getName(), javax.swing.JOptionPane.WARNING_MESSAGE);
+				// again, with what was typed
+				shown = text;
+			}
+		}
+	}
+
+	/** Opens a variable's value in an editor and sets what is typed there, as a value of the variable's type. */
 	private void editVariable(Component parent, Variable v) {
-		VariableValueDialog d = new VariableValueDialog(parent, v.getName(), valueText(v.getValue()), ctx != null);
-		String text = d.showDialog();
+		String text = askValue(parent, v);
 		if( text == null || ctx == null ) {
 			return;
 		}

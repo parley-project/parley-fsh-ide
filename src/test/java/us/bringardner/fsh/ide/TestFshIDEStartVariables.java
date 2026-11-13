@@ -46,7 +46,7 @@ public class TestFshIDEStartVariables {
 	private static String value(JTable table, String name) {
 		for(int row=0; row < table.getModel().getRowCount(); row++ ) {
 			if( name.equals(table.getModel().getValueAt(row, 0))) {
-				return String.valueOf(table.getModel().getValueAt(row, 2));
+				return String.valueOf(table.getModel().getValueAt(row, 1));
 			}
 		}
 		return null;

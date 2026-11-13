@@ -76,7 +76,7 @@ public class TestFshIDEShowsPausedLine {
 		javax.swing.JTable table = w.showDebugView(true).userTable();
 		for(int row=0; row < table.getModel().getRowCount(); row++ ) {
 			if( "x".equals(table.getModel().getValueAt(row, 0))) {
-				return String.valueOf(table.getModel().getValueAt(row, 2));
+				return String.valueOf(table.getModel().getValueAt(row, 1));
 			}
 		}
 		return null;

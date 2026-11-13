@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import us.bringardner.fsh.Console;
+import us.bringardner.fsh.FshList;
 import us.bringardner.fsh.ShellContext;
 
 /** A paused script's variables, for a debugger's variables view in any UI. */
@@ -138,15 +139,153 @@ public final class DebugVariables {
 		return ret;
 	}
 
-	/** The value an editor's text sets: true or false for a Boolean variable, otherwise the text. */
+	/**
+	 * The value an editor's text sets: one of the type the variable has now (oldValue's), so a
+	 * number stays a number and an array stays an array.
+	 * <ul>
+	 * <li>a Boolean: true or false</li>
+	 * <li>a whole number (Long, Integer, Short, Byte, BigInteger) or another number (Double, Float,
+	 * BigDecimal): that number</li>
+	 * <li>an array: an element for each line (see editText); an element keeps its index while the
+	 * number of lines is the number of elements, otherwise they are numbered from 0</li>
+	 * <li>an associative array: an element for each key=value line</li>
+	 * <li>anything else (text, or nothing yet): the text</li>
+	 * </ul>
+	 *
+	 * @throws IllegalArgumentException with why, for text that isn't a value of that type
+	 */
 	public static Object parseValue(Object oldValue, String text) {
 		if( oldValue instanceof Boolean ) {
 			String t = text.trim();
 			if( t.equalsIgnoreCase("true") || t.equalsIgnoreCase("false")) {
 				return Boolean.valueOf(t);
 			}
+			throw new IllegalArgumentException("It's true or false, not "+oneLine(t));
+		}
+		if( oldValue instanceof Number ) {
+			return parseNumber((Number) oldValue, text.trim());
+		}
+		if( oldValue instanceof List<?> || oldValue instanceof Map<?,?> ) {
+			if( text.equals(editText(oldValue))) {
+				// nothing was changed
+				return ShellContext.copyValue(oldValue);
+			}
+			String lines = text.replace("\r\n", "\n").replace('\r', '\n');
+			if( lines.endsWith("\n")) {
+				// (the line break that ends the last line isn't one more, empty, element)
+				lines = lines.substring(0, lines.length()-1);
+			}
+			List<String> list = lines.isEmpty() ? List.of() : java.util.Arrays.asList(lines.split("\n", -1));
+			return oldValue instanceof Map<?,?> ? parseMap((Map<?,?>) oldValue, list) : parseArray((List<?>) oldValue, list);
 		}
 		return text;
+	}
+
+	// text as a number of the class old is
+	private static Number parseNumber(Number old, String t) {
+		boolean whole = old instanceof Long || old instanceof Integer || old instanceof Short || old instanceof Byte
+				|| old instanceof java.math.BigInteger;
+		try {
+			if( old instanceof Long ) {
+				return Long.valueOf(t);
+			} else if( old instanceof Integer ) {
+				return Integer.valueOf(t);
+			} else if( old instanceof Short ) {
+				return Short.valueOf(t);
+			} else if( old instanceof Byte ) {
+				return Byte.valueOf(t);
+			} else if( old instanceof java.math.BigInteger ) {
+				return new java.math.BigInteger(t);
+			} else if( old instanceof Float ) {
+				return Float.valueOf(t);
+			} else if( old instanceof java.math.BigDecimal ) {
+				return new java.math.BigDecimal(t);
+			}
+			return Double.valueOf(t);
+		} catch (NumberFormatException e) {
+			if( whole && t.matches("[-+]?[0-9]+")) {
+				throw new IllegalArgumentException("It's too big for this variable: "+oneLine(t));
+			}
+			throw new IllegalArgumentException("It's a "+(whole ? "whole number" : "number")+", not "+oneLine(t));
+		}
+	}
+
+	// an array of the lines: at the indexes old has while there are as many, else from 0
+	private static Object parseArray(List<?> old, List<String> lines) {
+		if( !(old instanceof FshList)) {
+			return new ArrayList<Object>(lines);
+		}
+		List<Integer> indexes = ((FshList) old).getIndexes();
+		FshList ret = new FshList();
+		for(int i=0; i < lines.size(); i++ ) {
+			ret.set(indexes.size() == lines.size() ? indexes.get(i) : i, lines.get(i));
+		}
+		return ret;
+	}
+
+	// a map of the key=value lines, of the class old is (which says how the shell orders it)
+	private static Object parseMap(Map<?,?> old, List<String> lines) {
+		Map<Object,Object> ret = old instanceof TreeMap<?,?> ? new TreeMap<>() : new java.util.LinkedHashMap<>();
+		for(int i=0; i < lines.size(); i++ ) {
+			String line = lines.get(i);
+			int eq = line.indexOf('=');
+			if( eq < 1 ) {
+				throw new IllegalArgumentException("Line "+(i+1)+" isn't key=value: "+oneLine(line));
+			}
+			ret.put(line.substring(0, eq), line.substring(eq+1));
+		}
+		return ret;
+	}
+
+	/**
+	 * The text an editor shows for a value, and parseValue reads back: an array's elements one on
+	 * each line, an associative array's as key=value lines, anything else as its text ("" for null).
+	 */
+	public static String editText(Object value) {
+		StringBuilder ret = new StringBuilder();
+		if( value instanceof List<?> ) {
+			for(Object o : (List<?>) value) {
+				ret.append(ret.length() > 0 ? "\n" : "").append(o == null ? "" : String.valueOf(o));
+			}
+			return ret.toString();
+		}
+		if( value instanceof Map<?,?> ) {
+			for(Map.Entry<?,?> e : ((Map<?,?>) value).entrySet()) {
+				ret.append(ret.length() > 0 ? "\n" : "").append(e.getKey()).append('=').append(e.getValue() == null ? "" : String.valueOf(e.getValue()));
+			}
+			return ret.toString();
+		}
+		return value == null ? "" : String.valueOf(value);
+	}
+
+	/**
+	 * Why a value can't be changed as text, or null when it can: an array with a line break in an
+	 * element (a line is an element), or an associative array with one in a key or a value, or an =
+	 * in a key.
+	 */
+	public static String editProblem(Object value) {
+		if( value instanceof List<?> ) {
+			for(Object o : (List<?>) value) {
+				if( hasLineBreak(o)) {
+					return "an element has a line break in it";
+				}
+			}
+		} else if( value instanceof Map<?,?> ) {
+			for(Map.Entry<?,?> e : ((Map<?,?>) value).entrySet()) {
+				if( hasLineBreak(e.getKey()) || hasLineBreak(e.getValue())) {
+					return "an element has a line break in it";
+				}
+				if( String.valueOf(e.getKey()).contains("=") || String.valueOf(e.getKey()).isEmpty()) {
+					return "a key is empty or has an = in it";
+				}
+			}
+		}
+		return null;
+	}
+
+	private static boolean hasLineBreak(Object o) {
+		String s = String.valueOf(o);
+		return s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0;
 	}
 
 	/**

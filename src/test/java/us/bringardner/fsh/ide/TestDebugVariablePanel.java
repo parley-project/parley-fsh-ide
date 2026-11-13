@@ -1,6 +1,7 @@
 package us.bringardner.fsh.ide;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -115,7 +116,7 @@ public class TestDebugVariablePanel {
 	private static String value(JTable table, String name) {
 		for(int row=0; row < table.getModel().getRowCount(); row++ ) {
 			if( name.equals(table.getModel().getValueAt(row, 0))) {
-				return String.valueOf(table.getModel().getValueAt(row, 2));
+				return String.valueOf(table.getModel().getValueAt(row, 1));
 			}
 		}
 		return null;
@@ -144,8 +145,75 @@ public class TestDebugVariablePanel {
 	@Test
 	public void theEditorsTextKeepsABooleanABoolean() {
 		assertEquals(Boolean.FALSE, DebugVariablePanel.parseValue(Boolean.TRUE, " false\n"));
-		assertEquals("maybe", DebugVariablePanel.parseValue(Boolean.TRUE, "maybe"));
+		assertThrows(IllegalArgumentException.class, ()->DebugVariablePanel.parseValue(Boolean.TRUE, "maybe"));
 		assertEquals("line 1\nline 2", DebugVariablePanel.parseValue("x", "line 1\nline 2"));
+	}
+
+	/** The tables show a variable's name and value (its type decides what a changed value becomes, but isn't a column). */
+	@Test
+	public void theVariableTablesShowNameAndValue() throws Exception {
+		SwingUtilities.invokeAndWait(()->{
+			ShellContext ctx = new ShellContext(new Console());
+			ctx.setVariable("count", Long.valueOf(3));
+			DebugVariablePanel panel = new DebugVariablePanel();
+			panel.setContext(null, ctx, ctx.getVariables());
+			for(JTable table : new JTable[] {panel.userTable(), panel.fshTable()}) {
+				assertEquals(2, table.getColumnCount());
+				assertEquals("Name", table.getColumnName(0));
+				assertEquals("Value", table.getColumnName(1));
+			}
+			assertEquals("3", value(panel.userTable(), "count"));
+		});
+	}
+
+	/**
+	 * Every table's headings are drawn in the theme's header colors, both of them: the theme's
+	 * header text on the theme's header background (not on whatever the look and feel draws there).
+	 */
+	@Test
+	public void theHeadingsAreTheThemesHeaderTextOnItsHeaderBackground() throws Exception {
+		SwingUtilities.invokeAndWait(()->{
+			Object oldBackground = javax.swing.UIManager.get("TableHeader.background");
+			Object oldForeground = javax.swing.UIManager.get("TableHeader.foreground");
+			java.awt.Color dark = new java.awt.Color(0x1B2A41);
+			try {
+				javax.swing.UIManager.put("TableHeader.background", new javax.swing.plaf.ColorUIResource(dark));
+				javax.swing.UIManager.put("TableHeader.foreground", new javax.swing.plaf.ColorUIResource(java.awt.Color.WHITE));
+				ShellContext ctx = new ShellContext(new Console());
+				ctx.setVariable("count", "3");
+				DebugVariablePanel panel = new DebugVariablePanel();
+				panel.setContext(null, ctx, ctx.getVariables());
+				for(JTable table : new JTable[] {panel.userTable(), panel.fshTable(), panel.breakpointsTable(), panel.watchpointsTable()}) {
+					for(int col=0; col < table.getColumnCount(); col++ ) {
+						java.awt.Component c = table.getTableHeader().getDefaultRenderer().getTableCellRendererComponent(
+								table, table.getColumnModel().getColumn(col).getHeaderValue(), false, false, -1, col);
+						assertTrue(c.isOpaque(), "the heading paints its own background");
+						assertEquals(dark.getRGB(), c.getBackground().getRGB());
+						assertEquals(java.awt.Color.WHITE.getRGB(), c.getForeground().getRGB());
+						// and what is painted is that background: a pixel in the corner, clear of the text
+						c.setSize(120, 24);
+						java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(120, 24, java.awt.image.BufferedImage.TYPE_INT_RGB);
+						java.awt.Graphics2D g = image.createGraphics();
+						try {
+							c.paint(g);
+						} finally {
+							g.dispose();
+						}
+						assertEquals(dark.getRGB(), image.getRGB(1, 1));
+					}
+				}
+				// the column the table is sorted by keeps its arrow
+				JTable user = panel.userTable();
+				user.getRowSorter().toggleSortOrder(0);
+				javax.swing.JLabel name = (javax.swing.JLabel) user.getTableHeader().getDefaultRenderer().getTableCellRendererComponent(user, "Name", false, false, -1, 0);
+				assertEquals(javax.swing.UIManager.getIcon("Table.ascendingSortIcon"), name.getIcon());
+				javax.swing.JLabel val = (javax.swing.JLabel) user.getTableHeader().getDefaultRenderer().getTableCellRendererComponent(user, "Value", false, false, -1, 1);
+				assertEquals(null, val.getIcon());
+			} finally {
+				javax.swing.UIManager.put("TableHeader.background", oldBackground);
+				javax.swing.UIManager.put("TableHeader.foreground", oldForeground);
+			}
+		});
 	}
 
 	@Test
