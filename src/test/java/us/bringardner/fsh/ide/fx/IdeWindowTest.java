@@ -131,7 +131,7 @@ public class IdeWindowTest {
 		Fx.waitFor(()->w.console().getArea().getText().isEmpty());
 	}
 
-	/** Run > Clear Run Settings...: the store's, and the open windows' (so saving doesn't keep them again). */
+	/** Run > Clear ALL Run Settings...: the store's, and the open windows' (so saving doesn't keep them again). */
 	@Test
 	public void clearRunSettingsClearsTheOpenWindowsToo() throws Exception {
 		TestWindow w = window();
@@ -149,6 +149,21 @@ public class IdeWindowTest {
 		assertEquals("", Fx.call(()->w.stdOutField().getText()));
 		// as it's kept now: not a change
 		assertFalse(Fx.call(w::hasChanged));
+	}
+
+	/** Run > Clear Current Run Settings: this window's fields only; what's kept stays. */
+	@Test
+	public void clearCurrentRunSettingsEmptiesOnlyThisWindow() throws Exception {
+		TestWindow w = window();
+		FileSource f = file("current.sh", "echo a\n");
+		store.put(f, new RunSettings("x y", "", "/tmp/out", ""));
+		Fx.run(()->w.load(f));
+		Fx.waitFor(()->w.scriptFile() != null);
+		Fx.run(w::actionClearCurrentRunSettings);
+		assertEquals("", Fx.call(()->w.argumentsField().getText()));
+		assertEquals("", Fx.call(()->w.stdOutField().getText()));
+		assertEquals(1, store.size());
+		assertTrue(Fx.call(w::hasChanged));
 	}
 
 	@Test

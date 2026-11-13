@@ -91,7 +91,7 @@ What's kept for scripts that were deleted, renamed outside the IDE or are on ser
 longer use cleans itself up: settings not used for 180 days go, at most 500 scripts are kept
 (the least recently used go first), and at start the IDE drops those of local scripts that are
 gone. `runSettingsMaxAgeDays` and `runSettingsMaxEntries` in `Config.xml` change the limits;
-File > Clear Run Settings forgets them all.
+Run > Clear ALL Run Settings forgets them all.
 
 Scripts saved by earlier versions carry them in comment lines (`#BjlIdeScriptArgs=` ...); those
 are read, and the next save moves them out of the script.

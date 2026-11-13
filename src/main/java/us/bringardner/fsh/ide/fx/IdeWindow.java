@@ -401,7 +401,8 @@ public class IdeWindow {
 				item("Toggle Breakpoint", "Shortcut+B", ()->editor.toggleBreakpoint(editor.getCaretLine())),
 				new SeparatorMenuItem(), useSelection, useAdapter, new SeparatorMenuItem(),
 				item("Clear Console", "Shortcut+K", console::clear), new SeparatorMenuItem(),
-				item("Clear Run Settings...", null, this::actionClearRunSettings));
+				item("Clear ALL Run Settings...", null, this::actionClearRunSettings),
+				item("Clear Current Run Settings", null, this::actionClearCurrentRunSettings));
 		// right-click on the console: Clear Console, as in the Run menu
 		console.getArea().setContextMenu(new ContextMenu(item("Clear Console", null, console::clear)));
 
@@ -654,7 +655,20 @@ public class IdeWindow {
 	}
 
 	/**
-	 * Clear Run Settings, in this window: no arguments or redirects; as the script was kept, so it
+	 * Run > Clear Current Run Settings: empties this window's arguments and redirects, and nothing
+	 * more: nothing is asked or said, what's kept for other scripts stays, and the script counts as
+	 * changed until it's saved.
+	 */
+	void actionClearCurrentRunSettings() {
+		arguments.setText("");
+		stdIn.setText("");
+		stdOut.setText("");
+		stdErr.setText("");
+		updateTitle();
+	}
+
+	/**
+	 * Clear ALL Run Settings, in this window: no arguments or redirects; as the script was kept, so it
 	 * doesn't count as changed (its code still does, if it was).
 	 */
 	void clearRunSettingsFields() {

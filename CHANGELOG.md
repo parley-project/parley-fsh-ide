@@ -193,9 +193,11 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 - A variable a script gets from the login shell's environment (one the IDE itself doesn't have
   when it's opened from the Finder, such as `CLASSPATH` or `SDKMAN_PLATFORM` set in a startup file)
   shows on the fsh Variables tab, not with the script's own on User Variables.
-- Clear Run Settings... (now in the Run menu, in both IDEs; it was in File) also empties the
+- Clear ALL Run Settings... (now in the Run menu, in both IDEs; it was in File) also empties the
   arguments and redirects of the scripts open in the IDE's windows, so saving one doesn't keep
   them again, and says how many scripts' settings it cleared (the Swing IDE said nothing).
+- Run > Clear Current Run Settings (below it, in both IDEs) empties only the arguments and
+  redirects of the script in the window; nothing is asked, and what's kept for other scripts stays.
 - The Swing IDE's stdout and stderr browse buttons open a Save dialog, where a new file can be
   named, as the JavaFX IDE's do (they only let you pick a file that was already there).
 - The IDEs' own debugger takes a breakpoint's condition and hit count as Loupe does (and the Debug

@@ -1530,9 +1530,12 @@ public class FshIDE extends JFrame  {
 		run.addSeparator();
 		run.add(StandardMenus.item("Clear Console", KeyEvent.VK_K, this::actionClearConsole));
 		run.addSeparator();
-		JMenuItem clearRunSettings = StandardMenus.item("Clear Run Settings...", null, this::actionClearRunSettings);
+		JMenuItem clearRunSettings = StandardMenus.item("Clear ALL Run Settings...", null, this::actionClearRunSettings);
 		clearRunSettings.setToolTipText("Forget the arguments and redirects kept for every script");
 		run.add(clearRunSettings);
+		JMenuItem clearCurrentRunSettings = StandardMenus.item("Clear Current Run Settings", null, this::actionClearCurrentRunSettings);
+		clearCurrentRunSettings.setToolTipText("Empty this script's arguments and redirects");
+		run.add(clearCurrentRunSettings);
 
 		// what environment scripts get (see ShellEnvironment)
 		menus.help.add(StandardMenus.item("Script Environment...", ()->showScriptEnvironment(this)));
@@ -2169,7 +2172,25 @@ public class FshIDE extends JFrame  {
 	}
 
 	/**
-	 * Clear Run Settings, in this window: no arguments or redirects; as the script was kept, so it
+	 * Run > Clear Current Run Settings: empties this window's arguments and redirects (stdin, stdout
+	 * and stderr), as deleting what's in the four fields does, and nothing more: nothing is asked or
+	 * said, what's kept for other scripts stays, and the script counts as changed until it's saved.
+	 */
+	protected void actionClearCurrentRunSettings() {
+		argumentsTextField.setText("");
+		stdInTextField.setText("");
+		stdOutTextField.setText("");
+		stdErrTextField.setText("");
+		updateTitle();
+	}
+
+	/** for the tests: the arguments and the stdin, stdout and stderr redirects' fields */
+	JTextField[] runSettingsFields() {
+		return new JTextField[] {argumentsTextField, stdInTextField, stdOutTextField, stdErrTextField};
+	}
+
+	/**
+	 * Clear ALL Run Settings, in this window: no arguments or redirects; as the script was kept, so it
 	 * doesn't count as changed (its code still does, if it was).
 	 */
 	void clearRunSettingsFields() {
