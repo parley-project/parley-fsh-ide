@@ -27,7 +27,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.ide.core.ScriptDocument;
+import us.bringardner.fsh.debug.ScriptDocument;
 
 /**
  * While debugging in the Swing IDE, the line the script stopped on shows: the editor scrolls to

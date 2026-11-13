@@ -1,5 +1,7 @@
 package us.bringardner.fsh.ide.core;
 
+import us.bringardner.fsh.debug.Completions;
+import us.bringardner.fsh.debug.Template;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;

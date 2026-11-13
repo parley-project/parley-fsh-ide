@@ -1,5 +1,6 @@
 package us.bringardner.fsh.ide.core;
 
+import us.bringardner.fsh.debug.ScriptText;
 import us.bringardner.fsh.syntax.Ast;
 import us.bringardner.fsh.syntax.Parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;

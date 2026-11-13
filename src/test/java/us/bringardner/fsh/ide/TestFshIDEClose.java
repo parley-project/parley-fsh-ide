@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import us.bringardner.fsh.ide.core.ExitChoice;
-import us.bringardner.fsh.ide.core.ScriptDocument;
+import us.bringardner.fsh.debug.ScriptDocument;
 import us.bringardner.parley.files.FileSource;
 import us.bringardner.parley.files.FileSourceFactory;
 

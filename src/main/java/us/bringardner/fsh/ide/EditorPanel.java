@@ -12,11 +12,11 @@
 */
 package us.bringardner.fsh.ide;
 
-import us.bringardner.fsh.ide.core.Breakpoint;
-import us.bringardner.fsh.ide.core.Template;
+import us.bringardner.fsh.debug.Breakpoint;
+import us.bringardner.fsh.debug.Template;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.CompileError;
-import us.bringardner.fsh.ide.core.ScriptText;
+import us.bringardner.fsh.debug.ScriptText;
 import us.bringardner.fsh.ide.core.TemplateText;
 
 import java.awt.BorderLayout;

@@ -42,7 +42,7 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import us.bringardner.fsh.ide.core.Configuration;
-import us.bringardner.fsh.ide.core.Template;
+import us.bringardner.fsh.debug.Template;
 import us.bringardner.fsh.ide.core.TemplateList;
 import us.bringardner.swing.dialog.SettingsPage;
 

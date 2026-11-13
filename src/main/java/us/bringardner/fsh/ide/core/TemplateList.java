@@ -12,6 +12,7 @@
  */
 package us.bringardner.fsh.ide.core;
 
+import us.bringardner.fsh.debug.Template;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

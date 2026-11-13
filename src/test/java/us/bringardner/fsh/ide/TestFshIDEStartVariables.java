@@ -75,7 +75,7 @@ public class TestFshIDEStartVariables {
 			});
 			// a debug run: its own take their place (cleared as it starts)
 			SwingUtilities.invokeAndWait(()->{
-				w[0].setDocument(us.bringardner.fsh.ide.core.ScriptDocument.parse("IFS=,\nx=1\necho $x\n"), null);
+				w[0].setDocument(us.bringardner.fsh.debug.ScriptDocument.parse("IFS=,\nx=1\necho $x\n"), null);
 			});
 			SwingUtilities.invokeAndWait(()->{});
 			SwingUtilities.invokeAndWait(()->assertTrue(panel[0].showsStartVariables()));

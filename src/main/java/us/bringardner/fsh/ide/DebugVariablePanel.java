@@ -12,9 +12,9 @@
 */
 package us.bringardner.fsh.ide;
 
-import us.bringardner.fsh.ide.core.Breakpoint;
-import us.bringardner.fsh.ide.core.DebugVariables;
-import us.bringardner.fsh.ide.core.Watchpoint;
+import us.bringardner.fsh.debug.Breakpoint;
+import us.bringardner.fsh.debug.DebugVariables;
+import us.bringardner.fsh.debug.Watchpoint;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -42,7 +42,7 @@ import javax.swing.table.TableColumn;
 
 import us.bringardner.fsh.ShellContext;
 import us.bringardner.fsh.ide.core.SyntaxNode;
-import us.bringardner.fsh.ide.core.Variable;
+import us.bringardner.fsh.debug.Variable;
 
 
 public class DebugVariablePanel extends JPanel  {

@@ -330,6 +330,12 @@
 			<artifactId>fsh</artifactId>
 			<version>${fsh.version}</version>
 		</dependency>
+		<!-- Running and debugging scripts (shared with fshdb; no user interface) -->
+		<dependency>
+			<groupId>us.bringardner</groupId>
+			<artifactId>parley-fsh-debug</artifactId>
+			<version>${fsh.version}</version>
+		</dependency>
 		<!-- The Loupe debugging protocol, and fsh's adapter for it (LoupeSession). -->
 		<dependency>
 			<groupId>us.bringardner.parley</groupId>

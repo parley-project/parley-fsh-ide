@@ -28,7 +28,7 @@ import org.fife.ui.autocomplete.TemplateCompletion;
 import org.junit.jupiter.api.Test;
 
 import us.bringardner.fsh.ide.core.Configuration;
-import us.bringardner.fsh.ide.core.Template;
+import us.bringardner.fsh.debug.Template;
 
 public class TestEditorCompletions {
 

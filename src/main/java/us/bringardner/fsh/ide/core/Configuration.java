@@ -12,6 +12,8 @@
  */
 package us.bringardner.fsh.ide.core;
 
+import us.bringardner.fsh.debug.RunSettingsStore;
+import us.bringardner.fsh.debug.Template;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -136,7 +138,7 @@ public class Configuration {
 
 	/** The folder in the user's home that held the configuration before BjlShellIde became fsh-ide. */
 	static final String LEGACY_DIR = ".bjlshellIde";
-	static final String DIR = ".fsh-ide";
+	static final String DIR = RunSettingsStore.SETTINGS_DIR;
 	static final String FILE = "Config.xml";
 
 	/**

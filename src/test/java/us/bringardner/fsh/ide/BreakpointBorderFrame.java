@@ -1,6 +1,6 @@
 package us.bringardner.fsh.ide;
 
-import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.debug.Breakpoint;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

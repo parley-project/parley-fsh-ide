@@ -18,7 +18,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import us.bringardner.fsh.Console;
 import us.bringardner.fsh.ShellContext;
-import us.bringardner.fsh.ide.core.Variable;
+import us.bringardner.fsh.debug.Variable;
 
 /** The Swing IDE's variables: the script's own and fsh's in their own tabs, long values. */
 public class TestDebugVariablePanel {
@@ -93,7 +93,7 @@ public class TestDebugVariablePanel {
 			assertTrue(!panel.showsStartVariables());
 			assertEquals(",", value(panel.fshTable(), "IFS"));
 
-			panel.setStartVariables(us.bringardner.fsh.ide.core.ScriptRun.startVariables("/scripts/hello.fsh", "a b"));
+			panel.setStartVariables(us.bringardner.fsh.debug.ScriptRun.startVariables("/scripts/hello.fsh", "a b"));
 			assertTrue(panel.showsStartVariables());
 			List<String> fsh = names(panel.fshTable());
 			assertEquals(" \t\n", value(panel.fshTable(), "IFS"));
@@ -219,8 +219,8 @@ public class TestDebugVariablePanel {
 	@Test
 	public void watchpointsTable() throws Exception {
 		SwingUtilities.invokeAndWait(()->{
-			List<us.bringardner.fsh.ide.core.Watchpoint> list = new java.util.concurrent.CopyOnWriteArrayList<>();
-			list.add(new us.bringardner.fsh.ide.core.Watchpoint("$count", true, false));
+			List<us.bringardner.fsh.debug.Watchpoint> list = new java.util.concurrent.CopyOnWriteArrayList<>();
+			list.add(new us.bringardner.fsh.debug.Watchpoint("$count", true, false));
 			DebugVariablePanel panel = new DebugVariablePanel();
 			panel.setWatchpoints(list);
 			JTable table = panel.watchpointsTable();

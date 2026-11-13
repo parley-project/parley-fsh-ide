@@ -35,7 +35,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.ide.core.ScriptDocument;
+import us.bringardner.fsh.debug.ScriptDocument;
 
 /**
  * While a script runs in the Swing IDE: it can't be edited, and the editor's right-click menu

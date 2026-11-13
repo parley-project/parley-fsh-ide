@@ -12,6 +12,8 @@
  */
 package us.bringardner.fsh.ide.core;
 
+import us.bringardner.fsh.debug.Breakpoint;
+
 /**
  * What the breakpoint dialogs' info button shows, in either IDE: how a breakpoint's condition
  * and hit count stop it, as the Debug Adapter Protocol says (and Loupe and DebugSession do).

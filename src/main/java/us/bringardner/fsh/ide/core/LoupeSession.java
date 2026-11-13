@@ -12,6 +12,8 @@
  */
 package us.bringardner.fsh.ide.core;
 
+import us.bringardner.fsh.debug.Breakpoint;
+import us.bringardner.fsh.debug.ShellEnvironment;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;

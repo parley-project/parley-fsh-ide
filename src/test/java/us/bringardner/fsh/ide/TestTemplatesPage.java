@@ -19,7 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import us.bringardner.fsh.ide.core.Configuration;
-import us.bringardner.fsh.ide.core.Template;
+import us.bringardner.fsh.debug.Template;
 import us.bringardner.swing.dialog.SettingsDialog;
 import us.bringardner.swing.dialog.SettingsPages;
 import us.bringardner.swing.gradient.GradientLook;

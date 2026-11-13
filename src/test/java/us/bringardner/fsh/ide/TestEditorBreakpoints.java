@@ -1,6 +1,6 @@
 package us.bringardner.fsh.ide;
 
-import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.debug.Breakpoint;
 import us.bringardner.fsh.ide.core.CompileError;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

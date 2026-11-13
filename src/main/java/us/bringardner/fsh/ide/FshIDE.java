@@ -16,20 +16,20 @@ import us.bringardner.swing.dialog.SettingsDialog;
 import us.bringardner.swing.gradient.GradientLook;
 import us.bringardner.swing.gradient.ThemeExtensions;
 import us.bringardner.swing.menu.StandardMenus;
-import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.debug.Breakpoint;
 import us.bringardner.fsh.ide.core.ScriptOutline;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.CompileError;
-import us.bringardner.fsh.ide.core.DebugSession;
+import us.bringardner.fsh.debug.DebugSession;
 import us.bringardner.fsh.ide.core.ExitChoice;
 import us.bringardner.fsh.ide.core.LogBatcher;
 import us.bringardner.fsh.ide.core.RecentFiles;
-import us.bringardner.fsh.ide.core.RunSettings;
-import us.bringardner.fsh.ide.core.RunSettingsStore;
-import us.bringardner.fsh.ide.core.ScriptDocument;
+import us.bringardner.fsh.debug.RunSettings;
+import us.bringardner.fsh.debug.RunSettingsStore;
+import us.bringardner.fsh.debug.ScriptDocument;
 import us.bringardner.fsh.ide.core.ScriptParser;
-import us.bringardner.fsh.ide.core.ScriptRun;
-import us.bringardner.fsh.ide.core.ScriptText;
+import us.bringardner.fsh.debug.ScriptRun;
+import us.bringardner.fsh.debug.ScriptText;
 import us.bringardner.fsh.ide.core.LegacyPreferences;
 
 import java.awt.BorderLayout;
@@ -311,7 +311,7 @@ public class FshIDE extends JFrame  {
 		}
 
 		@Override
-		public void watchpointHit(us.bringardner.fsh.ide.core.Watchpoint wp, String name, boolean write, Object value) {
+		public void watchpointHit(us.bringardner.fsh.debug.Watchpoint wp, String name, boolean write, Object value) {
 			logBatcher.add("Watchpoint: "+DebugSession.describeHit(name, write, value)+"\n");
 		}
 	};
@@ -358,7 +358,7 @@ public class FshIDE extends JFrame  {
 	 */
 	public static void main(String [] args) {
 		// the environment the scripts run with: a terminal's (see ShellEnvironment), got now, in the background
-		us.bringardner.fsh.ide.core.ShellEnvironment.start(problem->SwingUtilities.invokeLater(()->{
+		us.bringardner.fsh.debug.ShellEnvironment.start(problem->SwingUtilities.invokeLater(()->{
 			JOptionPane pane = new JOptionPane(problem, JOptionPane.WARNING_MESSAGE);
 			// (over an IDE window, so it isn't behind another application's)
 			java.awt.Frame owner = null;
@@ -1084,7 +1084,7 @@ public class FshIDE extends JFrame  {
 			return;
 		}
 		// (once the login shell's environment is known, so this doesn't wait for it here)
-		us.bringardner.fsh.ide.core.ShellEnvironment.whenKnown(()->SwingUtilities.invokeLater(()->{
+		us.bringardner.fsh.debug.ShellEnvironment.whenKnown(()->SwingUtilities.invokeLater(()->{
 			if( debugSplitPane.isVisible() && runState == IdeRunstate.Idel ) {
 				debugVariablePanel.setStartVariables(ScriptRun.startVariables(
 						scriptFile != null ? scriptFile.getAbsolutePath() : "fsh", argumentsTextField.getText()));
@@ -1608,7 +1608,7 @@ public class FshIDE extends JFrame  {
 	static void showScriptEnvironment(java.awt.Component parent) {
 		// (it may wait for the login shell)
 		new Thread(()->{
-			String report = us.bringardner.fsh.ide.core.ShellEnvironment.report();
+			String report = us.bringardner.fsh.debug.ShellEnvironment.report();
 			SwingUtilities.invokeLater(()->{
 				JTextArea text = new JTextArea(report, 28, 80);
 				text.setEditable(false);
@@ -1922,9 +1922,9 @@ public class FshIDE extends JFrame  {
 		}
 		// the variable clicked (to watch, and to show), or the selection (to show)
 		Map<String,Object> known = pausedVariables;
-		String variable = us.bringardner.fsh.ide.core.ScriptText.variableAt(editorPane.getText(), offset,
+		String variable = us.bringardner.fsh.debug.ScriptText.variableAt(editorPane.getText(), offset,
 				name->known != null && known.containsKey(name));
-		if( variable != null && us.bringardner.fsh.ide.core.Watchpoint.isValidName(variable)) {
+		if( variable != null && us.bringardner.fsh.debug.Watchpoint.isValidName(variable)) {
 			items.add(popupItem("Watch "+variable+"...", true, ()->debugVariablePanel.addWatchpoint(variable)));
 		}
 		String show = selection != null && !selection.isBlank() ? selection : variable;
@@ -1959,7 +1959,7 @@ public class FshIDE extends JFrame  {
 			ADAPTER.execute(()->{
 				String line;
 				try {
-					line = name+" = "+session.evaluate(us.bringardner.fsh.ide.core.DebugVariables.expression(name));
+					line = name+" = "+session.evaluate(us.bringardner.fsh.debug.DebugVariables.expression(name));
 				} catch (Exception e) {
 					line = e.getMessage();
 				}
@@ -1977,7 +1977,7 @@ public class FshIDE extends JFrame  {
 		}
 		String line;
 		try {
-			line = text.trim()+" = "+us.bringardner.fsh.ide.core.DebugVariables.valueOf(ctx, text);
+			line = text.trim()+" = "+us.bringardner.fsh.debug.DebugVariables.valueOf(ctx, text);
 		} catch (IllegalArgumentException e) {
 			line = e.getMessage();
 		}
@@ -2090,7 +2090,7 @@ public class FshIDE extends JFrame  {
 			logView.setText("");
 			outputTextArea.clear();
 			// what environment scripts get, at the top of the Log tab
-			us.bringardner.fsh.ide.core.ShellEnvironment.logStatus(logBatcher::add);
+			us.bringardner.fsh.debug.ShellEnvironment.logStatus(logBatcher::add);
 			if( state == IdeRunstate.Debugging) {
 				debugControlPanel.setVisible(true);
 				// a new debug run: the last one's variables go

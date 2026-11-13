@@ -37,12 +37,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.debug.Breakpoint;
 import us.bringardner.fsh.ide.core.Configuration;
 import us.bringardner.fsh.ide.core.RemoteDebug;
 import us.bringardner.fsh.ide.core.RemoteDebug.Mode;
 import us.bringardner.fsh.ide.core.RemoteSide;
-import us.bringardner.fsh.ide.core.ScriptDocument;
+import us.bringardner.fsh.debug.ScriptDocument;
 
 /** Run &gt; Debug Remote... in the Swing IDE: the dialog, and each of its three ways against a "remote" side in this JVM. */
 public class TestRemoteDebugSwing {

@@ -2,6 +2,16 @@
 
 ## 1.1.0 (unreleased)
 
+### Changed (2026-11-13: parley-fsh-debug)
+
+- Running and debugging scripts moved to a new library,
+  [parley-fsh-debug](https://github.com/parley-project/parley-fsh-debug), which fshdb uses too
+  (it used to use Fsh Studio's jar for them). `ScriptText`, `ScriptDocument`, `ScriptRun`,
+  `RunSettings`, `RunSettingsStore`, `DebugSession`, `DebugVariables`, `Breakpoint`, `Watchpoint`,
+  `Variable`, `ShellEnvironment`, `Completions` and `Template` are now in `us.bringardner.fsh.debug`
+  (they were in `us.bringardner.fsh.ide.core`), with their tests. Nothing the user sees changes:
+  the settings are still in `~/.fsh-ide`.
+
 ### Removed (2026-11-12: the JavaFX IDE)
 
 - The JavaFX IDE (`us.bringardner.fsh.ide.fx`, started by `FshIdeFx`) is no longer part of fsh-ide,

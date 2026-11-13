@@ -12,6 +12,8 @@
  */
 package us.bringardner.fsh.ide.core;
 
+import us.bringardner.fsh.debug.Breakpoint;
+import us.bringardner.fsh.debug.ShellEnvironment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

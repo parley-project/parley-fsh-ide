@@ -12,6 +12,7 @@
  */
 package us.bringardner.fsh.ide.core;
 
+import us.bringardner.fsh.debug.Breakpoint;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

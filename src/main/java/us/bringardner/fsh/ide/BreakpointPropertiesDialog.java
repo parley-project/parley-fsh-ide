@@ -13,7 +13,7 @@
 package us.bringardner.fsh.ide;
 
 import us.bringardner.swing.gradient.GradientLook;
-import us.bringardner.fsh.ide.core.Breakpoint;
+import us.bringardner.fsh.debug.Breakpoint;
 import us.bringardner.fsh.ide.core.BreakpointHelp;
 
 import java.awt.BorderLayout;
