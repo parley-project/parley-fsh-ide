@@ -948,6 +948,10 @@ public class FshIDE extends JFrame  {
 		JScrollPane logViewScrollPane = new JScrollPane();
 		logView = new JTextArea();
 		logView.setText("");
+		// right-click: Clear Log (it leaves a line that says so)
+		JPopupMenu logPopup = new JPopupMenu();
+		logPopup.add(StandardMenus.item("Clear Log", null, this::actionClearLog));
+		logView.setComponentPopupMenu(logPopup);
 		logViewScrollPane.setViewportView(logView);
 
 		debugSplitPane.setRightComponent(logViewScrollPane);
@@ -1549,6 +1553,18 @@ public class FshIDE extends JFrame  {
 		outputTextArea.clear();
 	}
 
+	/** what the text under the debug view's variables starts with after Clear Log */
+	static final String LOG_CLEARED = "Cleared...";
+
+	/**
+	 * The right-click menu of the text under the debug view's variables: clears it (lines not shown
+	 * yet included), leaving LOG_CLEARED at the top so it's seen that it was cleared.
+	 */
+	protected void actionClearLog() {
+		logBatcher.clear();
+		logView.setText(LOG_CLEARED+"\n");
+	}
+
 	/** Run > Stop: stops the script running or being debugged. */
 	protected void actionStop() {
 		if( runState == IdeRunstate.Running ) {
@@ -1970,6 +1986,11 @@ public class FshIDE extends JFrame  {
 	String logText() {
 		logBatcher.flush();
 		return logView.getText();
+	}
+
+	/** for the tests: the text area under the debug view's variables */
+	JTextArea logView() {
+		return logView;
 	}
 
 	/** for the tests: the debugger, to step and resume a paused script */

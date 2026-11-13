@@ -73,6 +73,39 @@ public class TestFshIDEClearConsole {
 		});
 	}
 
+	/**
+	 * The text under the debug view's variables has a right-click menu too: Clear Log clears it and
+	 * leaves a line that says it was cleared, which what is shown next comes after.
+	 */
+	@Test
+	public void theRightClickMenuClearsTheLogAndSaysSo() throws Exception {
+		Assumptions.assumeFalse(GraphicsEnvironment.isHeadless(), "needs a screen");
+		FshIDE[] w = new FshIDE[1];
+		SwingUtilities.invokeAndWait(()->{
+			w[0] = new FshIDE();
+			w[0].setSize(900, 700);
+			w[0].setVisible(true);
+		});
+		try {
+			SwingUtilities.invokeAndWait(()->{
+				w[0].logView().append("count = 3\n");
+				JPopupMenu popup = w[0].logView().getComponentPopupMenu();
+				assertNotNull(popup, "the log has a right-click menu");
+				JMenuItem item = item(popup, "Clear Log");
+				assertNotNull(item, "Clear Log");
+				item.doClick();
+			});
+			SwingUtilities.invokeAndWait(()->{
+				assertEquals(FshIDE.LOG_CLEARED+"\n", w[0].logText());
+				assertEquals("Cleared...", FshIDE.LOG_CLEARED);
+				w[0].logView().append("count = 4\n");
+				assertEquals("Cleared...\ncount = 4\n", w[0].logText());
+			});
+		} finally {
+			SwingUtilities.invokeAndWait(()->w[0].dispose());
+		}
+	}
+
 	interface ItemFinder {
 		JMenuItem find(FshIDE w);
 	}
