@@ -26,9 +26,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.studio.FshStudio;
-import us.bringardner.fsh.studio.FshStudioTextArea;
-import us.bringardner.fsh.studio.FshSpellingParser;
 import us.bringardner.fsh.studio.core.SpellChecking;
 
 /**

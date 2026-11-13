@@ -12,8 +12,6 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.studio.core.Configuration;
-
 /** The configuration is ~/.fsh-studio/Config.xml. */
 public class TestConfigurationLocation {
 
@@ -30,7 +28,7 @@ public class TestConfigurationLocation {
 
 	@Test
 	public void doesNotCopyOldConfigurations() throws IOException {
-		for(String old : new String[] {".bjlshellIde", ".fsh-ide"}) {
+		for(String old : new String[] {".bjlshellIde", ".fsh-studio"}) {
 			Files.createDirectories(home.resolve(old));
 			Files.writeString(home.resolve(old).resolve("Config.xml"), "<old/>");
 		}

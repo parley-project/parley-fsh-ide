@@ -7,8 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.FshStudioTextArea;
-import us.bringardner.fsh.studio.TextAreaFind;
 import us.bringardner.fsh.studio.core.TextSearch;
 
 /** The Swing find dialog's search (TextAreaFind): forward and back, replace one and all, Selected Lines. */

@@ -9,8 +9,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.core.LegacyPreferences;
-
 /** The IDE's preferences survive the move from us.bringardner.shell.ide to us.bringardner.fsh.studio. */
 public class TestLegacyPreferences {
 

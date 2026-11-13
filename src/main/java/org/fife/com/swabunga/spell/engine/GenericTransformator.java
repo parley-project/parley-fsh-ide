@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 /*
- * Modified for fsh-ide: the files this class opens are closed (try-with-resources); the original left some
+ * Modified for fsh-studio: the files this class opens are closed (try-with-resources); the original left some
  * open until garbage collection, or when an exception was thrown. Everything else is as in spellchecker 3.0.0.
  */
 

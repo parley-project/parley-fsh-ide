@@ -54,7 +54,7 @@ import us.bringardner.swing.dialog.SettingsPage;
 public class TemplatesPage implements SettingsPage {
 
 	/** The id it is registered under in swing-widgets' SettingsPages. */
-	public static final String ID = "fsh-ide.templates";
+	public static final String ID = "fsh-studio.templates";
 
 	/** What a template's code can have, shown under it. */
 	static final String HINT = "<html><div style='width:420px'>${name} is a field to fill in (fields with the same "

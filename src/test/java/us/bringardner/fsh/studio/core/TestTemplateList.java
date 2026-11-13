@@ -1,9 +1,5 @@
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.Template;
-import us.bringardner.fsh.studio.core.Configuration;
-import us.bringardner.fsh.studio.core.TemplateList;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -16,6 +12,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import us.bringardner.fsh.debug.Template;
 
 /** The template manager's working copy, and deleted built-ins staying deleted. */
 public class TestTemplateList {

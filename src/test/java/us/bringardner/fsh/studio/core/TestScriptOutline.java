@@ -9,10 +9,6 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.core.CompileError;
-import us.bringardner.fsh.studio.core.ScriptOutline;
-import us.bringardner.fsh.studio.core.ScriptParser;
-
 /** The outline the IDE shows: the script's functions and variables, with their lines. */
 public class TestScriptOutline {
 

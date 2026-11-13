@@ -35,7 +35,7 @@ import java.util.zip.ZipInputStream;
  * main class, which the java launcher finds) stays, marked jniAccessible only.
  * <p>
  * CLASS_PATH is jars and class folders, separated as the platform's class path is. The same file is
- * in fsh-ide and parley-files-viewer; fsh's tools/native-reflect.py does this for fsh.
+ * in fsh-studio and parley-files-viewer; fsh's tools/native-reflect.py does this for fsh.
  */
 public class NativeMetadata {
 

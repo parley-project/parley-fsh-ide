@@ -7,8 +7,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.core.LogBatcher;
-
 public class TestLogBatcher {
 
 	@Test

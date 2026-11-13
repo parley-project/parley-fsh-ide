@@ -36,15 +36,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import us.bringardner.fsh.debug.ScriptDocument;
-import us.bringardner.fsh.studio.FshStudio;
-import us.bringardner.fsh.studio.FshStudioTextArea;
 
 /**
  * While a script runs in the Swing IDE: it can't be edited, and the editor's right-click menu
  * is the run's (Stop, Copy) or the debugger's (Run to Line, breakpoints, the variable clicked,
  * the steps) in place of the edit menu.
  */
-public class TestFshIDERunMenus {
+public class TestFshStudioRunMenus {
 
 	@TempDir
 	static Path home;

@@ -14,14 +14,14 @@
 ### Changed (2026-11-13: the settings folder)
 
 - Settings are kept in `~/.fsh-studio` (`Config.xml`, `run-settings` and `words.txt`); they were in
-  `~/.fsh-ide`. Nothing is copied from `~/.fsh-ide`, and a configuration in `~/.bjlshellIde` is no
+  `~/.fsh-studio`. Nothing is copied from `~/.fsh-studio`, and a configuration in `~/.bjlshellIde` is no
   longer copied either: Fsh Studio starts with its default settings.
 
 ### Removed (2026-11-12: the JavaFX IDE)
 
-- The JavaFX IDE (`us.bringardner.fsh.studio.fx`, started by `FshIdeFx`) is no longer part of fsh-ide,
+- The JavaFX IDE (`us.bringardner.fsh.studio.fx`, started by `FshIdeFx`) is no longer part of fsh-studio,
   with its tests, its stylesheet and its libraries (JavaFX, RichTextFX, fx-widgets, parley-files-fx).
-  fsh-ide is the Swing IDE. The tag `javafx-final` is the last commit that has the JavaFX IDE, as it
+  fsh-studio is the Swing IDE. The tag `javafx-final` is the last commit that has the JavaFX IDE, as it
   was. Entries below that speak of "both IDEs" or of the JavaFX IDE describe it as it was then.
 
 ### Changed (2026-11-13: tests)
@@ -32,16 +32,16 @@
 
 ### Changed (2026-11-13: the name)
 
-- The IDE is named **Fsh Studio** (it was fsh-ide): in the application menu, Help > About, the
-  README, the log lines and the header of `~/.fsh-ide/run-settings`, and to a debug adapter as its
+- The IDE is named **Fsh Studio** (it was fsh-studio): in the application menu, Help > About, the
+  README, the log lines and the header of `~/.fsh-studio/run-settings`, and to a debug adapter as its
   client. Its command, native binary (`fshstudio`, `fshstudio.exe`) and release archives
   (`fshstudio-V-PLATFORM-ARCH`) are named `fshstudio`. The repository, project and Maven artifact are
-  `parley-fsh-studio` (were `parley-fsh-ide` and `fsh-ide`). The settings ids and the `~/.fsh-ide`
+  `parley-fsh-studio` (were `parley-fsh-studio` and `fsh-studio`). The settings ids and the `~/.fsh-studio`
   folder keep their names, so nothing saved is lost.
 
 ### Changed (2026-11-12: the native image's settings redone)
 
-- **Native image**: the recorded `reachability-metadata.json` no longer names fsh-ide's or Parley's
+- **Native image**: the recorded `reachability-metadata.json` no longer names fsh-studio's or Parley's
   classes and files, so a rename can't leave a stale name behind (it still named
   `us.bringardner.parley.core.ParleyLogger`). `mvn -Pnative package` lists them from the class path
   as the image is built (`tools/NativeMetadata.java`: every `us.bringardner` class with its members,
@@ -208,7 +208,7 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
   comments, strings, variables, numbers, operators, selection, current line, line numbers and their
   background, caret), with a preview. A new theme starts with the colors of the theme it is made
   from; a theme without its own, such as a built-in one, gets the light colors, or the Parley dark
-  ones for a dark theme. Kept in the theme file as `fsh-ide.editor.*` settings (`SyntaxColors`, in
+  ones for a dark theme. Kept in the theme file as `fsh-studio.editor.*` settings (`SyntaxColors`, in
   the UI-free core), and the JavaFX IDE uses them too.
 - The editors' and console's font, apart from the appearance font: View > Bigger Text (⌘+),
   Smaller Text (⌘−) and Reset Text Size (⌘0), and in the Swing IDE View > Editor Font... (a
@@ -262,7 +262,7 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
   variable's name rather than its value (`echo i`), and now echo `$i`, linked to the loop variable's
   field. The do-statement template, not valid on its own, is gone. Unchanged copies of the old
   templates in a saved configuration are replaced; edited ones are kept.
-- The JavaFX IDE's editor and console are in a fixed-width font everywhere. fsh-ide.css listed
+- The JavaFX IDE's editor and console are in a fixed-width font everywhere. fsh-studio.css listed
   several families ("Menlo", "Consolas", ...), but JavaFX's CSS takes only one, so where Menlo
   isn't installed (Windows, Linux) the console was in the proportional System font; the family is
   now chosen in code from those the computer has. A font chosen with Editor Font... now reaches the
@@ -271,11 +271,11 @@ Needs swing-widgets, fx-widgets, parley-files-swing, parley-files-fx and fsh 1.1
 
 ## 1.0.0 (2026-10-21)
 
-First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
+First release as fsh-studio. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 
 ### Changed
 - A script's arguments and redirects are no longer written into the script. They're kept per
-  user in `~/.fsh-ide/run-settings` (`RunSettingsStore`), by the script's full path (a remote
+  user in `~/.fsh-studio/run-settings` (`RunSettingsStore`), by the script's full path (a remote
   script's URL, without any password). Saving a script writes only its code; if it has no
   arguments or redirects, nothing is kept for it, and any kept before are removed. So a script
   holds nothing but its code, and `$LINENO` and fsh's messages match the file however it's run.
@@ -294,7 +294,7 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   (17.0.20; was 21, which needs Java 17). `ScriptDocument` is a final class with the record's
   constructor, accessors, `equals`, `hashCode` and `toString`. On JavaFX 20 or later the debug
   tables' last column takes the spare width; on 17 every column shares it.
-- Maven coordinates: `us.bringardner:bjl_shell_ide` → `us.bringardner:fsh-ide`.
+- Maven coordinates: `us.bringardner:bjl_shell_ide` → `us.bringardner:fsh-studio`.
 - The sources are now the IDE that had grown inside BjlShell, which was ahead of
   this repository's copy (more templates, the recent-files menu, "Show Position",
   editable debug variables, output in an embedded console). It moved here from fsh.
@@ -351,11 +351,11 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
   suggestions, Ignore and Add to Dictionary. It can be switched off in the Edit menu.
 - `core.FoldRegions` and `core.SpellChecking`: the blocks that fold, and spell checking, without a
   UI. The English dictionary is read once and shared by both IDEs; words added to it are kept in
-  `~/.fsh-ide/words.txt`.
+  `~/.fsh-studio/words.txt`.
 - The Swing editor's spelling is the JavaFX editor's (`FshSpellingParser`): the same words are underlined
   (comments and quoted text, not code, acronyms or camelCase), a right-click offers suggestions,
   Ignore and Add to Dictionary, Edit > Check Spelling switches it off, and added words go to
-  `~/.fsh-ide/words.txt`, which both IDEs read. (It used the spell checker library's own parser, whose
+  `~/.fsh-studio/words.txt`, which both IDEs read. (It used the spell checker library's own parser, whose
   tooltip links are gone, and whose "Add to dictionary" had no user dictionary and only beeped.)
 - A new script is empty, not one blank line (`ScriptDocument.parse("")`).
 
@@ -394,7 +394,7 @@ First release as fsh-ide. Formerly BjlShellIde (`us.bringardner:bjl_shell_ide`).
 - Ctrl+Shift+Add expands all folds (it collapsed them). Alt+F before Ctrl+F no longer fails.
 
 ### Still works
-- Settings move from `~/.bjlshellIde/Config.xml` to `~/.fsh-ide/Config.xml`;
+- Settings move from `~/.bjlshellIde/Config.xml` to `~/.fsh-studio/Config.xml`;
   the old file is copied across the first time.
 - Preferences saved under the old package's node are copied to the new one on first
   start.

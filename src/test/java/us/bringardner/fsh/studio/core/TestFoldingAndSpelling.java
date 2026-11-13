@@ -15,9 +15,6 @@ import org.fife.com.swabunga.spell.engine.SpellDictionary;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.studio.core.FoldRegions;
-import us.bringardner.fsh.studio.core.SpellChecking;
-
 /** The blocks an editor can fold, and spell checking comments and quoted text. */
 public class TestFoldingAndSpelling {
 

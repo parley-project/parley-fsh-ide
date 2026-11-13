@@ -19,7 +19,6 @@ import org.junit.jupiter.api.io.TempDir;
 import us.bringardner.fsh.Console;
 import us.bringardner.fsh.ShellContext;
 import us.bringardner.fsh.debug.Variable;
-import us.bringardner.fsh.studio.DebugVariablePanel;
 
 /** The Swing IDE's variables: the script's own and fsh's in their own tabs, long values. */
 public class TestDebugVariablePanel {

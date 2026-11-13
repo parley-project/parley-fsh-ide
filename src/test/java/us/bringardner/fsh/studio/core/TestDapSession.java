@@ -12,14 +12,6 @@
  */
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.Breakpoint;
-import us.bringardner.fsh.studio.core.AdapterSession;
-import us.bringardner.fsh.studio.core.Configuration;
-import us.bringardner.fsh.studio.core.DapSession;
-import us.bringardner.fsh.studio.core.RemoteDebug;
-import us.bringardner.fsh.studio.core.RemoteDebug.Mode;
-import us.bringardner.fsh.studio.core.RemoteDebug.Protocol;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -37,6 +29,10 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import us.bringardner.fsh.debug.Breakpoint;
+import us.bringardner.fsh.studio.core.RemoteDebug.Mode;
+import us.bringardner.fsh.studio.core.RemoteDebug.Protocol;
 
 /**
  * The IDE as a DAP client: Debug Remote's three ways, speaking the Debug Adapter Protocol to

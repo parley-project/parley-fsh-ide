@@ -35,7 +35,7 @@ import javax.swing.border.EmptyBorder;
 import us.bringardner.parley.brand.ParleyBrand;
 
 /**
- * Help &gt; About: Margot on the Parley tower beside fsh-ide's name and
+ * Help &gt; About: Margot on the Parley tower beside fsh-studio's name and
  * version, in the Parley palette (ink background, gold text).
  */
 public class AboutWindow extends JFrame {
@@ -45,7 +45,7 @@ public class AboutWindow extends JFrame {
 	/** The Parley web site, opened by the link at the bottom. */
 	public static final String PARLEY_SITE = "https://parley.bringardner.us";
 
-	/** One line on what fsh-ide is. */
+	/** One line on what fsh-studio is. */
 	public static final String DESCRIPTION = "An editor and debugger for shell scripts, with fsh, "
 			+ "the FileSource Shell, as the interpreter.";
 

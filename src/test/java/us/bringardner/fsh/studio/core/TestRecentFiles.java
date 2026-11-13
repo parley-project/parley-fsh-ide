@@ -11,8 +11,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.studio.core.RecentFiles;
-
 public class TestRecentFiles {
 
 	@TempDir

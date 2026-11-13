@@ -12,10 +12,6 @@
  */
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.Breakpoint;
-import us.bringardner.fsh.debug.ShellEnvironment;
-import us.bringardner.fsh.studio.core.LoupeSession;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,6 +25,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
+import us.bringardner.fsh.debug.Breakpoint;
+import us.bringardner.fsh.debug.ShellEnvironment;
 
 /** A script debugged on the fsh adapter in this JVM, as the IDE does it. */
 public class TestLoupeSession {

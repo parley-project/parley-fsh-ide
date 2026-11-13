@@ -30,10 +30,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import us.bringardner.fsh.studio.FshStudio;
+
 
 /** Run > Clear ALL Run Settings... and, below it, Clear Current Run Settings (this window's fields only). */
-public class TestFshIDEClearRunSettings {
+public class TestFshStudioClearRunSettings {
 
 	@TempDir
 	static Path home;

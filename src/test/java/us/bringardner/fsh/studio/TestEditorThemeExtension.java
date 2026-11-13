@@ -34,8 +34,6 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.EditorColors;
-import us.bringardner.fsh.studio.EditorThemeExtension;
 import us.bringardner.fsh.studio.core.SyntaxColors;
 import us.bringardner.swing.dialog.ThemeDesigner;
 import us.bringardner.swing.gradient.GradientLook;

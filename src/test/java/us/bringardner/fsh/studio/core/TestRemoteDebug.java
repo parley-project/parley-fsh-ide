@@ -12,13 +12,6 @@
  */
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.Breakpoint;
-import us.bringardner.fsh.debug.ShellEnvironment;
-import us.bringardner.fsh.studio.core.AdapterSession;
-import us.bringardner.fsh.studio.core.Configuration;
-import us.bringardner.fsh.studio.core.RemoteDebug;
-import us.bringardner.fsh.studio.core.RemoteDebug.Mode;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,6 +33,10 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import us.bringardner.fsh.debug.Breakpoint;
+import us.bringardner.fsh.debug.ShellEnvironment;
+import us.bringardner.fsh.studio.core.RemoteDebug.Mode;
 
 /**
  * Debug Remote's three ways, against what would be on the other machine: fsh-loupe's adapter

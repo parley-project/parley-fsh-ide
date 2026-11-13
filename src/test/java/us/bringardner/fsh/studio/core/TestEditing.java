@@ -1,10 +1,5 @@
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.Completions;
-import us.bringardner.fsh.debug.Template;
-import us.bringardner.fsh.studio.core.TemplateText;
-import us.bringardner.fsh.studio.core.TextSearch;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,6 +9,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+
+import us.bringardner.fsh.debug.Completions;
+import us.bringardner.fsh.debug.Template;
 
 /** Find and replace, templates and completions: the editing help in the core. */
 public class TestEditing {

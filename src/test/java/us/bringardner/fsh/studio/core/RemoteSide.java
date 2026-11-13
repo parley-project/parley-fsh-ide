@@ -12,7 +12,6 @@
  */
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.Breakpoint;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,9 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import us.bringardner.fsh.Console;
+import us.bringardner.fsh.debug.Breakpoint;
 import us.bringardner.fsh.loupe.FshAdapterMain;
-import us.bringardner.fsh.studio.core.AdapterSession;
-import us.bringardner.fsh.studio.core.RemoteDebug;
 
 /**
  * For the IDEs' Debug Remote tests: what would run on the other machine, in this JVM on the

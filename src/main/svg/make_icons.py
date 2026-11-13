@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""fsh-ide icon set, each drawn from what its button does.
+"""fsh-studio icon set, each drawn from what its button does.
 
 Run from the parley-fsh-studio project folder:  python3 src/main/svg/make_icons.py
 Writes each icon's SVG (32x32 viewBox) to src/main/svg and renders its 16 px png and

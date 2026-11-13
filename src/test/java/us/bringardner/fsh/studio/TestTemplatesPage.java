@@ -19,7 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import us.bringardner.fsh.debug.Template;
-import us.bringardner.fsh.studio.TemplatesPage;
 import us.bringardner.fsh.studio.core.Configuration;
 import us.bringardner.swing.dialog.SettingsDialog;
 import us.bringardner.swing.dialog.SettingsPages;

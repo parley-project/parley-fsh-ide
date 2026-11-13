@@ -24,8 +24,6 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.core.SyntaxColors;
-
 /** The script editors' syntax colors, as a theme keeps them. */
 public class TestSyntaxColors {
 

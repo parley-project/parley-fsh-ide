@@ -7,10 +7,10 @@ import java.awt.Rectangle;
 
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.FshStudio;
+
 
 /** Saved window bounds. */
-public class TestFshIDEBounds {
+public class TestFshStudioBounds {
 
 	private static final Rectangle[] SCREEN = { new Rectangle(0, 0, 1920, 1080) };
 

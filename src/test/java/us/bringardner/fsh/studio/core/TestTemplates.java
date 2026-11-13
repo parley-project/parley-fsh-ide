@@ -1,13 +1,5 @@
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.Completions;
-import us.bringardner.fsh.debug.Template;
-import us.bringardner.fsh.studio.core.CompileError;
-import us.bringardner.fsh.studio.core.Configuration;
-import us.bringardner.fsh.studio.core.ScriptParser;
-import us.bringardner.fsh.studio.core.TemplateList;
-import us.bringardner.fsh.studio.core.TemplateText;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
+import us.bringardner.fsh.debug.Completions;
+import us.bringardner.fsh.debug.Template;
 
 /** The built-in templates insert code that parses, and old copies of them give way to the new ones. */
 public class TestTemplates {

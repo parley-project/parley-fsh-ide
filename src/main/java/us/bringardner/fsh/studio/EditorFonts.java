@@ -76,7 +76,7 @@ final class EditorFonts {
 	}
 
 	/** The client property (on a window's root pane) of the font one window has for now. */
-	static final String WINDOW_FONT = "fsh-ide.editorFont";
+	static final String WINDOW_FONT = "fsh-studio.editorFont";
 
 	/**
 	 * A font for one window, for this session only (the text size keys): its editors and console

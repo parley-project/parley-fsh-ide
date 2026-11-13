@@ -1,8 +1,5 @@
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.Template;
-import us.bringardner.fsh.studio.core.Configuration;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,6 +12,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import us.bringardner.fsh.debug.Template;
 
 /** Saved settings and templates are read back (they used to be replaced by the defaults). */
 public class TestConfiguration {

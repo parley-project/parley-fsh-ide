@@ -1,11 +1,5 @@
 package us.bringardner.fsh.studio.core;
 
-import us.bringardner.fsh.debug.ScriptText;
-import us.bringardner.fsh.studio.core.CompileError;
-import us.bringardner.fsh.studio.core.ScriptParser;
-import us.bringardner.fsh.studio.core.SyntaxNode;
-import us.bringardner.fsh.syntax.Ast;
-import us.bringardner.fsh.syntax.Parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,6 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
+import us.bringardner.fsh.debug.ScriptText;
+import us.bringardner.fsh.syntax.Ast;
+import us.bringardner.fsh.syntax.Parser;
 
 public class TestScriptText {
 

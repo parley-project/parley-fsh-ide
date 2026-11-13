@@ -24,8 +24,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.core.EditorFont;
-
 /** The editors' and console's font, apart from the appearance font. */
 public class TestEditorFont {
 

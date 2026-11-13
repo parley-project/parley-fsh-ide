@@ -35,12 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import us.bringardner.fsh.ConsolePanel;
-import us.bringardner.fsh.studio.EditorColors;
-import us.bringardner.fsh.studio.EditorFontDialog;
-import us.bringardner.fsh.studio.EditorFonts;
-import us.bringardner.fsh.studio.FshStudio;
-import us.bringardner.fsh.studio.FshStudioTextArea;
-import us.bringardner.fsh.studio.TextSizeKeys;
 import us.bringardner.fsh.studio.core.EditorFont;
 import us.bringardner.swing.gradient.GradientLook;
 

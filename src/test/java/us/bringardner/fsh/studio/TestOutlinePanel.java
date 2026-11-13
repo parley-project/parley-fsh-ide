@@ -12,7 +12,6 @@ import javax.swing.tree.TreePath;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import us.bringardner.fsh.studio.OutlinePanel;
 import us.bringardner.fsh.studio.core.CompileError;
 import us.bringardner.fsh.studio.core.ScriptOutline;
 import us.bringardner.fsh.studio.core.ScriptParser;

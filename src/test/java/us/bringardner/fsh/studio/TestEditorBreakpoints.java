@@ -1,10 +1,5 @@
 package us.bringardner.fsh.studio;
 
-import us.bringardner.fsh.debug.Breakpoint;
-import us.bringardner.fsh.studio.DebugVariablePanel;
-import us.bringardner.fsh.studio.EditorPanel;
-import us.bringardner.fsh.studio.core.CompileError;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -20,6 +15,9 @@ import javax.swing.text.Document;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import us.bringardner.fsh.debug.Breakpoint;
+import us.bringardner.fsh.studio.core.CompileError;
 
 /** Breakpoints stay on their statement as lines are added and removed above them. */
 public class TestEditorBreakpoints {
