@@ -32,20 +32,34 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** The toolbar: its icons are 10% larger than their images, and Run is its first button. */
+/**
+ * The toolbar: Run, Debug, Stop and the debugger's buttons have double-size icons, the redirects'
+ * are 10% larger than their images, and Run is its first button.
+ */
 public class TestToolbarIcons {
 
 	@TempDir
 	static Path home;
 
 	@Test
-	public void anIconIsTenPercentLargerThanItsImage() {
-		// 16 x 16 images
+	public void theRunAndDebugButtonsIconsAreDoubleSize() {
+		// 16 x 16 images, with a 32 x 32 @2x file
 		for(String name : new String[] {"run", "debug", "terminate", "resume", "suspend", "step_into", "step_over", "step_return"}) {
-			Icon icon = ToolbarIcons.icon(name);
-			assertEquals(18, icon.getIconWidth(), name);
-			assertEquals(18, icon.getIconHeight(), name);
+			Icon icon = ToolbarIcons.large(name);
+			assertEquals(32, icon.getIconWidth(), name);
+			assertEquals(32, icon.getIconHeight(), name);
+			List<Image> sizes = ((MultiResolutionImage) ((ImageIcon) icon).getImage()).getResolutionVariants();
+			assertEquals(2, sizes.size(), name);
+			assertEquals(64, sizes.get(1).getWidth(null), name);
 		}
+		// (the redirects' images have no @2x file)
+		assertThrows(IllegalArgumentException.class, ()->ToolbarIcons.large("redirect_in"));
+	}
+
+	@Test
+	public void anIconIsTenPercentLargerThanItsImage() {
+		assertEquals(18, ToolbarIcons.icon("run").getIconWidth());
+		assertEquals(18, ToolbarIcons.icon("run").getIconHeight());
 		// 12 x 14 images
 		for(String name : new String[] {"redirect_in", "redirect_out"}) {
 			Icon icon = ToolbarIcons.icon(name);
@@ -108,7 +122,7 @@ public class TestToolbarIcons {
 				assertSame(run, first);
 				assertTrue(run.getX() < debug.getX() && debug.getX() < stop.getX(), run.getX()+" "+debug.getX()+" "+stop.getX());
 				for(JButton button : b) {
-					assertEquals(18, button.getIcon().getIconWidth());
+					assertEquals(32, button.getIcon().getIconWidth());
 				}
 			});
 		} finally {

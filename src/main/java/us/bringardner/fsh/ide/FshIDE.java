@@ -777,11 +777,11 @@ public class FshIDE extends JFrame  {
 
 		// Run first, then Debug and Stop
 		executeButton = new JButton("");
-		executeButton.setIcon(ToolbarIcons.icon("run"));
+		executeButton.setIcon(ToolbarIcons.large("run"));
 		executePanel.add(executeButton);
 
 		debugButton = new JButton("");
-		debugButton.setIcon(ToolbarIcons.icon("debug"));
+		debugButton.setIcon(ToolbarIcons.large("debug"));
 		executePanel.add(debugButton);
 		debugButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -790,7 +790,7 @@ public class FshIDE extends JFrame  {
 		});
 
 
-		stopButton.setIcon(ToolbarIcons.icon("terminate"));
+		stopButton.setIcon(ToolbarIcons.large("terminate"));
 		stopButton.setToolTipText("Stop");
 		stopButton.addActionListener(e->actionStop());
 		executePanel.add(stopButton);

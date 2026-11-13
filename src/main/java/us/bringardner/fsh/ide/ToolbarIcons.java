@@ -25,11 +25,12 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 /**
- * The toolbar's icons (Run, Debug, Stop, the redirects' and the debugger's Resume, Suspend and
- * steps), drawn SCALE times the size of their image in /img.
+ * The toolbar's icons, from the images in /img: Run, Debug, Stop and the debugger's Resume,
+ * Suspend and steps at double size (large: the image's @2x file as it is), the redirects' SCALE
+ * times the size of their image (icon).
  *
  * An icon has its size for an ordinary screen and twice that for a Retina (HiDPI) one, both drawn
- * from the image's @2x file when it has one, so the larger icon stays sharp.
+ * from the image's @2x file when it has one.
  */
 final class ToolbarIcons {
 
@@ -63,6 +64,25 @@ final class ToolbarIcons {
 			return new ImageIcon(new BaseMultiResolutionImage(draw(source, width, height), draw(source, 2*width, 2*height)));
 		} catch (IOException e) {
 			// (as an ImageIcon of the image itself does: it's in the application's own jar)
+			return new ImageIcon(url);
+		}
+	}
+
+	/**
+	 * @param name the image's file in /img, without .png (run, debug, step_over ...)
+	 * @return its icon at double size: the image's @2x file, at that file's own size
+	 * @throws IllegalArgumentException if the image has no @2x file
+	 */
+	static Icon large(String name) {
+		URL url = ToolbarIcons.class.getResource("/img/"+name+"@2x.png");
+		if( url == null ) {
+			throw new IllegalArgumentException("No image /img/"+name+"@2x.png");
+		}
+		try {
+			BufferedImage source = ImageIO.read(url);
+			// (a Retina screen's is that image drawn larger: there's none sharper)
+			return new ImageIcon(new BaseMultiResolutionImage(source, draw(source, 2*source.getWidth(), 2*source.getHeight())));
+		} catch (IOException e) {
 			return new ImageIcon(url);
 		}
 	}
