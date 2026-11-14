@@ -94,7 +94,7 @@ are read, and the next save moves them out of the script.
 ## Debugging through a Loupe adapter
 
 **Run > Debug Through the Loupe Adapter** debugs the script on fsh's Loupe adapter
-([fsh-loupe](../fsh-loupe), started in this JVM) instead of through fsh's hooks directly.
+([fsh-loupe](../parley-fsh-loupe), started in this JVM) instead of through fsh's hooks directly.
 The IDE then speaks the [Loupe](../parley-loupe/PROTOCOL.md) protocol, the same one other
 tools (and editors, through parley-loupe's DAP bridge) use. `LoupeSession`, in `core`, is the
 client and has no UI; it can also talk to an adapter that is a program (`exec`) or listening
