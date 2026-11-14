@@ -24,16 +24,8 @@ public class TestConfigurationLocation {
 		assertEquals(home.resolve(".fsh-studio").resolve("Config.xml").toFile(), file);
 		assertTrue(file.getParentFile().isDirectory());
 		assertFalse(file.exists());
-	}
-
-	@Test
-	public void doesNotCopyOldConfigurations() throws IOException {
-		for(String old : new String[] {".bjlshellIde", ".fsh-studio"}) {
-			Files.createDirectories(home.resolve(old));
-			Files.writeString(home.resolve(old).resolve("Config.xml"), "<old/>");
-		}
-		File file = Configuration.configFileIn(home.toFile());
-		assertFalse(file.exists());
+		// .fsh-studio is the one folder made in the home
+		assertEquals(java.util.List.of(".fsh-studio"), java.util.Arrays.asList(home.toFile().list()));
 	}
 
 	@Test
